@@ -11,17 +11,12 @@ export function distanceM(a, b) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-// 반경 안의 가장 가까운 에피소드 1개. GPS 오차는 최대 30m까지만 봐줌
-// (관사들이 붙어 있어서 너무 넓게 잡으면 엉뚱한 건물이 잡힘).
-export function nearestEpisode(pos, episodes) {
-  if (!pos) return null;
-  const slack = Math.min(pos.acc ?? 0, 30);
-  let best = null;
-  for (const ep of episodes) {
-    const d = distanceM(pos, ep);
-    if (d <= ep.radius + slack && (!best || d < best.dist)) best = { ep, dist: d };
-  }
-  return best;
+// 기능 1.1 도착 체크 ① GPS: 스팟 반경 안인지. GPS 오차는 최대 30m까지만 봐줌
+// (골목이라 오차가 커서 반경은 넉넉히, 하지만 이것만으로 판정하지 않음 → 다음 단계 가상 QR).
+export function gpsCheck(pos, point, radius) {
+  if (!pos) return { ok: false, dist: null };
+  const dist = distanceM(pos, point);
+  return { ok: dist <= radius + Math.min(pos.acc ?? 0, 30), dist };
 }
 
 export class Geo {
@@ -53,8 +48,9 @@ export class Geo {
     );
   }
 
-  setDemo(ep) {
-    this.demoEp = ep;
+  // 데모 모드: 가상 위치를 이 포인트 위로
+  setDemo(point) {
+    this.demoEp = point;
     this.onUpdate();
   }
 

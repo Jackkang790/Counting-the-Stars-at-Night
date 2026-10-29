@@ -61,20 +61,3 @@ export function StickyAction({ children, action, className = '' }) {
     </div>
   );
 }
-
-/** AR 화면 아래 반쯤 걸친 시트. 탭하거나 위로 밀어 올리면 05 건물 이야기로. */
-export function Peek({ children, onOpen }) {
-  const y0 = useRef(null);
-  return (
-    <button
-      type="button"
-      className="peek"
-      onClick={onOpen}
-      onPointerDown={(e) => { y0.current = e.clientY; }}
-      onPointerUp={(e) => { if (y0.current != null && y0.current - e.clientY > 30) onOpen(); y0.current = null; }}
-    >
-      <i className="grip" />
-      {children}
-    </button>
-  );
-}

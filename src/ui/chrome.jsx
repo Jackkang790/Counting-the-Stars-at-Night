@@ -1,4 +1,4 @@
-// 카메라(AR) 화면 공통 조각: 상단(닫기/뒤로 · 가운데 알약 · 오른쪽 칸) + 관사별 도장 2개
+// 카메라(AR) 화면 공통 상단: 닫기/뒤로 · 가운데 알약 · 오른쪽 칸
 import { useApp } from '../store.jsx';
 import { stopCamera } from './Camera.jsx';
 
@@ -19,16 +19,6 @@ export function ArHead({ pill, right = null, left = 'close' }) {
       </button>
       <div className="pill">{pill}</div>
       <div className="ar-head-side">{right}</div>
-    </div>
-  );
-}
-
-// 관사별 도장 2개(역·방)
-export function StampPair({ s = {}, small = false }) {
-  return (
-    <div className={'stamp-pair' + (small ? ' small' : '')}>
-      <span className={'stamp' + (s.role ? ' on' : '')}>역</span>
-      <span className={'stamp' + (s.escape ? ' on' : '')}>방</span>
     </div>
   );
 }
