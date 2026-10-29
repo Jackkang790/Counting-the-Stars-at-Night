@@ -116,8 +116,9 @@ Codex가 쓰는 실제 스키마를 기준으로 합니다. 핵심 필드(발췌
   엔진이 `setTimePhase(0..1)`로 두 그룹 가시성/투명도 블렌딩.
   - 매니페스트 추가 필드: `"time_phase": { "enabled": true }`.
 - **클립**(접두사 없는 표준): `Reveal`(등장), `RestoreIn`(복원 요소 등장, 선택), `Idle`(선택).
-- **정합 데이터**: 스팟별 정렬 보조(기준 이미지/마커/상대 포즈)는
-  [`tech-validation.md` TV-03](./tech-validation.md)에서 관리. 에셋은 **실척 1:1**로만 제공.
+- **정합 데이터·방식**: 스팟별 정렬 보조(기준 이미지/마커/상대 포즈)와 정합 검증용
+  **임시 캘리브레이션 GLB 규격**은 [`building-alignment.md`](./building-alignment.md)에서 관리.
+  에셋은 **실척 1:1**로만 제공(스케일은 미터 추적으로 자동 일치).
 
 ### 3.2 `wall_artwork` (04-C)
 - **anchor.type**: `wall_center` (작품 **뒷면(벽 접촉면)** 중심, 패널은 +Z가 관람자 방향).

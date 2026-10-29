@@ -33,6 +33,9 @@
         pointer-events: auto; background: #ff4d4d; border: none; color: #fff; padding: 12px 22px; border-radius: 999px; font-weight: 600; }
       #ar-dismiss { position: absolute; bottom: 82px; left: 50%; transform: translateX(-50%);
         pointer-events: auto; background: #2a2a36; border: 1px solid #444; color: #fff; padding: 10px 18px; border-radius: 999px; }
+      #ar-telemetry { position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.72rem; color: #9ad;
+        background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 8px; white-space: pre; text-align: center; }
     </style>
   </head>
   <body>
@@ -80,6 +83,7 @@
 
     <div id="ar-overlay">
       <div id="ar-hint">바닥을 비추세요…</div>
+      <div id="ar-telemetry">telemetry…</div>
       <button id="ar-dismiss">작품 퇴장(Disappear)</button>
       <button id="ar-stop">AR 종료</button>
     </div>

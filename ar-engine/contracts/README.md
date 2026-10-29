@@ -12,6 +12,7 @@
 | [`asset-spec.md`](./asset-spec.md) | Codex(Blender 에셋) | 3D 모델·애니메이션·매니페스트 규격 |
 | [`ar-api.md`](./ar-api.md) | 게임 셸(외부 호출자) | AR 엔진 호출 인터페이스(TypeScript) |
 | [`tech-validation.md`](./tech-validation.md) | AR 담당(나) | WebXR 기본 기능으로 보장되지 않는 항목의 검증 관리 |
+| [`building-alignment.md`](./building-alignment.md) | AR 담당 / Codex | 04-B 건물 정합 기술 설계 + 정합 검증용 임시 에셋 규격 |
 
 ---
 

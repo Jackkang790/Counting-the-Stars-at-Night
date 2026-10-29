@@ -12,6 +12,7 @@ const dismissBtn = $<HTMLButtonElement>("ar-dismiss");
 const appEl = $("app");
 const overlayEl = $("ar-overlay");
 const hintEl = $("ar-hint");
+const telemetryEl = $("ar-telemetry");
 const loadStatusEl = $("loadStatus");
 
 function log(msg: string): void {
@@ -47,6 +48,12 @@ engine.on("ready", (e) => {
 });
 engine.on("placed", () => { log("📍 placed"); hintEl.textContent = "작품이 솟아오릅니다 · 작품을 탭해보세요"; });
 engine.on("trackingLost", (e) => log(`⚠ trackingLost: ${e.reason}`));
+engine.on("telemetry", (t) => {
+  const a = t.anchorWorld ? `anchor(${t.anchorWorld.x},${t.anchorWorld.y},${t.anchorWorld.z})` : "anchor —";
+  telemetryEl.textContent =
+    `fps ${t.fps} | ${t.placed ? "placed" : t.reticleVisible ? "reticle" : "searching"} | ` +
+    `phase ${t.animationPhase} | track ${t.viewerTracked ? "ok" : "LOST"}\n${a}`;
+});
 engine.on("hotspotSelected", (e) => log(`👆 hotspotSelected: ${e.hotspotId}`));
 engine.on("experienceCompleted", (e) =>
   log(`🏁 experienceCompleted (${Math.round(e.durationMs)}ms) — 외부 서비스가 보상 처리`)

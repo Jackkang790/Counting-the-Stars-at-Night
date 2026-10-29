@@ -103,6 +103,19 @@ export interface ARErrorEvent {
   recoverable: boolean;
 }
 
+/** 세션 중 주기적으로 방출되는 런타임 진단(실기기 배치 안정성 확인용). */
+export interface ARTelemetry {
+  fps: number;
+  placed: boolean;
+  reticleVisible: boolean;
+  /** 뷰어(기기) 포즈 추적 유효 여부. false 지속 시 트래킹 상실. */
+  viewerTracked: boolean;
+  hitTestActive: boolean;
+  animationPhase: "none" | "emerging" | "idle" | "disappearing";
+  /** 배치 후 기준점의 월드 좌표(배치 안정성 육안 확인용). */
+  anchorWorld?: { x: number; y: number; z: number };
+}
+
 export interface ARExperienceEventMap {
   sessionStarted: void;
   assetProgress: AssetProgressEvent;
@@ -112,6 +125,7 @@ export interface ARExperienceEventMap {
   hotspotSelected: HotspotSelectedEvent;
   experienceCompleted: ExperienceCompletedEvent;
   error: ARErrorEvent;
+  telemetry: ARTelemetry;
   sessionEnded: void;
 }
 

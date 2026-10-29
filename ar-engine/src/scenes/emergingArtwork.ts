@@ -15,6 +15,8 @@ export class EmergingArtworkScene {
   readonly object: THREE.Object3D;
   /** GLB에서 실제로 발견한 클립 이름(로그/검증용). */
   readonly clipNames: string[];
+  /** 현재 애니메이션 단계(텔레메트리용). */
+  phase: "none" | "emerging" | "idle" | "disappearing" = "none";
 
   private mixer?: THREE.AnimationMixer;
   private emergeAction?: THREE.AnimationAction;
@@ -63,6 +65,7 @@ export class EmergingArtworkScene {
   emerge(onComplete?: () => void): void {
     this.onEmergeComplete = onComplete;
     this.object.visible = true;
+    this.phase = "emerging";
 
     if (this.emergeAction && this.mixer) {
       this.emergeAction.reset();
@@ -86,6 +89,7 @@ export class EmergingArtworkScene {
 
   /** 퇴장(Disappear) 재생. 완료 시 onDone. */
   dismiss(onDone?: () => void): void {
+    this.phase = "disappearing";
     if (this.disappearAction && this.mixer) {
       this.idleAction?.stop();
       this.emergeAction?.stop();
@@ -95,17 +99,20 @@ export class EmergingArtworkScene {
         if (e.action !== this.disappearAction) return;
         this.mixer!.removeEventListener("finished", onFinished as never);
         this.object.visible = false;
+        this.phase = "none";
         onDone?.();
       };
       this.mixer.addEventListener("finished", onFinished as never);
     } else {
       // 클립 없음: 간단히 숨김.
       this.object.visible = false;
+      this.phase = "none";
       onDone?.();
     }
   }
 
   private playIdle(): void {
+    this.phase = "idle";
     if (!this.idleAction) return;
     this.emergeAction?.stop();
     this.idleAction.reset();
@@ -139,6 +146,7 @@ export class EmergingArtworkScene {
       this.object.scale.setScalar(Math.max(0.001, k));
       if (t >= 1) {
         this.emerging = false;
+        this.phase = "idle";
         this.onEmergeComplete?.();
       }
     } else if (this.object.visible) {

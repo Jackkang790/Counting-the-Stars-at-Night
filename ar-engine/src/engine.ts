@@ -50,6 +50,14 @@ export class AREngine implements ARExperience {
   private completedEmitted = false;
   private clock = new THREE.Clock();
 
+  // 런타임 텔레메트리 상태
+  private telemFrames = 0;
+  private lastTelemetryAt = 0;
+  private viewerLostFrames = 0;
+  private trackingLostEmitted = false;
+  private reticleWasVisible = false;
+  private readonly tmpVec = new THREE.Vector3();
+
   constructor(options: AREngineOptions = {}) {
     this.options = { mode: "geo", ...options };
   }
@@ -128,6 +136,8 @@ export class AREngine implements ARExperience {
 
     this.experienceStartTime = performance.now();
     this.clock.start();
+    this.lastTelemetryAt = performance.now();
+    this.telemFrames = 0;
     this.renderer!.setAnimationLoop(this.onFrame);
 
     // 에셋 로드(세션 초기화와 병렬). 완료되면 배치 가능.
@@ -225,11 +235,13 @@ export class AREngine implements ARExperience {
     let loadedUrl: string | undefined;
     this.usedPlaceholder = false;
     if (asset?.url && !req.overrides?.forcePlaceholder) {
+      const t0 = performance.now();
       try {
         model = await loadGLB(asset.url, (loaded, total) =>
           this.bus.emit("assetProgress", { assetId: this.assetId, loaded, total })
         );
         loadedUrl = asset.url;
+        console.info(`[ar-engine] GLB 로드 시간: ${Math.round(performance.now() - t0)}ms (${asset.url})`);
       } catch (err) {
         console.warn("[ar-engine] GLB 로드 실패 — 임시 모델 사용:", err);
       }
@@ -324,6 +336,24 @@ export class AREngine implements ARExperience {
     const dt = this.clock.getDelta();
     const elapsed = this.clock.elapsedTime;
 
+    // 뷰어(기기) 포즈 추적 유효성 — 배치 안정성/트래킹 상실 진단.
+    let viewerTracked = true;
+    if (frame && this.refSpace) {
+      const vp = frame.getViewerPose(this.refSpace);
+      if (!vp) {
+        viewerTracked = false;
+        this.viewerLostFrames++;
+        if (this.viewerLostFrames === 30 && !this.trackingLostEmitted) {
+          this.trackingLostEmitted = true;
+          console.warn("[ar-engine] ⚠ 뷰어 포즈 추적 상실(약 30프레임) — 배치 흔들림 가능");
+          this.bus.emit("trackingLost", { reason: "alignment-lost" });
+        }
+      } else {
+        this.viewerLostFrames = 0;
+        this.trackingLostEmitted = false;
+      }
+    }
+
     if (frame && this.hitTestSource && this.refSpace && !this.placement.isPlaced) {
       const results = frame.getHitTestResults(this.hitTestSource);
       if (results.length > 0) {
@@ -332,13 +362,46 @@ export class AREngine implements ARExperience {
       } else {
         this.reticle.hide();
       }
+      // 바닥 인식 전환 로깅(처음 발견/소실).
+      if (this.reticle.visible !== this.reticleWasVisible) {
+        this.reticleWasVisible = this.reticle.visible;
+        console.info(`[ar-engine] hit-test ${this.reticle.visible ? "바닥 인식됨 ✓" : "바닥 소실"}`);
+      }
     }
 
     this.artwork?.update(dt, elapsed);
     if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
+
+    this.emitTelemetry(viewerTracked);
   };
+
+  private emitTelemetry(viewerTracked: boolean): void {
+    this.telemFrames++;
+    const now = performance.now();
+    const span = now - this.lastTelemetryAt;
+    if (span < 500) return; // ~2회/초
+    const fps = Math.round((this.telemFrames * 1000) / span);
+    this.telemFrames = 0;
+    this.lastTelemetryAt = now;
+
+    let anchorWorld: { x: number; y: number; z: number } | undefined;
+    if (this.placement.isPlaced) {
+      this.placement.group.getWorldPosition(this.tmpVec);
+      anchorWorld = { x: round3(this.tmpVec.x), y: round3(this.tmpVec.y), z: round3(this.tmpVec.z) };
+    }
+
+    this.bus.emit("telemetry", {
+      fps,
+      placed: this.placement.isPlaced,
+      reticleVisible: this.reticle.visible,
+      viewerTracked,
+      hitTestActive: !!this.hitTestSource,
+      animationPhase: this.artwork?.phase ?? "none",
+      anchorWorld,
+    });
+  }
 
   private onResize = (): void => {
     if (!this.renderer || !this.camera) return;
@@ -366,4 +429,8 @@ export class AREngine implements ARExperience {
   private emitError(code: string, message: string, recoverable: boolean): void {
     this.bus.emit("error", { code, message, recoverable });
   }
+}
+
+function round3(n: number): number {
+  return Math.round(n * 1000) / 1000;
 }
