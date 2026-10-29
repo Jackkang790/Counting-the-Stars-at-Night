@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "testedUrl": "https://ar.lobodoc.com/",
+  "checks": [
+    "four actual skinned textured GLBs and supplied AAC audio preload",
+    "no tracker pose cannot place; 0.5m hit rejected without fake camera-relative fallback",
+    "BuildingAnchor/BuildingGroup/PerformerGroup/EffectsGroup; opaque facade disabled in camera mode",
+    "camera translation leaves all four building-relative anchors fixed while bone animation changes on the shared clock",
+    "evaluated skinned vertices keep each shoe sole within 7cm of building-local ground",
+    "10-second shared-clock playback, pause, completion and replay preserve placement",
+    "explicit reposition pauses and waits for a new physical hit",
+    "photo-based split facade is visible in explicitly labelled non-AR rehearsal"
+  ],
+  "tracking": "MOCK ONLY",
+  "physicalPhoneARVerified": false,
+  "realActorFacesReconstructed": false
+}

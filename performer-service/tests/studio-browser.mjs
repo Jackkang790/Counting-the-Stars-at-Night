@@ -1,0 +1,42 @@
+// End-to-end browser test uses local owned synthetic content. No provider API calls.
+import assert from 'node:assert/strict';
+import {mkdtemp,rm,mkdir,writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {resolve,join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {createApp} from '../src/server.mjs';
+const root=resolve(import.meta.dirname,'../..'),out=join(root,'ar-engine/reports/performer-pipeline');await mkdir(out,{recursive:true});
+const {chromium}=await import(pathToFileURL(resolve(root,process.env.PLAYWRIGHT_MODULE??'.tmp/musical-qa/node_modules/playwright/index.mjs')).href);
+const folder=await mkdtemp(join(tmpdir(),'performer-browser-')),token='qa-local-session-not-production-secret';
+const service=createApp({folder,adminToken:token,webDist:join(root,'ar-engine/dist')});await new Promise(r=>service.app.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+service.app.address().port;
+let browser;const errors=[],checks=[];
+try{
+  browser=await chromium.launch({executablePath:process.env.CHROME_PATH??'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const page=await browser.newPage({viewport:{width:1100,height:900}});page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/?studio=1');await page.locator('#token').fill(token);await page.getByRole('button',{name:'로그인',exact:true}).click();await page.locator('#studio-workspace').waitFor({state:'visible'});
+  const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=300;c.height=500;const ctx=c.getContext('2d');ctx.fillStyle='#dadada';ctx.fillRect(0,0,300,500);ctx.fillStyle='#008899';ctx.fillRect(110,120,80,250);return c.toDataURL('image/png').split(',')[1];});
+  await page.locator('[name=name]').fill('합성 테스트 배우');await page.locator('[name=title]').fill('30초 본 애니메이션 검증');
+  await page.locator('#photos').setInputFiles({name:'owned-test.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+  await page.locator('#video').setInputFiles(join(root,'ar-engine/musical-assets/actor-a-demo.mp4'));
+  for(const box of await page.locator('[data-consent]').all())await box.check();await page.getByRole('button',{name:'자료 업로드',exact:true}).click();
+  await page.locator('#job-status').filter({hasText:'업로드 완료'}).waitFor();checks.push('authenticated multipart upload, photo direction and four explicit consents');
+  await page.locator('[data-attachment=result]').setInputFiles(join(root,'performer-service/tests/fixtures/retargeted.glb'));
+  await page.locator('#job-status').filter({hasText:'외형 검수 필요'}).waitFor();await page.waitForFunction(()=>Number(document.querySelector('#preview')?.dataset.animations)>0);
+  assert.match(await page.locator('#job-status').textContent(),/합성 검증/);checks.push('actual retargeted skinned GLB preview, synthetic provenance preserved');
+  await page.screenshot({path:join(out,'studio-preview.png'),fullPage:true});
+  for(const box of await page.locator('#job-actions input[type=checkbox]').all())await box.check();await page.getByRole('button',{name:'검수 승인',exact:true}).click();
+  await page.locator('#job-status').filter({hasText:'동작 검수 필요'}).waitFor();
+  for(const box of await page.locator('#job-actions input[type=checkbox]').all())await box.check();await page.getByRole('button',{name:'검수 승인',exact:true}).click();await page.locator('#job-status').filter({hasText:'공연 등록 가능'}).waitFor();
+  await page.getByRole('button',{name:'검수 완료 배우를 AR 공연에 등록',exact:true}).click();await page.locator('#job-status').filter({hasText:'공연 등록 완료'}).waitFor();checks.push('SHA-bound model and motion review gate; immutable approved registry publication');
+  await page.goto(base+'/?musical=1');await page.waitForFunction(()=>document.querySelector('#musical-app')?.dataset.mediaSource==='samples');
+  await page.locator('#musical-registry-refresh').click();const value=await page.locator('#musical-registry-0 option').nth(1).getAttribute('value');
+  await page.locator('#musical-registry-0').selectOption(value);await page.waitForFunction(()=>JSON.parse(document.querySelector('#musical-app').dataset.representations)[0]==='rigged-glb');
+  await page.locator('#musical-registry-1').selectOption(value);await page.waitForFunction(()=>JSON.parse(document.querySelector('#musical-app').dataset.representations).every(r=>r==='rigged-glb'));
+  await page.locator('#musical-preview').click();assert.equal(await page.locator('#musical-play').isDisabled(),true);if(!await page.locator('#musical-test').isVisible())await page.locator('#musical-setup summary').click();await page.locator('#musical-test').click();
+  await page.waitForFunction(()=>Number(document.querySelector('#musical-app').dataset.time)>12,undefined,{timeout:20000});
+  assert.equal(await page.locator('#musical-app').getAttribute('data-spatial-anchored'),'true');await page.screenshot({path:join(out,'two-3d-performers.png')});checks.push('two registered skinned GLB objects reuse building anchors and shared musical clock; synthetic actor restricted to test mode');
+  await page.locator('#musical-pause').click();const paused=Number(await page.locator('#musical-app').getAttribute('data-time'));await page.waitForTimeout(300);assert.ok(Math.abs(Number(await page.locator('#musical-app').getAttribute('data-time'))-paused)<.1);
+  if(!await page.locator('#musical-test').isVisible())await page.locator('#musical-setup summary').click();await page.locator('#musical-test').click();await page.waitForFunction(()=>document.querySelector('#musical-app').dataset.playback==='completed',undefined,{timeout:25000});
+  await page.locator('#musical-replay').click();await page.waitForFunction(()=>document.querySelector('#musical-app').dataset.playback==='playing'&&Number(document.querySelector('#musical-app').dataset.time)<2);checks.push('30-second audio-driven show completion, pause and replay');
+  assert.deepEqual(errors,[]);await writeFile(join(out,'browser.json'),JSON.stringify({result:'PASS',checks,livePaidAPICalls:0,physicalDeviceARVerified:false,previewIsAR:false},null,2));console.log(JSON.stringify({result:'PASS',checks,physicalDeviceARVerified:false},null,2));
+}finally{await browser?.close();await new Promise(r=>service.app.close(r));service.close();await rm(folder,{recursive:true,force:true});}

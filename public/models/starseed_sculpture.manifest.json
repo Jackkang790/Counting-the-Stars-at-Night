@@ -1,0 +1,29 @@
+{
+  "sceneId": "starseed-sculpture",
+  "type": "emergent-artwork",
+  "title": "[임시 작품] 별의 새싹",
+  "model": "starseed_sculpture.glb",
+  "anchor": "horizontal",
+  "defaultScale": 1.0,
+  "bounds": {
+    "size": [
+      1.2400000095367432,
+      2.213874101638794,
+      1.2400000095367432
+    ]
+  },
+  "animations": {
+    "intro": "Emerge",
+    "idle": "Idle",
+    "outro": "Disappear"
+  },
+  "timePhase": {
+    "enabled": false
+  },
+  "scenes": [],
+  "audio": [],
+  "credits": {
+    "artist": "[작가 미확정]",
+    "work": "[임시 작품] 별의 새싹"
+  }
+}

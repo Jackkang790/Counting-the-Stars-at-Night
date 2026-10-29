@@ -1,0 +1,267 @@
+{
+  "url": "https://ar.lobodoc.com/",
+  "musicalUrl": "https://ar.lobodoc.com/?musical=1",
+  "verifiedAt": "2026-10-29T16:08:45.330Z",
+  "physicalDeviceARVerified": false,
+  "existingProtectedFiles": 38,
+  "files": [
+    {
+      "file": "assets/actor-a-demo-Bu0lSry-.mp4",
+      "status": 200,
+      "bytes": 406398,
+      "contentType": "video/mp4",
+      "sha256": "bc6afbc36973b3a13fd08a58b14f1d81b07d72f8ac704c24c37d25057248aba4",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/actor-b-demo-gLEQ79ZM.mp4",
+      "status": 200,
+      "bytes": 878125,
+      "contentType": "video/mp4",
+      "sha256": "3313007ac8557ca7148af01e310075e0ebd7eef1ee48e3c48973eab64b6b3bcd",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/app-B3eN0xvI.js",
+      "status": 200,
+      "bytes": 65209,
+      "contentType": "application/javascript",
+      "sha256": "37e7ba76690e6c0dbe61546336e511ec0bc8727daf94f131883a72e748c4dc03",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/app-DXtp__ns.css",
+      "status": 200,
+      "bytes": 3986,
+      "contentType": "text/css",
+      "sha256": "23ec5fa5ad48ded93ffb4c802e51fc0b6da79e5d68f66c47362b4db75aa3cebd",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/ChatGPT 이미지 2026년 10월 29일 오후 10_06_36-BMd-NTJS.jpg",
+      "status": 200,
+      "bytes": 459098,
+      "contentType": "image/jpeg",
+      "sha256": "a9ce3f44934286a1bd43178a76b3894e8c20bd06969a63c5474270a6f9d13358",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/ChatGPT 이미지 2026년 10월 29일 오후 10_06_50-Sy1TMAeD.jpg",
+      "status": 200,
+      "bytes": 427846,
+      "contentType": "image/jpeg",
+      "sha256": "22a95d14641e52a2762dd0f84dae247f94e9f79e49853585263a6be993db608c",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-00-Br4ZBYgx.glb",
+      "status": 200,
+      "bytes": 4120,
+      "contentType": "model/gltf-binary",
+      "sha256": "efa34c0170fe6feeccd2849b8aad4398dfcf238e3983a0067156bc04c8fc22fa",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-01-D6YOYP9j.glb",
+      "status": 200,
+      "bytes": 4192,
+      "contentType": "model/gltf-binary",
+      "sha256": "f04350c5201551d4c66d2f999270b47e8ac8f4f4c850594c3ef3911ae7697e0d",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-02-CM2wkTFk.glb",
+      "status": 200,
+      "bytes": 4192,
+      "contentType": "model/gltf-binary",
+      "sha256": "005f8a56cf5160a5e2cda7f933499ca90ccc67f50ef2bbe0141ac0988ffbfe8d",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-03-BmjWqXLr.glb",
+      "status": 200,
+      "bytes": 4176,
+      "contentType": "model/gltf-binary",
+      "sha256": "4688af81fa03705f884b9b6794d7468c0c0bb7aed2a976254a6e63dc65465589",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-04-BvjCvbZw.glb",
+      "status": 200,
+      "bytes": 4192,
+      "contentType": "model/gltf-binary",
+      "sha256": "93df0d9432c64a0cd1887d62649afed0aae5cbc125e49e00786fac7b7be1444c",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-05-Cyab744m.glb",
+      "status": 200,
+      "bytes": 4192,
+      "contentType": "model/gltf-binary",
+      "sha256": "a2d4e50c31a7b9985b58c489a431c34207eb29607b58a50fb8a362d35fcde8a4",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-06-CP8DxU3F.glb",
+      "status": 200,
+      "bytes": 4148,
+      "contentType": "model/gltf-binary",
+      "sha256": "a3f8d28b5850174b79d9ab2666165b94ba592eab0f7fe292c5521a316022ebdf",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-07-Df7oYwQg.glb",
+      "status": 200,
+      "bytes": 4192,
+      "contentType": "model/gltf-binary",
+      "sha256": "c501a2ddd9196dceebec41b84011bf89416e338c2a4120e0f64977a7124e3630",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-08-C_5aAABr.glb",
+      "status": 200,
+      "bytes": 4192,
+      "contentType": "model/gltf-binary",
+      "sha256": "5021d249ced1a474bf46bac93b4265cbc3e2a471d98f171c1a11830e556700b5",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-09-BL2XFPf2.glb",
+      "status": 200,
+      "bytes": 4192,
+      "contentType": "model/gltf-binary",
+      "sha256": "666548c35bb15485683b9c1f9495549e12957790ca008e49b06d02b3062c4bc9",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-10-C215xJPN.glb",
+      "status": 200,
+      "bytes": 4192,
+      "contentType": "model/gltf-binary",
+      "sha256": "e5d6c11cd2e07fd62d8879bd243e4fb35a72ba40f769ce7d7339427f99b96290",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/frame-11-zph21vBM.glb",
+      "status": 200,
+      "bytes": 4192,
+      "contentType": "model/gltf-binary",
+      "sha256": "724fc7739dac9f543ae15e0913909fb12b50504e3ed269d0775f77ed406f385d",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/index-BGYxtgQg.js",
+      "status": 200,
+      "bytes": 2327,
+      "contentType": "application/javascript",
+      "sha256": "5784c014b33e9346be7051d1412026f2ac3e38426158a181135992127e0402e5",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/launcher-51aKQzJw.js",
+      "status": 200,
+      "bytes": 726,
+      "contentType": "application/javascript",
+      "sha256": "79e1b109fc67ea01896ad5aca39c0a713dc82b37f31d25cb40d4624dfc80276f",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/LICENSE.apache-2-CIVX19zl.0",
+      "status": 200,
+      "bytes": 11358,
+      "contentType": "application/octet-stream",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/main-CpCtUjTt.js",
+      "status": 200,
+      "bytes": 35300,
+      "contentType": "application/javascript",
+      "sha256": "418b277ad3f66e64e942dc7f5f9eb5c65c360396dc95748fc0cd88ff1f705894",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/mindar-image.prod-DIR3MuiA.js",
+      "status": 200,
+      "bytes": 1758934,
+      "contentType": "application/javascript",
+      "sha256": "7b7aa49d9dce85a2dfd7e296614fef68936e757986c8fd68542bf2773fbf803a",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/panel-BdICPh8I.mind",
+      "status": 200,
+      "bytes": 170883,
+      "contentType": "application/octet-stream",
+      "sha256": "9c02f4c160a95b9b4e49d82abc13f171083808bf6da79c4e2155b44e34c545fe",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/reticle-CFmphrY9.js",
+      "status": 200,
+      "bytes": 588271,
+      "contentType": "application/javascript",
+      "sha256": "4661fd2f2c3b7336b423f6dfec8626410db70bce18aa3653cea2e07048d5919a",
+      "matchesLocal": true
+    },
+    {
+      "file": "assets/USDZExporter-DmpSW5ZI.js",
+      "status": 200,
+      "bytes": 21003,
+      "contentType": "application/javascript",
+      "sha256": "c9b40331008ef6a638dbec727533bbb2bd22451e2c54a68b18ad2e6bbac23831",
+      "matchesLocal": true
+    },
+    {
+      "file": "index.html",
+      "status": 200,
+      "bytes": 11322,
+      "contentType": "text/html",
+      "sha256": "4f595bb585f90d5fecf96967e7c6fdffe074524061166fdfae57e86f89ff68e7",
+      "matchesLocal": true
+    },
+    {
+      "file": "models/alignment_test_facade.glb",
+      "status": 200,
+      "bytes": 108412,
+      "contentType": "model/gltf-binary",
+      "sha256": "a7fbabafece083216d973472002cc84362e0da1826eb4a45947bceb7aaa6792e",
+      "matchesLocal": true
+    },
+    {
+      "file": "models/alignment_test_facade.manifest.json",
+      "status": 200,
+      "bytes": 8731,
+      "contentType": "application/json",
+      "sha256": "198d3ce05a571f41d79a1ba6f4afa9e998b61bcae04250dd7e5ea11afa52ba90",
+      "matchesLocal": true
+    },
+    {
+      "file": "models/asset-manifest.json",
+      "status": 200,
+      "bytes": 4546,
+      "contentType": "application/json",
+      "sha256": "cfb4b81a7ce960518bfb20e2952a9ca9559b2d2a439d6612532a9ae7e4fb1f0e",
+      "matchesLocal": true
+    },
+    {
+      "file": "models/starseed_sculpture.glb",
+      "status": 200,
+      "bytes": 174832,
+      "contentType": "model/gltf-binary",
+      "sha256": "aa947bbbfe1e8e37e9548645e3386108aac663bebb2122795610d8eb0fc5306d",
+      "matchesLocal": true
+    },
+    {
+      "file": "models/starseed_sculpture.manifest.json",
+      "status": 200,
+      "bytes": 578,
+      "contentType": "application/json",
+      "sha256": "8dbdd094314cc4c1ac67ec3ae0e719ebd0bcbc1222e3b3abab1ead4ea1633a91",
+      "matchesLocal": true
+    }
+  ],
+  "fileCount": 32,
+  "result": "PASS"
+}

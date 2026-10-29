@@ -1,0 +1,18 @@
+{
+  "result": "PASS",
+  "url": "https://ar.lobodoc.com/",
+  "release": "300423a",
+  "checks": [
+    "original AR entry remains available over public HTTPS",
+    "public HTTPS studio login and private session cookie",
+    "actual public multipart upload, synthetic 3D result and animated preview",
+    "model and animation review gates, published registry on deployed backend",
+    "unapproved originals stay private; approved GLB is served publicly",
+    "two deployed registry models load in building-local slots; shared clock test playback"
+  ],
+  "livePaidAPICalls": 0,
+  "actualPhoneARVerified": false,
+  "localRetargetOnServer": true,
+  "serverBlender": "3.4.1 (Debian Bookworm; NumPy compatibility shim)",
+  "approvedSyntheticActorID": "d02842c6-b299-40e6-bd77-c1f5fc3f6b9d"
+}

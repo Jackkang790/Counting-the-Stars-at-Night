@@ -1,0 +1,14 @@
+{
+  "files": 58,
+  "bytes": 38285382,
+  "sha256": "18d81376919a77049dfefd7330456a8d8c2469e4ab8a3bb51a5917cb9d74a03d",
+  "image": "ar-site:appearance-18d81376",
+  "indexSha256": "01a2db5cce8d84c27982531d1ebde6755e38a788f8b409499ba7784b784c42a4",
+  "url": "https://ar.lobodoc.com/?musical=1&show=quartet&v=18d81376",
+  "performerAPI": "unchanged",
+  "paidAPICalls": 0,
+  "physicalPhoneARVerified": false,
+  "rollbackImage": "ar-site:rollback-20261029T202150Z",
+  "originalPreQuartetRollback": "ar-site:rollback-20261029T193350Z",
+  "publicGLBSha256Verified": true
+}

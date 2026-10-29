@@ -1,0 +1,77 @@
+{
+  "actors": [
+    {
+      "id": "performer-01",
+      "file": "performer-01.glb",
+      "sha256": "a14188dff92940a8d638c34dcd6cc7ace371dd0f8c94d5c068b953ce31a92ab7",
+      "bytes": 5972268,
+      "bones": 17,
+      "frames": 241,
+      "duration": 10,
+      "repairedJointSamples": 23,
+      "groundCorrectionRange": [
+        0.037192851305007935,
+        0.11923705786466599
+      ],
+      "modelSource": "MakeHuman CC0 female macro, 2K Asian female skin, fitted CC0 short hair/brown eyes/eyebrows/suit/shoes, anatomical weights; authored student cap/buttons",
+      "motionSource": "MediaPipe monocular estimates, 5-frame smoothing, low-confidence interpolation, authored 9.5s hold",
+      "notOriginalActorIdentity": true
+    },
+    {
+      "id": "performer-02",
+      "file": "performer-02.glb",
+      "sha256": "59cb5b59eca7dd85f5abcf9dd38fd0a9cacf88a7befffc0556a963f5187dd074",
+      "bytes": 5972296,
+      "bones": 17,
+      "frames": 241,
+      "duration": 10,
+      "repairedJointSamples": 80,
+      "groundCorrectionRange": [
+        0.04393953084945679,
+        0.12297618389129639
+      ],
+      "modelSource": "MakeHuman CC0 female macro, 2K Asian female skin, fitted CC0 short hair/brown eyes/eyebrows/suit/shoes, anatomical weights; authored student cap/buttons",
+      "motionSource": "MediaPipe monocular estimates, 5-frame smoothing, low-confidence interpolation, authored 9.5s hold",
+      "notOriginalActorIdentity": true
+    },
+    {
+      "id": "performer-03",
+      "file": "performer-03.glb",
+      "sha256": "17665e457df24115d0b5f0aee79cf12c131e32eef22e631c540f6bdd7b2d203a",
+      "bytes": 5972296,
+      "bones": 17,
+      "frames": 241,
+      "duration": 10,
+      "repairedJointSamples": 30,
+      "groundCorrectionRange": [
+        0.04184342920780182,
+        0.11424195766448975
+      ],
+      "modelSource": "MakeHuman CC0 female macro, 2K Asian female skin, fitted CC0 short hair/brown eyes/eyebrows/suit/shoes, anatomical weights; authored student cap/buttons",
+      "motionSource": "MediaPipe monocular estimates, 5-frame smoothing, low-confidence interpolation, authored 9.5s hold",
+      "notOriginalActorIdentity": true
+    },
+    {
+      "id": "performer-04",
+      "file": "performer-04.glb",
+      "sha256": "83a87962f0bd095eee4bc79b8acc7df207dfa80bce9766aab5a5effd428bf958",
+      "bytes": 5972296,
+      "bones": 17,
+      "frames": 241,
+      "duration": 10,
+      "repairedJointSamples": 24,
+      "groundCorrectionRange": [
+        0.022361397743225098,
+        0.11780014634132385
+      ],
+      "modelSource": "MakeHuman CC0 female macro, 2K Asian female skin, fitted CC0 short hair/brown eyes/eyebrows/suit/shoes, anatomical weights; authored student cap/buttons",
+      "motionSource": "MediaPipe monocular estimates, 5-frame smoothing, low-confidence interpolation, authored 9.5s hold",
+      "notOriginalActorIdentity": true
+    }
+  ],
+  "sourceVideoSha256": "e18f5e9eb4ec841357f3c2ec682245aeb2957a2a5b26c5bf2686a1aa2cab9c51",
+  "measuredVolumetricCapture": false,
+  "faceReconstruction": false,
+  "wardrobe": "black tailored jacket/skirt/cap and fitted shoes, white socks, dark underlayer; historical accuracy unverified",
+  "appearanceRevision": "anatomical-female-v2"
+}

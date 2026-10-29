@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "type": "volumetric-mesh-sequence",
+  "units": "meters",
+  "up": "+Y",
+  "front": "-Z",
+  "origin": "ground-center",
+  "fps": 12,
+  "source": {
+    "kind": "synthetic-calibration",
+    "title": "비대칭 3D 검증 도형 — 실제 인물 아님",
+    "license": "project-generated-test-fixture; no performer footage"
+  },
+  "frames": [
+    "frame-00.glb",
+    "frame-01.glb",
+    "frame-02.glb",
+    "frame-03.glb",
+    "frame-04.glb",
+    "frame-05.glb",
+    "frame-06.glb",
+    "frame-07.glb",
+    "frame-08.glb",
+    "frame-09.glb",
+    "frame-10.glb",
+    "frame-11.glb"
+  ]
+}

@@ -1,0 +1,111 @@
+[
+  {
+    "url": "https://ar.lobodoc.com/",
+    "errors": [],
+    "console": [],
+    "failed": [],
+    "responses": [
+      {
+        "url": "https://ar.lobodoc.com/",
+        "status": 200,
+        "type": "text/html"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/index-BGYxtgQg.js",
+        "status": 200,
+        "type": "application/javascript"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/main-CpCtUjTt.js",
+        "status": 200,
+        "type": "application/javascript"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/reticle-CFmphrY9.js",
+        "status": 200,
+        "type": "application/javascript"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/launcher-51aKQzJw.js",
+        "status": 200,
+        "type": "application/javascript"
+      }
+    ],
+    "title": "별 헤는 밤 · AR 엔진 테스트 하네스",
+    "body": "테미오래 WebAR 실기기 테스트\n실제 카메라 AR 테스트 · Android Chrome 전용 · 전체 게임 UI 아님\nbuild 2026-10-29T15:37:00Z · secure=true · 일반 브라우저\nMozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\n● AR 미지원\n이 기기/브라우저에서 AR 모드(immersive-ar)를 사용할 수 없습니다. ARCore 지원 Android + 최신 Chrome에서 실행해 주세요.\nwebxr=true immersive-ar=false secure=true\n① 별의 새싹 AR 테스트\n바닥 인식 → 작품 배치 → Emerge · Idle · Disappear\n② 외벽 정합 AR 테스트\n※ 시험용 외벽 모델(실제 관사 16호 아님) · 레이어 토글 · 수동 보정\n기기 AR 지원 확인\n환경 진단\n에셋 로드 상태: 대기\n이벤트 로그\n로그 복사\n지우기\n[1시 10분 11초] env build=2026-10-29T15:37:00Z secure=true inApp=false debug=false\n\n③ 실사 AR 뮤지컬 MVP\n별도 공연 화면 · 이미지 추적(iPhone/Android) · 실사 영상 직접 선택",
+    "scripts": [
+      {
+        "src": "https://ar.lobodoc.com/assets/index-BGYxtgQg.js",
+        "type": "module"
+      },
+      {
+        "src": "",
+        "type": ""
+      }
+    ],
+    "launcher": 1,
+    "musical": 0
+  },
+  {
+    "url": "https://ar.lobodoc.com/?musical=1",
+    "errors": [],
+    "console": [],
+    "failed": [],
+    "responses": [
+      {
+        "url": "https://ar.lobodoc.com/?musical=1",
+        "status": 200,
+        "type": "text/html"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/index-BGYxtgQg.js",
+        "status": 200,
+        "type": "application/javascript"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/app-B3eN0xvI.js",
+        "status": 200,
+        "type": "application/javascript"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/app-DXtp__ns.css",
+        "status": 200,
+        "type": "text/css"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/reticle-CFmphrY9.js",
+        "status": 200,
+        "type": "application/javascript"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/ChatGPT%20%EC%9D%B4%EB%AF%B8%EC%A7%80%202026%EB%85%84%2010%EC%9B%94%2029%EC%9D%BC%20%EC%98%A4%ED%9B%84%2010_06_50-Sy1TMAeD.jpg",
+        "status": 200,
+        "type": "image/jpeg"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/ChatGPT%20%EC%9D%B4%EB%AF%B8%EC%A7%80%202026%EB%85%84%2010%EC%9B%94%2029%EC%9D%BC%20%EC%98%A4%ED%9B%84%2010_06_36-BMd-NTJS.jpg",
+        "status": 200,
+        "type": "image/jpeg"
+      },
+      {
+        "url": "https://ar.lobodoc.com/assets/panel-BdICPh8I.mind",
+        "status": 200,
+        "type": "application/octet-stream"
+      }
+    ],
+    "title": "목재 무대 · 실사 AR 뮤지컬 MVP",
+    "body": "LIVE STAGE · MVP\n목재 무대, 30초의 공연\n종료 ↗\n카메라 시작 전\n실기기 미검증\n\n표적 준비 완료 · 영상 2개를 선택하고 AR 카메라를 시작하세요.\n\n0.0 / 30초\n1. AR 카메라 시작\n2. 정합 확정\n3. 공연 시작\n일시정지\n다시 보기\n사진 촬영\n\n0/2 공연 객체 로드 · 합성 테스트 음악\n\n배우 A: 공간 고정 영상 평면(입체 인물 아님) · 배우 B: 공간 고정 영상 평면(입체 인물 아님)\n\n공연 준비 · 영상과 추적\n실행 경로\niPhone·Android 공통 — 이미지 표적 추적\nAndroid — WebXR 바닥 배치 후 벽 정합\n\n공통 경로는 표적의 위치·회전을 추적합니다. 표적이 안 보이면 숨김·정지하며, 화면 밖에서도 유지되는 SLAM은 아닙니다. 평면 영상은 옆에서 보면 얇아 보입니다.\n\n표적 실제 너비(m)\n\n사진 기반 치수·깊이는 임시값입니다. 기본 표적은 사진 2의 산수화 패널을 원근 보정했습니다. 반복 격자보다 패널 전체를 비추세요. 인식이 어려우면 정면에서 찍은 패널 사진으로 교체하세요.\n\n정면 표적 사진 교체\n표적 준비\n표적 파일 저장\n보정 표적 이미지\n기존 .mind 표적 불러오기\n실사 샘플 배우 2명 불러오기\n\nPexels 허용 조건을 확인한 움직이는 실사 샘플입니다. Yoshi Mura / SERGEY ZIMA 촬영. 지역 공연자의 최종 공연본이 아닙니다. 영상 출처·사용 조건\n\n배우 A 실사 영상 교체\n배우 A 배경 처리\nMP4 좌:컬러 / 우:흑백 알파 (권장)\n네이티브 알파 영상 (기기별 확인)\n녹색 배경 크로마키\n배우 B 실사 영상 교체\n배우 B 배경 처리\nMP4 좌:컬러 / 우:흑백 알파 (권장)\n네이티브 알파 영상 (기기별 확인)\n녹색 배경 크로마키\n공연 음악(30초 이상, 선택)\n\n권리가 확인된 파일만 선택하세요. 파일은 이 기기에서만 재생하며 서버에 업로드하지 않습니다. 미선택 시 합성 테스트 음악을 사용합니다. 짧은 배우 영상은 타임라인 동안 반복합니다.\n\n카드·조명 테스트\n개발 무대 미리보기\n개발자 정합 · 임시 치수",
+    "scripts": [
+      {
+        "src": "https://ar.lobodoc.com/assets/index-BGYxtgQg.js",
+        "type": "module"
+      },
+      {
+        "src": "",
+        "type": ""
+      }
+    ],
+    "launcher": 0,
+    "musical": 1
+  }
+]

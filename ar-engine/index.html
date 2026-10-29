@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>별 헤는 밤 · AR 엔진 테스트 하네스</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif;
+        background: #0e0e12; color: #eaeaf0;
+      }
+      #app { max-width: 560px; margin: 0 auto; padding: 20px; }
+      h1 { font-size: 1.25rem; margin: 0 0 4px; }
+      .sub { color: #9a9aa8; font-size: 0.85rem; margin-bottom: 16px; }
+      .card { background: #17171f; border: 1px solid #26262f; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+      .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+      label { font-size: 0.85rem; color: #b9b9c6; min-width: 96px; }
+      select, button { font-size: 0.95rem; padding: 10px 12px; border-radius: 8px; border: 1px solid #33333f;
+        background: #1f1f29; color: #eaeaf0; }
+      button.primary { background: #3a63ff; border-color: #3a63ff; font-weight: 600; width: 100%; }
+      button.primary:disabled { background: #2a2a36; border-color: #2a2a36; color: #76768a; }
+      /* iOS AR Quick Look 버튼(앵커의 유일 자식은 img여야 하므로 라벨은 ::after로) */
+      a.iosar { position: relative; display: block; width: 100%; height: 46px; margin: 8px 0 2px;
+        background: #3a63ff; border-radius: 8px; text-decoration: none; }
+      a.iosar img { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+      a.iosar::after { content: attr(data-label); position: absolute; inset: 0; display: flex;
+        align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 0.95rem; }
+      a.iosar[aria-disabled="true"] { background: #2a2a36; }
+      a.iosar[aria-disabled="true"]::after { color: #76768a; }
+      #support { font-size: 0.9rem; }
+      .ok { color: #58d68d; } .bad { color: #ff6b6b; } .warn { color: #ffd166; }
+      #log { font-family: ui-monospace, Menlo, monospace; font-size: 0.78rem; white-space: pre-wrap;
+        background: #0a0a0e; border: 1px solid #22222b; border-radius: 8px; padding: 10px; height: 220px; overflow: auto; }
+      /* 화면 진단(실기기) */
+      #env-info { font-size: 0.74rem; color: #8a8a98; margin: -8px 0 14px; word-break: break-all;
+        white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace; }
+      #diag-banner { display: none; background: #3a1414; border: 1px solid #7a2a2a; color: #ffdede;
+        border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; white-space: pre-wrap;
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.8rem; }
+      /* AR 중 DOM 오버레이 */
+      #ar-overlay { position: fixed; inset: 0; display: none; pointer-events: none; z-index: 10; }
+      #ar-hint { position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+        background: rgba(0,0,0,0.55); padding: 10px 16px; border-radius: 999px; font-size: 0.9rem; }
+      #ar-stop { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+        pointer-events: auto; background: #ff4d4d; border: none; color: #fff; padding: 12px 22px; border-radius: 999px; font-weight: 600; }
+      #ar-dismiss { position: absolute; bottom: 82px; left: 50%; transform: translateX(-50%);
+        pointer-events: auto; background: #2a2a36; border: 1px solid #444; color: #fff; padding: 10px 18px; border-radius: 999px; }
+      #ar-telemetry { position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.72rem; color: #9ad;
+        background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 8px; white-space: pre; text-align: center; }
+      #ar-debug { position: absolute; top: 118px; left: 50%; transform: translateX(-50%); display: none;
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.7rem; color: #9effa0; text-align: center;
+        background: rgba(0,0,0,0.6); padding: 6px 12px; border-radius: 8px; white-space: pre; pointer-events: none; }
+      #ar-debug-toggle { position: absolute; top: 12px; right: 10px; display: none; pointer-events: auto;
+        background: #ff2d95; border: none; color: #fff; padding: 8px 12px; border-radius: 999px; font-size: 0.78rem; }
+      #ar-align { position: absolute; left: 8px; right: 8px; bottom: 150px; display: none;
+        pointer-events: auto; background: rgba(0,0,0,0.6); border-radius: 10px; padding: 8px 10px;
+        max-height: 48vh; overflow: auto; }
+      #ar-align .align-sec { font-size: 0.7rem; color: #9a9aa8; margin: 6px 0 3px; }
+      #ar-align .align-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 2px; }
+      #ar-align button { flex: 1; min-width: 44px; padding: 8px 4px; font-size: 0.8rem;
+        background: #1f1f29; border: 1px solid #33333f; color: #eaeaf0; border-radius: 6px; }
+      #ar-align label { display: inline-flex; align-items: center; gap: 4px; min-width: 0;
+        font-size: 0.72rem; color: #cfcfe0; background: #1f1f29; border: 1px solid #33333f;
+        border-radius: 6px; padding: 5px 7px; margin: 2px 3px 2px 0; }
+      #cal-save { background: #2b5bd7 !important; } #cal-reset { background: #5a2b2b !important; }
+      .hintline { font-size: 0.78rem; color: #9a9aa8; margin: 4px 0 2px; }
+      details.card summary { cursor: pointer; font-weight: 600; }
+      #ar-glb { position: absolute; top: 12px; left: 10px; font-family: ui-monospace, Menlo, monospace;
+        font-size: 0.68rem; color: #8fe; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 6px; max-width: 70vw; }
+      #ar-error { position: absolute; top: 50%; left: 8px; right: 8px; transform: translateY(-50%);
+        display: none; background: rgba(120,20,20,0.92); color: #fff; padding: 14px 16px; border-radius: 10px;
+        font-size: 0.9rem; pointer-events: auto; }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h1>테미오래 WebAR 실기기 테스트</h1>
+      <div class="sub">실제 카메라 AR 테스트 · Android Chrome 전용 · 전체 게임 UI 아님</div>
+      <div id="env-info">환경 확인 중…</div>
+
+      <div id="diag-banner"></div>
+
+      <div class="card" id="support">지원 여부 확인 중…</div>
+
+      <div class="card">
+        <button id="start-star" class="primary">① 별의 새싹 AR 테스트</button>
+        <div class="hintline">바닥 인식 → 작품 배치 → Emerge · Idle · Disappear</div>
+        <button id="start-align" class="primary" style="margin-top:12px;">② 외벽 정합 AR 테스트</button>
+        <div class="hintline">※ <strong>시험용</strong> 외벽 모델(실제 관사 16호 아님) · 레이어 토글 · 수동 보정</div>
+        <div class="row" style="margin-top:12px;">
+          <button id="check" style="flex:1;">기기 AR 지원 확인</button>
+          <button id="diag" style="flex:1;">환경 진단</button>
+        </div>
+        <div id="loadStatus" class="sub" style="margin:8px 0 0;">에셋 로드 상태: 대기</div>
+      </div>
+
+      <!-- iPhone 폴백: WebXR 미지원 iOS에서 AR Quick Look(USDZ)로 배치 -->
+      <div class="card" id="ios-ar" style="display:none;">
+        <div class="hintline">📱 iPhone은 WebXR 대신 <strong>AR Quick Look</strong>으로 봅니다(바닥 배치·회전·크기). 레이어 토글·수동 보정은 Android 전용입니다.</div>
+        <a class="iosar" id="ios-star" rel="ar" href="#" aria-disabled="true" data-label="① 별의 새싹 (iPhone AR · 준비 중)"><img alt="별의 새싹 AR" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" /></a>
+        <a class="iosar" id="ios-align" rel="ar" href="#" aria-disabled="true" data-label="② 외벽 정합 (iPhone AR · 준비 중)"><img alt="외벽 정합 AR" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" /></a>
+        <div id="ios-status" class="sub" style="margin:6px 0 0;">USDZ 준비 중…</div>
+      </div>
+
+      <details class="card" open>
+        <summary>이벤트 로그</summary>
+        <div class="row" style="justify-content:flex-end; gap:6px;">
+          <button id="copy-log" style="padding:4px 10px;">로그 복사</button>
+          <button id="clear" style="padding:4px 10px;">지우기</button>
+        </div>
+        <div id="log"></div>
+      </details>
+    </div>
+
+    <div id="ar-overlay">
+      <div id="ar-glb">GLB: —</div>
+      <div id="ar-hint">바닥을 비추세요…</div>
+      <div id="ar-telemetry">telemetry…</div>
+      <div id="ar-debug"></div>
+      <button id="ar-debug-toggle">큐브 끄기</button>
+      <div id="ar-error"></div>
+      <button id="ar-dismiss">작품 퇴장(Disappear)</button>
+
+      <!-- 건물 정합 보정 패널 (alignment 체험에서만 표시) -->
+      <div id="ar-align">
+        <div class="align-sec">레이어</div>
+        <div id="align-layers"></div>
+        <div class="align-sec">위치 (±0.05m)</div>
+        <div class="align-row">
+          <button data-cal="dx-">X−</button><button data-cal="dx+">X+</button>
+          <button data-cal="dy-">Y−</button><button data-cal="dy+">Y+</button>
+          <button data-cal="dz-">Z−</button><button data-cal="dz+">Z+</button>
+        </div>
+        <div class="align-sec">회전 (±1°)</div>
+        <div class="align-row">
+          <button data-cal="yaw-">Yaw−</button><button data-cal="yaw+">Yaw+</button>
+          <button data-cal="pitch-">Pit−</button><button data-cal="pitch+">Pit+</button>
+          <button data-cal="roll-">Rol−</button><button data-cal="roll+">Rol+</button>
+        </div>
+        <div class="align-sec">크기 (±2%)</div>
+        <div class="align-row">
+          <button data-cal="scale-">작게</button><button data-cal="scale+">크게</button>
+        </div>
+        <div class="align-row">
+          <button id="cal-save">저장</button><button id="cal-load">불러오기</button><button id="cal-reset">초기화</button>
+        </div>
+      </div>
+
+      <button id="ar-stop">AR 종료</button>
+    </div>
+
+    <!-- 조기 오류 포착(모듈 로드/파싱 오류까지) — 모듈 스크립트보다 먼저 실행되는 클래식 스크립트 -->
+    <script>
+      (function () {
+        window.__arDiag = [];
+        function showEarly(msg) {
+          var el = document.getElementById("diag-banner");
+          if (el) { el.textContent = msg; el.style.display = "block"; }
+        }
+        window.addEventListener("error", function (e) {
+          var m = "✗ JS 오류: " + (e.message || (e.error && e.error.message) || e.error) +
+            (e.filename ? " @ " + e.filename + ":" + e.lineno + ":" + e.colno : "");
+          window.__arDiag.push(m); showEarly(m);
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          var r = e.reason;
+          var m = "✗ Promise 오류: " + (r && r.message ? (r.name + ": " + r.message) : String(r));
+          window.__arDiag.push(m); showEarly(m);
+        });
+      })();
+    </script>
+    <script type="module" src="/src/bootstrap.ts"></script>
+  </body>
+</html>

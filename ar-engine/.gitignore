@@ -1,0 +1,6 @@
+# 빌드 산출물 / 의존성
+dist/
+node_modules/
+
+# 스테이징된 Codex 에셋(빌드시 git ref에서 재생성 — 커밋하지 않음)
+.assets/

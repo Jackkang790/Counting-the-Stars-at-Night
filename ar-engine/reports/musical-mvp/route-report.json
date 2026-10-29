@@ -1,0 +1,16 @@
+[
+  {
+    "base": "http://localhost:5192/",
+    "result": "PASS",
+    "assetsAndVideosLoad": true,
+    "previewDoesNotClaimARTracking": true,
+    "errors": []
+  },
+  {
+    "base": "http://localhost:5193/Counting-the-Stars-at-Night/",
+    "result": "PASS",
+    "assetsAndVideosLoad": true,
+    "previewDoesNotClaimARTracking": true,
+    "errors": []
+  }
+]

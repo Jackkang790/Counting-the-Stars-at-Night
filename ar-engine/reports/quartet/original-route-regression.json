@@ -1,0 +1,26 @@
+{
+  "testedUrl": "https://localhost:5187/",
+  "browser": "155.0.8059.86",
+  "realPhoneTests": "NOT RUN",
+  "projectPerformerMedia": "NOT PROVIDED",
+  "licensedStockSamples": "included; tested below",
+  "checks": [
+    "existing page and original buttons available",
+    "compiled supplied-photo MindAR target loads",
+    "real show refuses missing actor videos; preview explicitly marked non-AR",
+    "two licensed Pexels human performers decode and play as alpha-matted video in the 30-second stage",
+    "audio master clock advances and freezes on pause",
+    "full 30-second timeline completes and replay works",
+    "two synthetic packed H.264 MP4 clips decode and play on separate alpha-shaded actor planes; not real performers",
+    "two licensed human videos run together with actual image-pose estimation on simulated camera; composite PNG exported",
+    "moving the simulated camera image changes actual MindAR pose while both performers keep their building-relative transforms",
+    "real MindAR detection on simulated camera; loss hides stage and pauses timeline",
+    "reacquisition does not silently resume audio",
+    "iPhone-UA original GLB-to-USDZ links generated with rel=ar; native Quick Look NOT executed"
+  ],
+  "previewFpsLabel": "60 fps · 개발 미리보기",
+  "imageTrackingFpsLabel": "14 fps · 실기기 검증 기록 전",
+  "result": "PASS",
+  "browserErrors": [],
+  "compiledTargetExists": true
+}

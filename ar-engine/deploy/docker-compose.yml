@@ -1,0 +1,18 @@
+# AR 테스트 사이트 Docker 구성.
+#   ar          — nginx:alpine + dist/, 호스트 127.0.0.1:8080 에만 노출(호스트 nginx가 프록시)
+#   placeholder — 빈(idle) 컨테이너. 추후 백엔드/API 등으로 교체할 자리.
+services:
+  ar:
+    build: .
+    image: ar-site:latest
+    container_name: ar-site
+    ports:
+      - "127.0.0.1:8080:80"
+    restart: unless-stopped
+
+  placeholder:
+    image: alpine:3.20
+    container_name: ar-placeholder
+    # 아무 것도 하지 않고 계속 떠 있는다 (docker ps 로 확인 가능).
+    command: ["sh", "-c", "while true; do sleep 3600; done"]
+    restart: unless-stopped

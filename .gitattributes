@@ -1,0 +1,13 @@
+# Keep the distributed XR engine byte-identical to the licensed vendor package.
+/ar-engine/vendor/xr8/** -text
+# The original asset stager can use these files when the Blender ref is unavailable.
+/public/models/*.json text eol=lf
+
+# Preserve downloaded CC0 asset bytes for the recorded provenance hashes.
+/performer-service/assets/makehuman/** -text
+/performer-service/assets/makehuman/PROVENANCE.json text eol=lf
+# Upstream LICENSE uses a Setext heading and intentional trailing spaces.
+/performer-service/assets/makehuman/LICENSE.md whitespace=-blank-at-eol conflict-marker-size=32
+# Raw CC0 proxy/shape files retain upstream whitespace and provenance hashes.
+/performer-service/assets/makehuman/appearance/** whitespace=-blank-at-eol,-blank-at-eof
+/performer-service/assets/makehuman/*.target whitespace=-blank-at-eol

@@ -1,0 +1,295 @@
+{
+  "date": "2026-10-29",
+  "gitHead": "82bfc3ed2e5f111098418d7e2e0cb7eda135fea9",
+  "analysisBasis": "Current working tree, including five pre-existing modified tracked files",
+  "versions": {
+    "three": "0.169.0",
+    "vite": "5.4.21",
+    "typescript": "5.9.3"
+  },
+  "scope": {
+    "existingRuntimeModified": false,
+    "newFeaturesImplemented": false,
+    "deviceARReexecuted": false,
+    "userConfirmedBaseline": "iPhone and Android render the starseed and facade fixed in real scenery",
+    "localOnly": true,
+    "assetStagingRerun": false,
+    "existingDistOverwritten": false
+  },
+  "preExistingModifiedTrackedFiles": [
+    "ar-engine/index.html",
+    "ar-engine/src/engine.ts",
+    "ar-engine/src/main.ts",
+    "ar-engine/src/types.ts",
+    "ar-engine/vite.config.ts"
+  ],
+  "checks": [
+    {
+      "command": "npm run typecheck",
+      "cwd": "ar-engine",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run verify:asset",
+      "cwd": "ar-engine",
+      "exitCode": 0,
+      "clips": [
+        "Emerge",
+        "Idle",
+        "Disappear"
+      ],
+      "idleMaxYawDegrees": 2
+    },
+    {
+      "command": "npm run verify:alignment",
+      "cwd": "ar-engine",
+      "exitCode": 0,
+      "layers": 5,
+      "referencePoints": 11,
+      "horizontalMeters": 6,
+      "verticalMeters": 3.6
+    },
+    {
+      "command": "node node_modules/vite/bin/vite.js build --outDir ../.tmp/ar-compat-build-root",
+      "cwd": "ar-engine",
+      "exitCode": 0,
+      "base": "/",
+      "initialSandboxSpawnFailure": "EPERM; successfully rerun with approved escalation"
+    },
+    {
+      "command": "node node_modules/vite/bin/vite.js build --outDir ../.tmp/ar-compat-build-root --base /Counting-the-Stars-at-Night/",
+      "cwd": "ar-engine",
+      "exitCode": 0,
+      "base": "/Counting-the-Stars-at-Night/",
+      "htmlModulePathVerified": true
+    }
+  ],
+  "headlessAudit": {
+    "scope": "Headless code and asset compatibility; no device AR session",
+    "models": [
+      {
+        "name": "starseed_sculpture",
+        "glbBytes": 174832,
+        "sha256": "aa947bbbfe1e8e37e9548645e3386108aac663bebb2122795610d8eb0fc5306d",
+        "sourcePath": "public/models/starseed_sculpture.glb",
+        "stagedMatchesSource": true,
+        "inputClips": [
+          "Emerge",
+          "Idle",
+          "Disappear"
+        ],
+        "meshes": 4,
+        "usdzBytes": 501820,
+        "archiveEntries": 5,
+        "exportedMeshes": 4,
+        "hasTimeSamples": false,
+        "metersPerUnit": 1,
+        "upAxis": "Y",
+        "planeAlignment": "horizontal",
+        "warnings": []
+      },
+      {
+        "name": "alignment_test_facade",
+        "glbBytes": 108412,
+        "sha256": "a7fbabafece083216d973472002cc84362e0da1826eb4a45947bceb7aaa6792e",
+        "sourcePath": "blender/.worktrees/feature-blender-assets/public/models/alignment_test_facade.glb",
+        "stagedMatchesSource": true,
+        "inputClips": [],
+        "meshes": 11,
+        "usdzBytes": 293740,
+        "archiveEntries": 12,
+        "exportedMeshes": 11,
+        "hasTimeSamples": false,
+        "metersPerUnit": 1,
+        "upAxis": "Y",
+        "planeAlignment": "horizontal",
+        "warnings": []
+      }
+    ],
+    "placement": {
+      "starseed_sculpture": {
+        "translationPreserved": true,
+        "yawOnly": true,
+        "meterScalePreserved": true,
+        "parentUnaffectedByChildAnimation": true
+      },
+      "alignment_test_facade": {
+        "translationPreserved": true,
+        "yawOnly": true,
+        "meterScalePreserved": true,
+        "parentUnaffectedByChildAnimation": "not-applicable"
+      }
+    },
+    "isolatedBuildAssetsMatchStaged": true
+  },
+  "protectedFileVerification": {
+    "algorithm": "SHA-256",
+    "checkedCount": 38,
+    "changedCount": 0,
+    "files": [
+      {
+        "path": "ar-engine/.assets/models/alignment_test_facade.glb",
+        "sha256": "a7fbabafece083216d973472002cc84362e0da1826eb4a45947bceb7aaa6792e"
+      },
+      {
+        "path": "ar-engine/.assets/models/alignment_test_facade.manifest.json",
+        "sha256": "198d3ce05a571f41d79a1ba6f4afa9e998b61bcae04250dd7e5ea11afa52ba90"
+      },
+      {
+        "path": "ar-engine/.assets/models/asset-manifest.json",
+        "sha256": "cfb4b81a7ce960518bfb20e2952a9ca9559b2d2a439d6612532a9ae7e4fb1f0e"
+      },
+      {
+        "path": "ar-engine/.assets/models/starseed_sculpture.glb",
+        "sha256": "aa947bbbfe1e8e37e9548645e3386108aac663bebb2122795610d8eb0fc5306d"
+      },
+      {
+        "path": "ar-engine/.assets/models/starseed_sculpture.manifest.json",
+        "sha256": "8dbdd094314cc4c1ac67ec3ae0e719ebd0bcbc1222e3b3abab1ead4ea1633a91"
+      },
+      {
+        "path": "ar-engine/contracts/ar-api.md",
+        "sha256": "693a24ec0cc6d825f9ecae28d11c6c29e26c7143d0e82ca13be85b412ef0385a"
+      },
+      {
+        "path": "ar-engine/contracts/asset-spec.md",
+        "sha256": "415583ccdd0ac0ab32db01dc7d605aa6478143aa564111ff21923eba3237dc1f"
+      },
+      {
+        "path": "ar-engine/contracts/building-alignment.md",
+        "sha256": "a24f0806d6ecbe816968b59b63ea9df1293680778d5730df7dfce95a376a2027"
+      },
+      {
+        "path": "ar-engine/contracts/README.md",
+        "sha256": "f69b306538f6f87355bc34e3f64276b63caaa865dee37844427f936aee529e4c"
+      },
+      {
+        "path": "ar-engine/contracts/tech-validation.md",
+        "sha256": "e4c8375953d36064d80a4408c537ff4758115d34d7dd3fc9d77ef69b8fee8170"
+      },
+      {
+        "path": "ar-engine/DEPLOY.md",
+        "sha256": "89f40ea9d7d53f80957681d63087ec1a7a7a3ed34a1ea2a4ce52f73cb5a616c8"
+      },
+      {
+        "path": "ar-engine/DEVICE-TEST.md",
+        "sha256": "11eb33108d64e125f43df86b996bfd3705801fc21c0d7e1b5d7004c78373cc55"
+      },
+      {
+        "path": "ar-engine/index.html",
+        "sha256": "8b6a3d192410b72739cf5b0f5b2f25469028085fdac7ca5b9718bb2e348a5afc"
+      },
+      {
+        "path": "ar-engine/package.json",
+        "sha256": "6d9d2716ffbba7c92d65d5f2a9223d2689150e38b81003ea341b690d88bd6b12"
+      },
+      {
+        "path": "ar-engine/package-lock.json",
+        "sha256": "3414adf78ece184fdb4d2aea9d0db47a31e147f2a26f016eaefbd75cea931eb9"
+      },
+      {
+        "path": "ar-engine/README.md",
+        "sha256": "35bd3478ab6d7e94edbbd85a2571eb29a5c6cebfb9fac981165055ce8e767a6f"
+      },
+      {
+        "path": "ar-engine/scripts/stage-assets.mjs",
+        "sha256": "7f6f5c490accf63ba3f531c2642d8be1b5ef6daa49f93536e22f896edbc0da9b"
+      },
+      {
+        "path": "ar-engine/scripts/verify-alignment.mjs",
+        "sha256": "18322ca04070c916f18e66022b1d312739a5bac7c04082d9e900ec31e3d85c19"
+      },
+      {
+        "path": "ar-engine/scripts/verify-asset.mjs",
+        "sha256": "bf2f1a235c1f08af978cb2a4ca1545ced0987d82ab5e6c9977036650222a67e7"
+      },
+      {
+        "path": "ar-engine/src/core/diagnostics.ts",
+        "sha256": "24b5c5512af3c030020a6d9b86dd5d3568df9b6ae71cd32fec76cd680bf6b05a"
+      },
+      {
+        "path": "ar-engine/src/core/placement.ts",
+        "sha256": "9f83d4f70e38ac638cf1d92f2cd822fa2b493ebd6f4c158d1b2c7b3f5db702b4"
+      },
+      {
+        "path": "ar-engine/src/core/reticle.ts",
+        "sha256": "4213dc46c85c88a10688905ae1c60e4304f6b16194f009353c672ce91cf66f8a"
+      },
+      {
+        "path": "ar-engine/src/core/support.ts",
+        "sha256": "5cdb89dbe0056baaa65299d01d1a991bc5ac184e080a51a2c09663390bebed36"
+      },
+      {
+        "path": "ar-engine/src/engine.ts",
+        "sha256": "9c863b736ba76976fdf1ea675f0a63abbc6b45409605d710209e4cbe016b4a3c"
+      },
+      {
+        "path": "ar-engine/src/events.ts",
+        "sha256": "35c58448aa8f233d4060064bc70208288c69dc60ad28f332feaa8144c19eb780"
+      },
+      {
+        "path": "ar-engine/src/index.ts",
+        "sha256": "2942b31dde8bcd415cab87a35bfc1428ba5893ad85ead270304acc3ec5078abd"
+      },
+      {
+        "path": "ar-engine/src/loaders/gltf.ts",
+        "sha256": "a98d2cf03490714de063053ca30cff22421fb8ed13f7e0f0f0bd523c25cc8ee3"
+      },
+      {
+        "path": "ar-engine/src/loaders/manifest.ts",
+        "sha256": "37e0706f653ea655fb3b03241b9fe0eaa57be8de545d9524ee08e94929ef7e48"
+      },
+      {
+        "path": "ar-engine/src/main.ts",
+        "sha256": "c26779b142f01106b005d404499d929935d3d496ae5a98f4937fc3c4718a802a"
+      },
+      {
+        "path": "ar-engine/src/scenes/alignmentScene.ts",
+        "sha256": "ac2d914400fecf9fc3494821312dc72fa0198e30e82a78082362877533fee4a1"
+      },
+      {
+        "path": "ar-engine/src/scenes/emergingArtwork.ts",
+        "sha256": "0e5cd15a2ddf7673733b6a64ea005cfb8220eaef6a91344122f821ee1a011284"
+      },
+      {
+        "path": "ar-engine/src/scenes/placeholder.ts",
+        "sha256": "28983c46f8b8284ce5d02983e3ab358bb4848fc28e5f3412e2b6fe856e539c0c"
+      },
+      {
+        "path": "ar-engine/src/types.ts",
+        "sha256": "bcadd6bf3ae9cf36788842efa658e98a98dbb0a774a582bb11ddb452a0ad6bec"
+      },
+      {
+        "path": "ar-engine/tsconfig.json",
+        "sha256": "91a9b22700c1c20011d6d3f7d723b43b6458cb4bc483f878e7220f27a8278b8a"
+      },
+      {
+        "path": "ar-engine/vite.config.ts",
+        "sha256": "656cc09ae37be1eae6f7c4ed725a7e9dc8188ec6f6d1e38e7f3aabe66ff15c89"
+      },
+      {
+        "path": "public/models/asset-manifest.json",
+        "sha256": "716a734c1dd889c2e2e1d07657c6443a8d504fc407988d7a06fc470712ee8de3"
+      },
+      {
+        "path": "public/models/starseed_sculpture.glb",
+        "sha256": "aa947bbbfe1e8e37e9548645e3386108aac663bebb2122795610d8eb0fc5306d"
+      },
+      {
+        "path": "public/models/starseed_sculpture.manifest.json",
+        "sha256": "b3a5101b75fbcbe1918cbe970c3794652020c21d2960dfff9806e74b37bf2714"
+      }
+    ]
+  },
+  "buildWarnings": [
+    "Main JS chunk exceeds Vite default 500 kB warning threshold",
+    "Isolated outDir is outside ar-engine project root and is not automatically emptied"
+  ],
+  "temporaryArtifactsRetained": false,
+  "requiresDeviceValidation": [
+    "Authored two-actor iOS musical with audio and animation synchronization",
+    "Quick Look shutter capture and save/share on target iOS",
+    "Android camera-access grant and same-frame background/model composition",
+    "Existing experiences with the new extension enabled and disabled"
+  ]
+}

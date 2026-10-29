@@ -1,0 +1,42 @@
+# 공연자 파이프라인 검증 기록 · 2026-10-30
+
+추가 배포 완료: https://ar.lobodoc.com/?studio=1 및 https://ar.lobodoc.com/?musical=1 . [공개 HTTPS 검사](./deployment.json)에서 로그인·실제 업로드·3D 미리보기·두 단계 검수·공개 등록·두 배우 슬롯 로드를 확인했다. [서버 변환 검사](./server-retarget.json)는 실제 서버 Blender 3.4.1에서 업로드→리타기팅→스킨/본 동작 GLB 검증을 통과했다. Debian NumPy 1.24와 구버전 glTF 가져오기 호환을 워커 프로세스 안에서 보완했다. 로컬 4.5 LTS 검증과 구분한다. Tripo/DeepMotion 키는 미설정이며 유료 호출은 하지 않았다. 합성 시험 자료만 사용했고 실제 스마트폰 AR 검증은 여전히 미완료다.
+
+기존 ar-site 이미지 백업은 `ar-site:rollback-20261029T181356Z`, 이전 dist/nginx는 `/home/ubuntu/ar-docker/backups/performer-20261029T181356Z`에 보존했다. 기존 compose/Dockerfile은 유지하고 제작용 override를 추가했다. 운영 방법은 [배포 안내](../../../performer-service/deploy/README.md)를 참조한다. 관리 암호·원본·DB는 Git 및 공개 웹 루트에 포함하지 않는다.
+
+구현 브랜치: `feat/performer-generation-pipeline`. 기존 루트의 별의 새싹·외벽·Quick Look 코드를 유지하고 별도 제작 서비스와 렌더러를 추가했다. 보호 대상 38개 파일 검사는 통과했다. 기존 패키지·잠금파일·배포 설정은 수정하지 않았다.
+
+| 검사 | 결과 | 실제 검증 범위 |
+| --- | --- | --- |
+| `npm run build --prefix ar-engine` | PASS | TypeScript 및 Vite 실행용 빌드, SDK 스테이징 포함 |
+| 서비스 Node 테스트 8개 | PASS | 인증·동의·검수·공개 등록, SQLite 복구/임대, 비용 승인과 모호한 제출 중복 방지, GLB 검증 |
+| Tripo/DeepMotion 어댑터 | 모의 HTTP 계약 PASS | 공식 요청 형식 검사. 실제 계정 호출·요금·출력 미검증 |
+| `rigged-performer-unit.mjs` | PASS | 실제 스킨 17본, 포즈 변화, 같은 시각 일시정지, 카메라 이동과 건물 좌표 독립, 정적 리그 거부 |
+| 실제 Blender 4.5.15 워커 | PASS | 서비스가 실제 Blender 실행 → 17본 매핑 → 720프레임/24fps → GLB 검사 → 수동 검수 대기 |
+| GLB/BVH/FBX 로컬 모션 | PASS | 직접 만든 합성 배우에서 내보낸 각 형식 입력 → 스킨 1개·본 17개·동작 51채널 GLB. DeepMotion 실결과는 아님 |
+| `studio-browser.mjs` | PASS | 실제 Chrome에서 사진/영상 업로드 → 3D 미리보기 → 두 검수 → 공개 등록 → 두 AR 슬롯 로드 → 30초 테스트·정지·재생 |
+| 기존 `musical-browser.mjs` | PASS | 이미지 추적의 합성 카메라 실제 pose 추정·배우 상대 좌표 유지·추적 소실/복구·촬영·USDZ 링크 |
+| 기존 웹 SLAM 어댑터 | PASS | 모의 pose/hit-test 계약. 실제 휴대폰 추적 합격을 의미하지 않음 |
+| iPhone/Android 실기기 | **미실시** | 실제 카메라 이동·드리프트·발 위치·가림·발열·성능을 검증하지 않음 |
+
+증거: [브라우저 결과](./browser.json), [실제 Blender 결과](./blender.json), [제작실 미리보기](./studio-preview.png), [두 합성 3D 배우](./two-3d-performers.png). 화면은 개발 미리보기이며 **카메라 AR 시연 사진이 아니다**. 실제 사람의 AI 재구성이나 볼류메트릭 촬영 성공 사진으로 사용하면 안 된다. 기본 라이선스 영상 공연도 그대로 사용할 수 있다.
+
+새 소스: `performer-service/src/{server,store,upload,providers,pipeline,network,glb}.mjs`, `performer-service/blender/*`, `ar-engine/src/studio/*`, `ar-engine/src/musical/riggedGLB.ts`, 테스트와 합성 GLB. 연결 변경은 bootstrap/공연 화면/공연자 슬롯/타입에 한정한다. 기존 이미지 브라우저 테스트는 현재 기본 경로가 웹 SLAM이므로 이미지 경로를 명시하도록 수정했다.
+
+## 남은 실제 연동
+
+- Tripo 키, DeepMotion REST 권한·프로덕션 주소와 비용 승인이 없어서 유료 생성은 실행하지 않았다. API 없이 사진에서 사람 모델을 생성했다고 표시하지 않는다.
+- 동의가 확인된 지역 공연자 전신 사진·춤 영상, 실측 치수와 실제 건물 기준점이 필요하다. 현재 제공 사진은 무대 참고 자료다.
+- 임의 인체 리그의 본 이름/축·체형 차이, 복잡한 춤의 발 보정, 얼굴·손가락·의상 정확도는 실제 출력으로 검수해야 한다. 제공자별 고급 리그 프로필과 IK는 후속 작업이다.
+- 웹 공연은 기존 웹 SLAM/WebXR에서 실행하며 Quick Look에 동적 공연을 전달하지 않는다. 실제 iPhone Safari/Android Chrome에서 6DoF 고정 여부를 확인해야 한다. Mac iOS 네이티브 빌드도 미실시다.
+
+## 스마트폰 검증 절차
+
+1. API·웹을 같은 HTTPS 출처로 실행한다. iPhone Safari와 Android Chrome에서 원래 별의 새싹·외벽 메뉴를 먼저 실행해 비교한다.
+2. 권리 있는 실제 공연자 2명을 별도 제작·검수·등록하거나 검수한 동작 GLB 두 개를 입력한다. 합성 테스트 모델은 실사 배우 합격 항목에 포함하지 않는다.
+3. `?musical=1`에서 두 배우를 각 슬롯에 선택한다. 카메라 시작 → 바닥 추적 → 실물 벽 기준으로 무대 방향·높이·크기 조정 → 정합 확정한다. GPS/일반 카메라 오버레이를 정합 증거로 삼지 않는다.
+4. 30초 공연 동안 좌우 1m 이동·접근·후퇴한다. 두 배우의 발과 기둥 사이 상대 위치가 유지되고 입체 시점이 달라지는지 실제 화면 녹화로 기록한다. 건물 깊이 가림 모델은 실물과 맞춘 뒤 켠다.
+5. 5초/10초 등장, 20초 조명, 27초 피날레, 30초 종료, 재생·일시정지·다시 보기, 음악 동기와 촬영을 확인한다. 추적 소실·권한 거부·앱 전환 시 정지/복구를 확인한다.
+6. 기기·OS·브라우저·배포 버전, FPS·드리프트·발열·누락 채널·가림 오차와 사진을 남긴다. 테스트 완료까지 실기기 검증 상태는 미완료로 유지한다.
+
+실행·환경변수·동의/비용 흐름은 [서비스 실행 안내](../../../performer-service/README.md)에 있다.
