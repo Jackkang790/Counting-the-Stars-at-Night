@@ -7,5 +7,18 @@ if (new URLSearchParams(location.search).get("studio") === "1") {
     if (el) { el.textContent = `공연 화면을 열 수 없습니다: ${String(error)}`; el.style.display = "block"; }
   });
 } else {
-  void import("./main").then(() => import("./musical/launcher")).then(m => m.installMusicalLauncher());
+  void import("./main").then(async () => {
+    if (new URLSearchParams(location.search).get('tourHost') === '1') {
+      document.querySelector('h1')!.textContent = '별의 새싹';
+      document.querySelector('#app > .sub')!.textContent = '바닥에 작품을 놓고 가까이에서 감상해 보세요';
+      document.getElementById('start-star')!.textContent = '작품 AR 시작';
+      for (const id of ['start-align', 'ios-align', 'diag', 'env-info']) {
+        const element = document.getElementById(id);
+        if (element) element.style.display = 'none';
+      }
+      const alignHint = document.getElementById('start-align')?.nextElementSibling as HTMLElement | null;
+      if (alignHint) alignHint.style.display = 'none';
+      document.querySelectorAll<HTMLElement>('#app > details').forEach(el => { el.hidden = true; });
+    } else (await import('./musical/launcher')).installMusicalLauncher();
+  });
 }

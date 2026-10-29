@@ -1,122 +1,124 @@
-// 서버 API 부르는 곳. 서버(FastAPI)는 팀원 담당 — Jackkang790/Counting-the-Stars-at-Night `Rest-Backend` 브랜치, backend/API.md v0.1.0.
-// VITE_API_URL(예: http://localhost:8000)이 있으면 그 서버로. 없으면 아래 고정 예시 데이터로 동작.
-// 화면 코드는 아래 api.* 함수만 부르고, 서버 응답은 여기서 화면이 쓰는 모양으로 바꿔서 돌려줌.
-//
-// 서버 v0.1.0 과 앱의 차이(여기서 맞춤):
-// - 사용자 구분: 서버가 발급한 session_id (POST /sessions) → 기기에 저장해 계속 사용
-// - 건물 id: 앱 h1·h2·h3 ↔ 서버 a·b·c (건물 파일의 server 값, src/houses/)
-// - 별: 앱은 건물당 2개(역할극·단서 얻기). 서버는 건물당 1개(완료 1회) → 그 건물 별 2개를 다 받았을 때 checkin + complete 를 보냄
-// - 쿠폰 만료일·카페 좌표/영업시간은 서버에 없음 → 화면에서 해당 칸을 숨김
-import { CONFIG, houseById } from './spots.js';
+// 기본은 같은 origin의 REST 서버. 샘플 모드는 VITE_SAMPLE_MODE=1로 명시한다.
+import { CONFIG, HOUSES, STAR_IDS } from './spots.js';
+import { CAFES } from './cafes.js';
 
-const BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') + '/api/v1' : null;
+const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api/v1';
 const SKEY = 'byeol-night:session:v5';
+const PKEY = 'byeol-night:past-sessions:v5';
+export const usingSample = import.meta.env.VITE_SAMPLE_MODE === '1';
+let sessionP = null;
+let memorySession = null;
+let sessionEpoch = 0;
+let mutations = Promise.resolve();
+const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
+const currentSession = () => { try { return localStorage.getItem(SKEY) || memorySession; } catch { return memorySession; } };
+const pastSessions = () => { const saved = read(PKEY, []); return Array.isArray(saved) ? saved.filter((sid) => typeof sid === 'string') : []; };
 
 async function http(path, { method = 'GET', body } = {}) {
-  const r = await fetch(BASE + path, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-  if (!r.ok) {
-    const detail = await r.json().then((j) => j.detail).catch(() => '');
-    throw Object.assign(new Error(`${r.status} ${detail}`), { status: r.status, detail });
-  }
-  return r.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetch(BASE + path, {
+      method, signal: controller.signal,
+      ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
+    });
+    if (!response.ok) {
+      const detail = await response.json().then((j) => j.detail).catch(() => '');
+      throw Object.assign(new Error(`${response.status} ${typeof detail === 'string' ? detail : 'validation_error'}`), { status: response.status, detail });
+    }
+    return await response.json();
+  } finally { clearTimeout(timer); }
 }
 
-// 체험 세션: 한 번 받아서 기기에 저장. 서버 DB가 초기화돼 session_not_found 면 새로 받음
-let sessionP = null;
 function session(renew = false) {
-  if (!renew) {
-    try { const s = localStorage.getItem(SKEY); if (s) return Promise.resolve(s); } catch { /* 저장 불가 */ }
+  const saved = currentSession();
+  if (!renew && saved) return Promise.resolve(saved);
+  if (!sessionP) {
+    const epoch = sessionEpoch;
+    const pending = http('/sessions', { method: 'POST' }).then(({ session_id }) => {
+      if (epoch === sessionEpoch) {
+        memorySession = session_id;
+        try { localStorage.setItem(SKEY, session_id); } catch { /* 저장 불가 */ }
+      }
+      return session_id;
+    }).finally(() => { if (sessionP === pending) sessionP = null; });
+    sessionP = pending;
   }
-  sessionP ??= http('/sessions', { method: 'POST' }).then(({ session_id }) => {
-    try { localStorage.setItem(SKEY, session_id); } catch { /* 저장 불가 */ }
-    sessionP = null;
-    return session_id;
-  });
   return sessionP;
-}
-// 회차(쿠폰 최대 3번): 서버는 세션 하나에 쿠폰 하나 → 다음 회차는 새 세션. 지난 세션은 쿠폰을 계속 보여주려고 목록에 남김
-const PKEY = 'byeol-night:past-sessions:v5';
-const pastSessions = () => { try { return JSON.parse(localStorage.getItem(PKEY)) || []; } catch { return []; } };
-export function nextSession() {
-  try {
-    const s = localStorage.getItem(SKEY);
-    if (s) localStorage.setItem(PKEY, JSON.stringify([...pastSessions(), s]));
-    localStorage.removeItem(SKEY);
-  } catch { /* 저장 불가 */ }
-}
-// 데모 진행 초기화: 기기에 저장한 세션을 모두 지움 → 다음 요청 때 새 세션(별·쿠폰 0부터)
-export function resetSession() {
-  try { localStorage.removeItem(SKEY); localStorage.removeItem(PKEY); } catch { /* 저장 불가 */ }
 }
 
 async function withSession(fn) {
-  try { return await fn(await session()); } catch (e) {
-    if (e.detail === 'session_not_found') return fn(await session(true));
-    throw e;
+  try { return await fn(await session()); } catch (error) {
+    if (error.detail === 'session_not_found') return fn(await session(true));
+    throw error;
   }
 }
 
-// 서버 응답 → 화면 모양
-const toCoupon = (c) => ({
-  id: c.id, title: c.title, benefit: c.benefit, code: c.code, status: c.status,
-  issued_at: c.issued_at, redeemed_at: c.redeemed_at, expires_at: c.expires_at ?? null, // v0.2.0 부터 만료 있음(v0.1.0 은 null)
-  store_id: c.store_id ?? null,
-});
+export function nextSession() {
+  sessionEpoch++;
+  sessionP = null;
+  try {
+    const sid = currentSession();
+    if (sid) localStorage.setItem(PKEY, JSON.stringify([...new Set([...pastSessions(), sid])]));
+    localStorage.removeItem(SKEY);
+  } catch { /* 저장 불가 */ }
+  memorySession = null;
+}
+
+export function resetSession() {
+  sessionEpoch++;
+  sessionP = null;
+  memorySession = null;
+  try { localStorage.removeItem(SKEY); localStorage.removeItem(PKEY); } catch { /* 저장 불가 */ }
+}
+
+const toCoupon = (c) => ({ ...c, expires_at: c.expires_at ?? null, store_id: c.store_id ?? null });
 const toStore = (s) => ({
-  id: s.id, name: s.name, area: s.display_location, about: s.description,
-  benefit: s.accepts_coupon ? '쿠폰 사용 가능' : '쿠폰 사용 불가',
-  accepts_coupon: s.accepts_coupon, demo: s.is_demo,
-  // 서버 v0.2.0 부터 좌표·영업시간·영업 중·야간 영업. v0.1.0 이면 undefined → 화면에서 숨김
-  lat: s.lat ?? undefined, lng: s.lng ?? undefined, hours: s.hours ?? undefined, open_now: s.open_now ?? undefined, night: s.night ?? undefined,
+  ...s, area: s.display_location, about: s.description, demo: s.is_demo,
+  benefit: s.accepts_coupon ? CONFIG.couponTitle : '쿠폰 사용 불가',
 });
-
-// ── 고정 예시 데이터 (서버 없을 때) ───────────────────────
-// TODO(운영): 제휴 매장 확정(원도심 소상공인 카페, 대기업·체인점 제외). 지금은 자리표시.
-const SAMPLE_STORES = [
-  { id: 's1', name: '[대흥동 카페 1]', area: '대흥동', lat: 36.3298, lng: 127.4228, hours: '11:00–23:00', open_now: true, night: true, benefit: '[음료 1,000원 할인]' },
-  { id: 's2', name: '[대흥동 카페 2]', area: '대흥동', lat: 36.3289, lng: 127.4215, hours: '12:00–22:00', open_now: true, night: true, benefit: '[음료 1,000원 할인]' },
-  { id: 's3', name: '[대흥동 카페 3]', area: '대흥동', lat: 36.3280, lng: 127.4240, hours: '10:00–21:00', open_now: false, night: false, benefit: '[음료 1,000원 할인]' },
-  { id: 's4', name: '[선화동 카페 1]', area: '선화동', lat: 36.3294, lng: 127.4248, hours: '11:00–22:30', open_now: true, night: true, benefit: '[음료 1,000원 할인]' },
-  { id: 's5', name: '[중앙로 카페]', area: '중앙로', lat: 36.3286, lng: 127.4268, hours: '09:00–20:00', open_now: false, night: false, benefit: '[음료 1,000원 할인]' },
-];
-const SAMPLE_COUPON = {
-  id: 'cp_sample', title: CONFIG.couponTitle, code: '482915730264', status: 'issued',
-  issued_at: '2026-10-29T21:10:00+09:00', expires_at: '2026-11-12T23:59:59+09:00', redeemed_at: null, store_id: null,
+// 기존 서버의 c/role 기록은 헤레디움의 전시 보기 별이다.
+const stampFromServer = ({ spot_id, kind }) => {
+  const house = HOUSES.find((h) => h.server === spot_id);
+  if (!house) return null;
+  return `${house.id}:${kind === 'role' && house.missions.includes('view') ? 'view' : kind}`;
 };
-
-const sample = {
-  star: () => ({ ok: true }),
-  // 완성한 회차 수만큼 예시 쿠폰
-  myCoupons: (n) => Array.from({ length: n }, (_, i) => ({ ...SAMPLE_COUPON, id: `cp_sample_${i + 1}`, code: String(482915730264 + i * 7919) })),
-  stores: () => SAMPLE_STORES,
-};
-
-export const usingSample = !BASE;
+const sampleCoupons = (n) => Array.from({ length: n }, (_, i) => ({
+  id: `cp_sample_${i + 1}`, title: CONFIG.couponTitle, benefit: '[시연용] 음료 할인',
+  code: String(482915730264 + i * 7919), status: 'issued',
+  issued_at: new Date().toISOString(), expires_at: null, redeemed_at: null, store_id: null,
+}));
 
 export const api = {
-  // 건물 완료(그 건물 별 2개 = 역할극 + 단서 얻기를 다 받음) → 서버에 checkin → experiences/complete.
-  // 서버는 건물당 별 1개 · 별 3개면 쿠폰 → 앱 별 6개를 다 모은 순간과 서버 쿠폰 발급이 같아짐. 다시 보내도 서버가 중복 지급 안 함.
-  clearHouse: (houseId) => {
-    if (!BASE) return Promise.resolve(sample.star());
-    const spot_id = houseById(houseId).server;
-    return withSession(async (session_id) => {
-      await http('/checkin', { method: 'POST', body: { session_id, spot_id } });
-      return http('/experiences/complete', { method: 'POST', body: { session_id, spot_id } });
+  // 체크인 상태는 세션에 하나뿐이므로 복구·완료 요청을 직렬화한다.
+  syncProgress(localStamps, roundsDone = 0) {
+    if (usingSample) return Promise.resolve({ stamps: localStamps, coupons: sampleCoupons(roundsDone) });
+    const epoch = sessionEpoch;
+    const task = mutations.catch(() => {}).then(async () => {
+      if (epoch !== sessionEpoch) throw Object.assign(new Error('session_changed'), { cancelled: true });
+      return withSession(async (session_id) => {
+        const saved = await http(`/stars?session_id=${encodeURIComponent(session_id)}`);
+        const serverStamps = saved.stars.map(stampFromServer).filter((id) => STAR_IDS.includes(id));
+        const merged = new Set([...serverStamps, ...localStamps.filter((id) => STAR_IDS.includes(id))]);
+        for (const id of STAR_IDS.filter((id) => merged.has(id) && !serverStamps.includes(id))) {
+          if (epoch !== sessionEpoch) throw Object.assign(new Error('session_changed'), { cancelled: true });
+          const [houseId, kind] = id.split(':');
+          const spot_id = HOUSES.find((h) => h.id === houseId).server;
+          await http('/checkin', { method: 'POST', body: { session_id, spot_id } });
+          await http('/experiences/complete', { method: 'POST', body: { session_id, spot_id, kind } });
+        }
+        const of = (sid) => http(`/coupons?session_id=${encodeURIComponent(sid)}`);
+        const coupons = (await Promise.all([of(session_id), ...pastSessions().map((sid) => of(sid).catch(error => {
+          if (error.detail === 'session_not_found') return [];
+          throw error;
+        }))])).flat();
+        return { stamps: [...merged], coupons: coupons.map(toCoupon) };
+      });
     });
+    mutations = task;
+    return task;
   },
-  // GET /coupons?session_id=
-  // 지금 회차 + 지난 회차 세션의 쿠폰을 모두 모음. done = 서버 없을 때 예시 쿠폰 수(완성한 회차 수)
-  myCoupons: async (done = 0) => {
-    if (!BASE) return sample.myCoupons(done);
-    const of = (sid) => http(`/coupons?session_id=${encodeURIComponent(sid)}`).catch(() => []);
-    const past = (await Promise.all(pastSessions().map(of))).flat();
-    const now = await withSession((sid) => http(`/coupons?session_id=${encodeURIComponent(sid)}`));
-    return [...now, ...past].map(toCoupon);
-  },
-  // GET /stores
-  stores: () => (BASE ? http('/stores').then((l) => l.map(toStore)) : Promise.resolve(sample.stores())),
+  stores: () => usingSample
+    ? Promise.resolve(CAFES.map((c) => ({ ...c, accepts_coupon: true, demo: true, benefit: '[시연용] 음료 할인' })))
+    : http('/stores').then((stores) => stores.map(toStore)),
 };

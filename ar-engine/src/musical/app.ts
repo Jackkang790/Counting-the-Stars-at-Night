@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { notifyTourHost, closeTourHost } from "../tourHost";
 import showUrl from "../../musical-assets/show.json?url";
 import "./style.css";
 import mindLicenseUrl from "./vendor/LICENSE.mind-ar?url";
@@ -43,6 +44,7 @@ function validCalibration(v: unknown): v is CalibrationState {
 }
 
 export async function mountMusical(): Promise<void> {
+  const tourHost = new URLSearchParams(location.search).get('tourHost') === '1';
   const quartet=new URLSearchParams(location.search).get("show")==="quartet";
   const response = await fetch(quartet?quartetShowUrl:showUrl); if (!response.ok) throw new Error("공연 데이터를 읽지 못했습니다.");
   const show = validateShow(await response.json());
@@ -135,7 +137,12 @@ export async function mountMusical(): Promise<void> {
     const cue = cueAt(show, time); stage.sample(time, cue.light, cue.particles);
     $("progress").setAttribute("value", String(time)); $("time").textContent = `${time.toFixed(1)} / ${show.duration}초`;
     root.dataset.playback = state; root.dataset.time = time.toFixed(3);
-    if (state === "completed") status(`${director.testMode ? "테스트" : "공연"} 종료 · 다시 보기를 누르세요.`);
+    if (state === "completed") {
+      status(`${director.testMode ? "테스트" : "공연"} 종료 · 다시 보기를 누르세요.`);
+      const mode = root.dataset.mode;
+      if (quartet && !preview && !director.testMode && active && confirmed && host?.tracked &&
+          (mode === 'world' || mode === 'webxr' || mode === 'image')) notifyTourHost('black-uniform', mode);
+    }
   });
   function fail(message: string): void {
     decoderFailures++; $("error").hidden = false; $("error").textContent = message; director.pause(); updateButtons();
@@ -160,7 +167,9 @@ export async function mountMusical(): Promise<void> {
     const reposition=root.querySelector<HTMLButtonElement>("#musical-reposition");if(reposition)reposition.disabled=!active||preview||!host?.reposition;
     root.querySelectorAll<HTMLButtonElement>("[data-view]").forEach(button => { button.disabled = !preview; });
     for (const id of ["target-image", "target-file", "target-width", "backend", "compile"]) $<HTMLInputElement>(id).disabled = active || compiling;
-    $("media-status").textContent = `${actors.filter(a => a.loaded).length}/${actors.length} 공연 객체 로드${actorSources.includes("sample") ? " · 라이선스 샘플 포함" : ""} · ${director.audioLabel}${director.testMode ? " · 카드 테스트 모드" : ""}`;
+    $("media-status").textContent = tourHost
+      ? actors.every(a => a.loaded) ? '공연 준비가 끝났어요' : '공연을 준비하고 있어요…'
+      : `${actors.filter(a => a.loaded).length}/${actors.length} 공연 객체 로드${actorSources.includes("sample") ? " · 라이선스 샘플 포함" : ""} · ${director.audioLabel}${director.testMode ? " · 카드 테스트 모드" : ""}`;
     $("representation").textContent = actors.map(a => `${a.config.label}: ${a.representation === "spatial-video-plane" ? "공간 고정 영상 평면(입체 인물 아님)" : a.contentKind === "synthetic-calibration" ? "3D 합성 테스트 배우·도형(실사 인물 아님)" : a.contentKind === "licensed-human" ? "CC0 인체·영상 추정 동작(원본 얼굴 복원 아님)" : a.representation === "rigged-glb" ? "생성형 3D 인물·본 애니메이션(볼류메트릭 촬영 아님)" : "3D 캡처 시퀀스(제공자 메타데이터)"}`).join(" · ");
     if(quartet&&actors.every(a=>a.contentKind==="licensed-human"))$("representation").textContent="독립 3D 배우 4명 · CC0 인체 + 영상 추정 동작 · 원본 얼굴 복원 아님";
     $("test").textContent = synthetic ? "3D 도형 기술 테스트(실사 아님)" : "카드·조명 테스트";
@@ -300,7 +309,7 @@ export async function mountMusical(): Promise<void> {
     const mode = $<HTMLSelectElement>("backend").value;
     host = mode === "world" ? new WorldTrackingHost(root,$("view"),placement.group,{...callbacks,tracking: tracked => {
       callbacks.tracking(tracked);
-      $("track").textContent = tracked ? "SLAM 공간 추적 · 무대 배치됨" : "공간 파악 중 · 바닥을 비추세요";
+      $("track").textContent = tracked ? (tourHost ? "무대 배치 완료" : "SLAM 공간 추적 · 무대 배치됨") : "공간 파악 중 · 바닥을 비추세요";
       if (tracked && !confirmed) { confirmed = true; stage.building.visible = false; $<HTMLInputElement>("building").checked = false; $<HTMLDetailsElement>("setup").open = false; status("무대 배치 완료 · 공연 시작을 누르세요."); updateButtons(); }
     }},quartet?quartetPlacementPolicy:undefined) : mode === "webxr" ? new WebXRTrackingHost(root, $("view"), placement.group, { ...callbacks, tracking: tracked => { callbacks.tracking(tracked); $("track").textContent = tracked ? "WebXR 월드 좌표 배치" : "바닥을 비추고 링을 탭하세요"; } },quartet?quartetPlacementPolicy:undefined) : new ImageTrackingHost($("view"), placement.group, target!, show.building, callbacks);
     root.dataset.mode = mode; status(mode === "world" ? "카메라·동작 센서 권한을 허용하고 바닥을 천천히 비추세요." : mode === "webxr" ? "바닥 링을 탭해 무대를 배치한 뒤 개발자 정합으로 벽에 맞추세요." : "카메라 준비 중… 산수화 패널 전체를 비추세요.");
@@ -361,9 +370,16 @@ export async function mountMusical(): Promise<void> {
   $("reset").addEventListener("click", () => { placement.reset(); placement.placeAt(new THREE.Matrix4().elements, true); actors.forEach(a => a.applyTransform()); showTransform(); });
   $("report").addEventListener("click", () => download(new Blob([JSON.stringify({ show: show.id, userAgent: navigator.userAgent, secure: isSecureContext, mode: root.dataset.mode, target: targetHash, targetWidthMeters: show.building.target.widthMeters, provisionalDimensions: true, poseTrackedNow: !preview && (host?.tracked ?? false), performerVideoSlotsLoaded: actors.filter(a => a.loaded).length, mediaSources: actorSources, duration: director.time, playback: director.state, testMode: director.testMode, fps, decoderFailures, deviceARVerified: false, trueVolumetricHumanFootageVerified: false, performers: spatialSnapshot(stage.root, actors, host?.camera), note: "진단 수치는 기기 검증 합격을 자동 선언하지 않습니다. 실제 움직임·정합·고정·동기를 수동 확인하세요." }, null, 2)], { type: "application/json" }), "musical-diagnostics.json"));
   function cleanup(): void { if (disposed) return; disposed = true; epoch++; director.dispose(); host?.dispose(); actors.forEach(a => { a.dispose(); a.group.removeFromParent(); }); stage.dispose(); }
-  $("exit").addEventListener("click", () => { cleanup(); const url = new URL(location.href); url.searchParams.delete("musical"); location.assign(url.href); });
+  $("exit").addEventListener("click", () => { cleanup(); if (quartet && closeTourHost('black-uniform')) return; const url = new URL(location.href); url.searchParams.delete("musical"); location.assign(url.href); });
   document.addEventListener("visibilitychange", () => { if (document.hidden) { director.pause(); updateButtons(); } });
   window.addEventListener("pagehide", cleanup, { once: true });
+  if (quartet && tourHost) {
+    root.querySelector('.musical-kicker')!.textContent = '별 헤는 밤';
+    for (const id of ['musical-developer', 'musical-setup', 'musical-fps']) {
+      const element = document.getElementById(id);
+      if (element) element.hidden = true;
+    }
+  }
   window.addEventListener("unhandledrejection", e => { if (!disposed) fail(`실행 오류: ${errorText(e.reason)}`); });
   showTransform(); updateButtons();
   // Precompiled target is optional during development; no expensive compilation on a phone by default.

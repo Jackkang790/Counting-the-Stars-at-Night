@@ -1,0 +1,12 @@
+{
+  "spots": [
+    { "id": "h1", "server": "a", "name": "관사 16호", "lat": 36.33245, "lng": 127.43695, "missions": ["role", "escape"] },
+    { "id": "h2", "server": "b", "name": "소제점방", "lat": 36.33305, "lng": 127.43805, "missions": ["role", "escape"] },
+    { "id": "h3", "server": "c", "name": "헤레디움", "lat": 36.32535, "lng": 127.43245, "missions": ["view", "escape"] }
+  ],
+  "cafes": [
+    { "id": "kiko", "name": "키코", "area": "대흥동 · 중앙로역 7번 출구 쪽", "map": { "x": 35.2, "y": 43.4 }, "tag": "top", "lat": 36.32935, "lng": 127.42360 },
+    { "id": "usia", "name": "우시아", "area": "대흥동 · 중앙로역 8번 출구 쪽", "map": { "x": 67.8, "y": 35.3 }, "tag": "left", "lat": 36.32964, "lng": 127.42676 },
+    { "id": "osiu", "name": "오시우커피", "area": "은행동 · 중앙로역 9번 출구 쪽", "map": { "x": 75.8, "y": 37.2 }, "tag": "right", "lat": 36.32957, "lng": 127.42754 }
+  ]
+}

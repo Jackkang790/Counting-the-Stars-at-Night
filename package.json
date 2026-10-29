@@ -4,10 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "oxlint",
-    "preview": "vite preview"
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "build:ar": "node scripts/build.mjs --ar-only",
+    "build:front": "vite build",
+    "start": "node scripts/server.mjs",
+    "lint": "oxlint src vite.config.js scripts tests",
+    "test:backend": "node scripts/python.mjs test",
+    "test:integration": "node tests/integration-browser.mjs",
+    "preview": "node scripts/server.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",
@@ -15,6 +20,7 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",

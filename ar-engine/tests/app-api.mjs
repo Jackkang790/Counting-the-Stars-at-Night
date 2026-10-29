@@ -6,11 +6,12 @@ import {createARClient} from '../integration/client.mjs';
 const dist=resolve(import.meta.dirname,'../dist');
 const read=p=>JSON.parse(readFileSync(resolve(dist,p),'utf8'));
 const catalog=read('api/ar/v1/catalog.json');assert.equal(catalog.schemaVersion,1);
+const localPath=url=>'.'+url.slice((catalog.basePath??'/').length-1);
 assert.deepEqual(catalog.experiences.map(e=>e.id),['starseed','black-uniform']);
 for(const entry of catalog.experiences){
- const data=read('.'+entry.url);assert.equal(data.id,entry.id);assert.equal(data.revision,entry.revision);
+ const data=read(localPath(entry.url));assert.equal(data.id,entry.id);assert.equal(data.revision,entry.revision);
  for(const asset of Object.values(data.assets)){
-  const bytes=readFileSync(resolve(dist,'.'+asset.url));assert.equal(bytes.length,asset.bytes);
+  const bytes=readFileSync(resolve(dist,localPath(asset.url)));assert.equal(bytes.length,asset.bytes);
   assert.equal(createHash('sha256').update(bytes).digest('hex'),asset.sha256);
  }
  if(data.id==='black-uniform'){

@@ -8,6 +8,7 @@ import ArFrame from '../ui/ArFrame.jsx';
 import { missionOf } from '../lib/missions.js';
 import { facadeOf } from '../ui/facade.js';
 import { box, Signs } from '../ui/OldHouse.jsx';
+import ARViewer from '../ui/ARViewer.jsx';
 
 const MISSION = missionOf('roleplay').id; // 이 화면이 주는 별(lib/missions.js)
 
@@ -31,6 +32,7 @@ export default function Roleplay() {
   const { house: h, finish } = useApp();
   const { scenes, people } = h.roleplay;
   const [n, setN] = useState(0);
+  const [arOpen, setArOpen] = useState(false);
   const last = n === scenes.length - 1;
   const sc = scenes[n];
   // 실내 창(벽이 투명해지는 자리): 이 건물 정면 몸통 안쪽
@@ -55,11 +57,14 @@ export default function Roleplay() {
     finish(h.id, MISSION);
   };
 
+  if (arOpen) return <ARViewer experience="black-uniform" onClose={() => setArOpen(false)} onComplete={done} />;
+
   return (
     // 데모 모드(발표용): 게임처럼 건너뛰기 → 바로 별 받고 지도
     <ArFrame scene="sky" left="back" pill={`역할극 · 장면 ${n + 1} / ${scenes.length}`} skip={done}>
       {/* 위에서부터: 안내 → 무대(땅 위에 섬) → 대사 카드. 무대는 남는 높이만큼만 커져서 어떤 화면에서도 땅에 붙어 있음 */}
       <div className="rp-col">
+      <button type="button" className="btn ghost" onClick={() => setArOpen(true)}>검정 교복 · 3D AR 공연 보기</button>
       <div className="rp-stage">
         <p className="rp-hint">밖에 선 채로 건물 안의 이야기를 들여다봄</p>
         {/* 이 스팟 건물 정면(facade.js — 03 · 04-B 와 같은 모양) 위에 벽이 투명해진 실내 */}

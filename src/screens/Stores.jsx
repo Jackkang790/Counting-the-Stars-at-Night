@@ -2,10 +2,11 @@
 // 지도 그림은 원래 비율(890 × 648)을 늘 지켜서(늘이거나 자르지 않음) 표시 위치가 화면 크기와 상관없이 카페 아이콘 위에 정확히 겹침.
 // 표시(동그라미 · 이름표)도 지도 크기에 맞춰 같이 커지고 작아짐(container query 단위 cqw).
 // 카페 목록 · 지도 위치는 src/lib/cafes.js. 지도 표시나 목록을 누르면 서로 같이 선택됨.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../store.jsx';
 import { distanceM } from '../lib/geo.js';
 import { CAFES } from '../lib/cafes.js';
+import { api } from '../lib/api.js';
 import { Screen, TopBar } from '../ui/Screen.jsx';
 import mapImg from '../assets/map.webp'; // 중앙로역 주변 지도 캡처(쿠폰 카페 3곳이 있는 곳)
 
@@ -18,16 +19,30 @@ function Cup({ size = 16 }) {
 export default function Stores() {
   const { pos } = useApp();
   const [sel, setSel] = useState(CAFES[0].id);
-  const list = CAFES.map((c) => ({ ...c, d: pos ? distanceM(pos, c) : null })).sort((a, b) => (a.d ?? 0) - (b.d ?? 0));
+  const [stores, setStores] = useState([]);
+  const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    api.stores().then((rows) => {
+      if (alive) { setStores(rows); setError(''); }
+    }).catch(() => { if (alive) setError('매장 정보를 불러오지 못했어요'); });
+    return () => { alive = false; };
+  }, [attempt]);
+  const cafes = CAFES.flatMap((c) => {
+    const store = stores.find((s) => s.id === c.id);
+    return store ? [{ ...c, ...store, map: c.map, tag: c.tag }] : [];
+  });
+  const list = cafes.map((c) => ({ ...c, d: pos && Number.isFinite(c.lat) && Number.isFinite(c.lng) ? distanceM(pos, c) : null })).sort((a, b) => (a.d ?? 0) - (b.d ?? 0));
 
   return (
     <Screen className="cafe-screen">
-      <TopBar back title="쿠폰 사용 가능 카페" right={<span className="muted">{CAFES.length}곳</span>} />
+      <TopBar back title="쿠폰 사용 가능 카페" right={<span className="muted">{cafes.filter((s) => s.accepts_coupon).length}곳</span>} />
 
       <div className="cafe-body">
         <div className="cafe-map-wrap">
           <div className="cafe-map" style={{ backgroundImage: `url(${mapImg})` }} role="group" aria-label="쿠폰 사용 가능 카페 지도 · 중앙로역 주변">
-            {CAFES.map((c) => (
+            {cafes.map((c) => (
               <button key={c.id} type="button" className={'cafe-mark' + (sel === c.id ? ' on' : '')} style={{ left: c.map.x + '%', top: c.map.y + '%' }}
                 onClick={() => setSel(c.id)} aria-label={c.name} aria-pressed={sel === c.id}>
                 <span className="cafe-ring" aria-hidden="true" />
@@ -38,6 +53,8 @@ export default function Stores() {
         </div>
 
         <main className="cafe-list">
+          {error && <p role="alert">{error} <button type="button" onClick={() => setAttempt((n) => n + 1)}>다시 시도</button></p>}
+          {!error && cafes.length === 0 && <p className="muted">매장 정보를 확인하고 있어요</p>}
           <p className="cafe-legend"><span className="cafe-legend-ring" aria-hidden="true" />쿠폰 사용 가능 카페 · 중앙로역 주변</p>
           {list.map((s) => (
             <article key={s.id} className={'cafe-card' + (sel === s.id ? ' on' : '')} onClick={() => setSel(s.id)}>
@@ -50,13 +67,14 @@ export default function Stores() {
                 {s.d != null && <span className="cafe-card-dist">{km(s.d)}</span>}
               </div>
               <div className="cafe-card-tags">
-                <span className="badge issued">쿠폰 사용 가능</span>
-                <span className="muted small">영업 시간 {s.hours}</span>
+                <span className="badge issued">{s.accepts_coupon ? '쿠폰 사용 가능' : '쿠폰 사용 불가'}</span>
+                <span className="muted small">{s.hours ? `영업 시간 ${s.hours}` : '영업시간 확인 필요'}</span>
               </div>
               <div className="cafe-card-foot">
                 <span className="small">{s.benefit}</span>
-                <a className="link" href={`https://map.kakao.com/link/to/${encodeURIComponent(s.name)},${s.lat},${s.lng}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>길찾기</a>
+                {Number.isFinite(s.lat) && Number.isFinite(s.lng) && <a className="link" href={`https://map.kakao.com/link/to/${encodeURIComponent(s.name)},${s.lat},${s.lng}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>길찾기</a>}
               </div>
+              {s.demo && <p className="muted small">시연용 · 실제 제휴와 혜택은 확정 전입니다</p>}
             </article>
           ))}
         </main>

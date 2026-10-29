@@ -1,96 +1,24 @@
-# 별 헤는 밤 — 프론트 ↔ 백엔드 연동 수정 사항
+# 통합 반영 상태
 
-- 기준: 백엔드 `Jackkang790/Counting-the-Stars-at-Night` `Rest-Backend` 브랜치 v0.1.0 (커밋 `5098dad`) / 프론트 `C:\Dev\byeol-night` (2026-10-29)
-- 확인 방법: 백엔드를 실제로 띄우고 프론트(`VITE_API_URL` 설정)로 처음부터 쿠폰·카페까지 끝까지 실행. 백엔드 테스트 28개 통과.
-- 결론: **지금 형식으로 연동은 된다.** 아래는 기획대로 동작하려면 고쳐야 할 것.
+`Frontend_V1` + `AR-Backend` + `Rest-Backend`를 별도 `feat/unified-tour` 브랜치에서 연결한다.
+실행 명령은 루트 README, 상세 계약은 `docs/API.md`와 각 서비스의 API 문서를 따른다.
 
----
+## 반영한 항목
 
-## 1. 백엔드에 요청할 것
+- 미션별 kind 전송, 별 6개 수집과 쿠폰 발급 연결
+- 헤레디움 view와 기존 c/role 별의 호환 및 중복 방지
+- 서버 진행 복구, 오프라인 별 재전송, 회차별 세션과 지난 쿠폰 유지
+- 쿠폰 만료·번호 기반 사용 결과·서버 매장 상태 표시
+- 공유 스팟·카페 데이터와 서버 등록 ID 일치
+- 프론트·AR·REST의 같은 origin 실행 및 Vite 개발 프록시
+- 별의 새싹·검정 교복 iframe 연결과 완료 메시지 검증
+- 독립 AR 빌드와 `/ar/` 하위 경로의 콘텐츠·에셋 URL
 
-### 1-0. 투어 장소 3곳 교체 (2026-10-30)
-- 스팟 seed 이름·좌표를 바꿔 주세요. id(a·b·c)는 그대로.
-  - `a` 대전테미예술창작센터 · 대흥동 대종로 525 · 36.330326, 127.423387
-  - `b` 협동조합 극단놀이터 · 대흥동 · [좌표 현장 확인] (프론트 임시값 36.3292, 127.4205)
-  - `c` 대전상상아트홀 · 선화동 · 36.328814, 127.423465
-- 제휴 카페 seed 도 소제동·인동 → 중앙로역 주변(대흥동·선화동)으로.
+## 남은 콘텐츠·현장 확인
 
-### 1-1. 별 기준이 다름 — 결정 필요 (중요)
-- 앱: 건물마다 별 2개(역할극 · 단서 얻기) → **6개**를 모으면 완성 + 쿠폰.
-- 서버: 건물마다 완료 1번 = 별 1개 → **3개**에 쿠폰 (`DEMO_STARS_PER_SPOT=1`, `DEMO_COUPON_REQUIRED_STARS=3`).
-- 지금 프론트는 이렇게 맞춰 둠: 한 건물에서 별 2개를 다 받았을 때만 `checkin` + `experiences/complete`를 보냄. 그래서 서버 별 3개 = 앱 별 6개 = 쿠폰 발급 시점이 같음.
-- 서버에서도 역할극 · 단서 얻기을 따로 세려면:
-  - `POST /api/v1/experiences/complete` 본문에 `kind: "role" | "escape"` 추가
-  - 세션 · 스팟 · kind별로 1번만 지급
-  - `DEMO_COUPON_REQUIRED_STARS=6`
-- **둘 중 하나로 정하기**: ① 지금 방식 유지(서버는 건물 완료만 앎) / ② 위처럼 kind 추가
+- 건물·카페의 실제 좌표, 야간 사용 협조, 제휴·혜택·영업시간 확정
+- 최종 작품·역할극 대본·인물 등 기존 자리표시 콘텐츠 교체
+- iPhone/Android 실제 카메라 권한·공간 정합·드리프트·발열 검증
 
-### 1-2. 쿠폰 사용(카페 리더기) 흐름이 없음 (중요)
-- 지금 `POST /coupons/{coupon_id}/redeem` 은 **손님의 `session_id`가 있어야** 사용 처리됨.
-- 카페 리더기는 손님 폰의 QR · 바코드 · 12자리 번호만 볼 수 있고 `session_id`를 모름 → 실제 사용 처리가 불가능.
-- 앱 10번 화면의 QR · 바코드 · 번호에는 지금 쿠폰 `code`(12자리)가 들어 있음.
-- 요청: 번호로 사용 처리하는 API
-  - 예: `POST /api/v1/coupons/redeem-by-code` 본문 `{ "code": "123456789012", "store_id": "demo-store-1" }`
-  - 매장 확인과 `accepts_coupon` 확인 포함
-- QR에 `code`만 담을지, 서명값까지 담을지 같이 정하기.
-
-### 1-3. 쿠폰 만료일 없음
-- 쿠폰 응답에 `expires_at`이 없음 → 앱 09 쿠폰함에서 "○월 ○일까지"를 못 띄워서 혜택 문구로 대신 보여 줌.
-- 요청: `expires_at`(ISO 8601 UTC) 추가. 만료 상태 `expired` 처리도 필요하면 같이.
-
-### 1-4. 카페 위치 · 영업 정보 없음
-- 매장 응답에 좌표 · 영업시간이 없음. 그래서 앱 11 사용 가능 카페(와이어프레임: 지도 + 영업 중 / 야간 영업 + 길찾기)에서 아래를 **숨김** 처리 중:
-  - 지도 핀 · 거리 · "영업 중"/"야간 영업" 필터 · 카카오맵 길찾기
-- 요청 필드:
-  - `lat`, `lng`
-  - `hours`(예 `"11:00–22:00"`)
-  - `open_now`(bool)
-  - `night`(야간 영업 bool)
-- 추가되면 프론트는 `src/lib/api.js`의 `toStore`만 고치면 바로 보임.
-
-### 1-5. 완료 검증 없음 (시연은 괜찮음)
-- 서버가 앱이 보낸 "완료"를 그대로 믿음(API.md에 명시). 시연용으로는 OK, 운영 전에는 검증 필요.
-
-### 1-6. CORS 허용 주소
-- 기본 허용은 `localhost:5173`(`npm run dev`)만.
-- 폰 시연(`vite preview` → `localhost:4173`)이나 배포 주소로 띄울 때는 백엔드 실행 시 `CORS_ORIGINS`에 그 주소를 추가해야 함.
-  - 예: `CORS_ORIGINS=http://localhost:5173,http://localhost:4173`
-
----
-
-## 2. 프론트에서 할 것
-
-- [ ] `docs/API.md`가 **예전 계약**(GPS+QR, `X-Device-Token`, `/stars`, `/coupons/me`)이라 지금 서버와 다름 → 백엔드 `backend/API.md`(v0.1.0) 기준으로 바꾸거나 지우기.
-- [ ] 연동해서 실행할 때 `.env` 만들기: `VITE_API_URL=http://localhost:8000` (`.env.example` 참고).
-- [ ] 1-1 결정이 나면 `src/store.jsx`의 `stamp()`와 `src/lib/api.js`의 `clearHouse()` 맞추기.
-- [ ] 1-3 · 1-4 필드가 생기면 `src/lib/api.js`의 `toCoupon()` · `toStore()`에 연결.
-- [ ] 안 쓰는 파일 지우기 (이전 기획 화면):
-  ```
-  src/screens/Point.jsx, Musical.jsx, Stars.jsx, Story.jsx
-  src/ui/Clip.jsx, Constellation.jsx, StarCube.jsx
-  public/icons.svg
-  ```
-
----
-
-## 3. 지금 연동 형식 (참고)
-
-| 앱 동작 | 호출 | 보내는 것 | 쓰는 응답 |
-|---|---|---|---|
-| 처음 열 때(없으면) | `POST /api/v1/sessions` | — | `session_id` (기기에 저장, `session_not_found` 오면 새로 받음) |
-| 한 건물 별 2개 완료 | `POST /api/v1/checkin` → `POST /api/v1/experiences/complete` | `{session_id, spot_id}` (h1/h2/h3 → a/b/c) | `star_awarded`, `total_stars`, `coupon_issued` |
-| 09 쿠폰함 · 10 내 쿠폰 | `GET /api/v1/coupons?session_id=` | — | `id`, `title`, `benefit`, `code`, `status`, `issued_at`, `redeemed_at` |
-| 11 사용 가능 카페 | `GET /api/v1/stores` | — | `name`, `description`, `display_location`, `accepts_coupon` |
-
-- 앱이 안 쓰는 API:
-  - `GET /stars`: 별은 앱이 기기에 따로 보관
-  - `GET /spots`: 건물 정보는 앱 안에 있음
-  - `POST /coupons/{id}/redeem`: 쿠폰 사용은 카페 쪽 일 → 1-2 참고
-- 서버 호출 · 응답 변환은 전부 `src/lib/api.js` 한 파일에 있음.
-
----
-
-## 추가 요청 (2026-10-30)
-- 쿠폰 사용 가능 카페를 **키코 · 우시아 · 오시우커피**(중앙로역 주변) 3곳으로 정함. 서버 매장 seed(`stores`)를 이 3곳으로 바꿔 주세요.
-  - 프론트 id: `kiko` · `usia` · `osiu` (`src/lib/cafes.js`). 같은 id 를 쓰면 번호 기반 사용(`redeem-by-code` 의 `store_id`)과 바로 맞음.
-  - 좌표는 지도 그림으로 어림한 값이라 현장 확인 후 함께 맞추기.
+자동 브라우저 검사의 추적 입력은 모의 값이다. 실제 모델·음원·재생·완료·별·쿠폰 흐름을
+검증하되 실제 휴대폰 AR 검증 완료로 해석하지 않는다.

@@ -1,0 +1,25 @@
+from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+
+class RedeemRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=128, description="쿠폰을 발급받은 이용자의 투어 세션 ID")
+
+
+class RedeemByCodeRequest(BaseModel):
+    code: str = Field(pattern=r"^[0-9]{12}$", min_length=12, max_length=12)
+    store_id: str = Field(min_length=1, max_length=128)
+
+
+class CouponResponse(BaseModel):
+    id: str
+    title: str
+    benefit: str
+    code: str
+    status: Literal["issued", "redeemed", "expired"]
+    issued_at: datetime
+    expires_at: datetime
+    redeemed_at: datetime | None
+    store_id: str | None

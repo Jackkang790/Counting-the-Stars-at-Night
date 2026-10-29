@@ -30,9 +30,12 @@ const SCREENS = {
 };
 
 function Current() {
-  const { screen } = useApp();
+  const { screen, syncError, refresh } = useApp();
   const Screen = SCREENS[screen.name] || Home;
-  return <Screen key={screen.name + (screen.h || '')} />;
+  return <>
+    <Screen key={screen.name + (screen.h || '')} />
+    {syncError && <div className="sync-notice" role="status"><span>{syncError}</span><button type="button" onClick={() => refresh()}>다시 시도</button></div>}
+  </>;
 }
 
 export default function App() {

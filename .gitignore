@@ -215,3 +215,14 @@ dist-ssr
 /ar-engine/reports/**/starstage-ios-source.zip
 **/xcuserdata/
 **/DerivedData/
+
+# Backend local data and environment overrides
+/backend/data/
+.env.*
+!.env.example
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*

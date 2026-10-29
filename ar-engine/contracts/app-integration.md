@@ -1,5 +1,15 @@
 # 앱 연동 API v1 — 별의 새싹 / 검정 교복
 
+통합 브랜치에서는 `/ar/`에 배포하며 `AR_BASE=/ar/`로 빌드한다. JSON의 실행·에셋 URL도
+해당 접두사를 포함한다. 기존 루트 배포는 `AR_BASE`를 지정하지 않으면 유지된다.
+
+같은 origin의 투어 UI가 `tourHost=1&hostToken=<일회용 토큰>`으로 iframe을 열 때는
+`{source:'byeol-ar',event:'completed',experience,token,mode}` 메시지를 부모에 전달한다.
+부모는 origin·iframe contentWindow·토큰·콘텐츠 ID를 모두 확인한다. 검정 교복은 실제
+추적 모드(world/webxr/image)에서 비테스트 공연이 끝난 경우에만 완료를 보낸다.
+미리보기·닫기·Quick Look 복귀는 완료를 보내지 않는다. 이 브리지는 일반 원격 재생
+제어 API나 서버 인증을 제공하지 않는다. 투어 UI의 명시적 확인 후 REST에 완료를 저장한다.
+
 앱 개발용 현재 계약이다. 기존 `ar-api.md`는 초기 엔진 제안이며, 앱 연결은 이 문서와 생성된 JSON을 기준으로 한다. 원격 재생 제어/완료 콜백을 제공하는 것으로 해석하지 않는다.
 
 현재 상태: 코드 구현·자동 검사 완료. 이 v1 조회 API는 기존 공연 서버와 별도로 아래 API 빌드 및 nginx 설정 배포가 필요하다. Git 푸시 자체가 서버 API 배포를 수행하지 않는다.
@@ -67,7 +77,7 @@ engine.on('error',error=>{/* 오류 UI */});
 // 종료: await engine.stop()
 ```
 
-이 이벤트 API는 같은 JavaScript 런타임의 엔진에만 해당한다. 외부 브라우저 창이나 네이티브 앱으로 자동 전달되지 않는다. 검정 교복에는 원격 `start/pause/replay` REST API나 공통 postMessage 브리지가 없다. 현재 공연 화면의 버튼이 제어한다. 외부 브라우저에서 돌아온 사실, Quick Look을 연 사실, JSON 다운로드를 공연 완료나 스탬프 지급의 근거로 사용하지 않는다.
+이 이벤트 API는 같은 JavaScript 런타임의 엔진에만 해당한다. 외부 브라우저 창이나 네이티브 앱으로 자동 전달되지 않는다. 검정 교복에는 원격 `start/pause/replay` REST API가 없다. 같은 origin의 투어 iframe 완료 브리지만 위 계약으로 제공하며 재생은 현재 공연 화면의 버튼이 제어한다. 외부 브라우저에서 돌아온 사실, Quick Look을 연 사실, JSON 다운로드를 공연 완료나 스탬프 지급의 근거로 사용하지 않는다.
 
 ## 제작 API와 분리
 

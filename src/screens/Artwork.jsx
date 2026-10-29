@@ -12,6 +12,7 @@ import useFit from '../ui/useFit.js';
 import useSwipe from '../ui/useSwipe.js';
 import { isARSupported, startAR } from '../lib/ar.js';
 import { buildArtwork } from '../lib/artwork3d.js';
+import ARViewer from '../ui/ARViewer.jsx';
 
 const STATUS = { scanning: '바닥을 천천히 비춰 주세요', found: '바닥 인식됨 · 곧 솟아나요' };
 
@@ -26,6 +27,7 @@ export default function Artwork() {
   const tried = useRef(false);
   const [xr, setXr] = useState(null); // null = 확인 중, false = 미지원, 'ready' | 'scanning' | 'found' | 'placed'
   const [i, setI] = useState(0);
+  const [arOpen, setArOpen] = useState(false);
   // 작품 회전무대: 작품들이 원(회전판) 위에 놓여, 다음 작품으로 넘기면 원이 돌며 앞으로 옴. ang = 지금 앞에 있는 자리(작품 번호, 소수 = 도는 중)
   const [ang, setAng] = useState(0);
   const angRef = useRef(0);
@@ -94,6 +96,8 @@ export default function Artwork() {
     else setAlign((a) => !a);
   };
 
+  if (arOpen) return <ARViewer experience="starseed" onClose={() => setArOpen(false)} onComplete={viewStar} confirmExhibit />;
+
   return (
     <ArFrame
       ref={root}
@@ -139,6 +143,7 @@ export default function Artwork() {
       )}
 
       <div className="art-foot">
+        <button type="button" className="btn light" onClick={() => { session.current?.end(); setArOpen(true); }}>별의 새싹 · 실제 3D 작품 보기</button>
         {works.length > 1 && (
           <div className="dots">
             {works.map((_, k) => <button key={k} type="button" className={k === i ? 'on' : ''} onClick={() => show(k)} aria-label={`작품 ${k + 1}`} />)}

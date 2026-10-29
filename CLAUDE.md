@@ -37,15 +37,17 @@
 - `src/ui/`: ArFrame.jsx(카메라 화면 공통 틀: 카메라·상단·데모 건너뛰기·안내 — 03·04-A·04-B·04-C·06·07) · StarPuzzle.jsx(조각 퍼즐) · OldHouse.jsx(옛 모습 자리표시 그림) · facade.js(스팟별 정면 모양 자리표시) · MyConstellation.jsx(별 6개 나의 별자리 — 홈·08, 별 아래 글자 없음) · Sculpture.jsx(땅 위 3D 작품 자리표시) · Peek.jsx(AR 하단 시트) · Camera.jsx · chrome.jsx(ArHead) · useFit.js(위치 맞추기).
 - 폰 시연: `npm run build && npx vite preview --port 4173` → `adb reverse tcp:4173 tcp:4173` → 폰 크롬 `localhost:4173` (보안 컨텍스트라 카메라/WebXR 됨).
 
-## 서버 (팀원 담당 — 여기서 만들지 않음)
-- FastAPI + DB 는 팀원이 만든다. 프론트는 **서버 코드 금지**, 약속은 `docs/API.md` 로만 알린다.
-- `src/lib/api.js`: `VITE_API_URL` 있으면 서버, 없으면 API.md 응답 예시와 같은 **고정 예시 데이터**(판정 로직 없음).
+## 통합 실행
+- 사용자 요청으로 `Frontend_V1`, `AR-Backend`, `Rest-Backend`를 통합한다. 기존 멤버 브랜치 대신 별도 통합 브랜치에서 수정한다.
+- 실행·현재 계약은 루트 README, `backend/API.md`, `ar-engine/contracts/app-integration.md`를 따른다.
+- `src/lib/api.js`는 기본으로 같은 origin의 실제 서버를 사용한다. 샘플 모드는 `VITE_SAMPLE_MODE=1`이다.
+- 스팟·미션·카페의 기준은 `shared/tour.json`이며 백엔드 통합 진입점은 `app.integrated:app`이다.
 
 ## 남은 일
 - 작가 옛 모습 이미지(OldHouse 교체), 작품 glTF, 역할극 대본·인물, 단서 얻기 단서·정답, 건물 좌표 확정본으로 교체.
 - 인식 판별은 지금 건물 데이터 `target`(데모 모드에서 "○○ 인식됨" 눌러 바꿈) → hit-test 평면 방향 + 건물 마커로 교체.
-- 백엔드 v0.1.0(Rest-Backend) 연동됨: api.js 가 session_id 발급·저장, h1/h2/h3→a/b/c, 건물 별 2개(역할극+단서 얻기)를 다 받으면 checkin+experiences/complete → 서버 별 3개 = 앱 별 6개 = 쿠폰. 카페 좌표·영업시간·쿠폰 만료는 서버에 없음(화면에서 숨김).
+- 백엔드 v0.2.0 연동: 각 미션별 kind를 전송한다. 헤레디움 view는 기존 c/role 슬롯과 호환된다. 별 6개로 쿠폰을 발급하며 재접속·오프라인 진행 복구를 지원한다.
 
 ## 규칙
-- 커밋은 `Frontend` 브랜치에만, 작성자 Coolguyzero 로만. 다른 멤버 브랜치·스택은 건드리지 않는다.
+- 통합 작업은 별도 브랜치에 커밋하고 기존 멤버 브랜치와 미커밋 작업을 보존한다. 작성자는 현재 Git 설정을 사용한다.
 - 커밋에 Claude 공동작성자/서명 줄 넣지 말 것.

@@ -41,6 +41,10 @@ export function AppProvider({ children }) {
   const [stamps, setStamps] = useState(saved.stamps || []); // 지금 회차의 별 ['h1:role', ...]
   const [round, setRound] = useState(saved.round || 1); // 회차(1~CONFIG.rounds). 회차마다 쿠폰 1장 · 별자리 배정이 바뀜
   const [coupons, setCoupons] = useState([]);
+  const [syncError, setSyncError] = useState('');
+  const stampsRef = useRef(stamps);
+  const progressEpoch = useRef(0);
+  const roundTransition = useRef(false);
   // 해커톤 시연용: 데모 모드(가상 위치 = 건물 1 앞)가 기본으로 켜져 있음 → 와이어프레임처럼 02 에서 바로 "도착".
   // 현장에서 실제 GPS 로 쓰려면 첫 화면 "데모 모드 켜짐 · 끄기".
   const [demo, setDemo] = useState(saved.demo || { on: true, h: HOUSES[0].id });
@@ -70,12 +74,28 @@ export function AppProvider({ children }) {
   const canReplay = complete && round < CONFIG.rounds;
 
   // 쿠폰 상태는 카페 리더기가 바꾸므로(사용 완료) 쿠폰 화면에선 주기적으로 다시 받아옴
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (pending = stampsRef.current) => {
+    const epoch = progressEpoch.current;
     try {
-      setCoupons(await api.myCoupons(roundsDone));
-    } catch { /* 연결 안 되면 지난 값 유지 */ }
+      const result = await api.syncProgress(pending, roundsDone);
+      if (epoch !== progressEpoch.current) return false;
+      const merged = [...new Set([...stampsRef.current, ...result.stamps])].filter((id) => STAR_IDS.includes(id));
+      stampsRef.current = merged;
+      setStamps(merged);
+      setCoupons(result.coupons);
+      setSyncError('');
+      return true;
+    } catch (error) {
+      if (epoch === progressEpoch.current && !error.cancelled) setSyncError('별 저장 대기 중 · 연결 후 다시 시도해 주세요');
+      return false;
+    }
   }, [roundsDone]);
   useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    const retry = () => { void refresh(); };
+    window.addEventListener('online', retry);
+    return () => window.removeEventListener('online', retry);
+  }, [refresh]);
 
   const screen = stack[stack.length - 1];
   const screenRef = useRef(screen);
@@ -127,41 +147,51 @@ export function AppProvider({ children }) {
   // 받았으면 받은 뒤 별 개수(이미 받았거나 이 스팟 미션이 아니면 false → "새 별" 안내 없음)
   const stamp = useCallback(async (houseId, kind) => {
     const id = stampId(houseId, kind);
-    if (stamps.includes(id) || !STAR_IDS.includes(id)) return false;
-    const next = [...stamps, id];
+    if (stampsRef.current.includes(id) || !STAR_IDS.includes(id)) return false;
+    const next = [...stampsRef.current, id];
+    stampsRef.current = next;
     setStamps(next);
     setFresh(id);
-    // 서버엔 "스팟 완료"(그 스팟 별 2개를 다 받음)일 때만 보냄 → 서버 별 3개 = 앱 별 6개 = 쿠폰.
-    // 이미 완료한 스팟도 같이 다시 보냄(전에 연결이 끊겨 못 보낸 경우 대비 · 서버가 중복 지급 안 함)
-    const cleared = HOUSES.filter((h) => h.missions.every((k) => next.includes(stampId(h.id, k))));
-    for (const h of cleared) {
-      try { await api.clearHouse(h.id); } catch { /* 연결 안 돼도 화면 진행은 유지 */ }
-    }
+    // 미션별 별을 저장한다. 연결이 끊겨도 로컬 별을 보관해 다음 연결에 복구한다.
+    await refresh(next);
     return next.filter((s) => STAR_IDS.includes(s)).length;
-  }, [stamps]);
+  }, [refresh]);
 
   // 미션을 끝냈을 때: 별 받고 → 02 지도로(지도 위에 "★ 별 획득" 안내). 별 6개를 다 모은 순간만 08 나의 별자리(완성 · 쿠폰).
   const finish = useCallback(async (houseId, kind) => {
+    const epoch = progressEpoch.current;
     const n = await stamp(houseId, kind);
+    if (epoch !== progressEpoch.current) return;
     go((n === false ? count : n) >= TOTAL_STAMPS ? 'stamps' : 'map', null, { replace: true });
   }, [stamp, go, count]);
 
   // 다음 회차: 새 서버 세션(새 쿠폰) · 별 0개 · 별자리 배정이 바뀜 · 지도로
-  const nextRound = useCallback(() => {
-    if (!canReplay) return;
-    nextSession();
-    setStamps([]);
-    setFresh(null);
-    setRound((r) => r + 1);
-    go('map', null, { replace: true });
-  }, [canReplay, go]);
+  const nextRound = useCallback(async () => {
+    if (!canReplay || roundTransition.current) return;
+    roundTransition.current = true;
+    try {
+      if (!await refresh()) return;
+      progressEpoch.current++;
+      nextSession();
+      stampsRef.current = [];
+      setStamps([]);
+      setFresh(null);
+      setRound((r) => r + 1);
+      go('map', null, { replace: true });
+      // roundsDone는 이전 회차 완료 직후와 같으므로 효과에 의존하지 않고 새 세션을 연다.
+      await refresh([]);
+    } finally { roundTransition.current = false; }
+  }, [canReplay, go, refresh]);
 
   // 데모 진행 초기화: 별 · 회차 · 서버 세션(쿠폰) · 가상 위치를 처음으로
   const resetProgress = useCallback(() => {
+    progressEpoch.current++;
     resetSession();
+    stampsRef.current = [];
     setStamps([]);
     setRound(1);
     setCoupons([]);
+    setSyncError('');
     setFresh(null);
     setDemo((d) => ({ ...d, h: HOUSES[0].id }));
     setStack([{ name: 'home', h: null, arg: null }]);
@@ -179,12 +209,12 @@ export function AppProvider({ children }) {
     () => ({
       screen, go, back, house: houseById(screen.h) || here || HOUSES[0],
       stamps, has: (h, k) => stamps.includes(stampId(h, k)), count, complete, stamp, finish,
-      fresh, clearFresh: () => setFresh(null), coupons, refresh,
+      fresh, clearFresh: () => setFresh(null), coupons, refresh, syncError,
       demo, setDemo, pos, here, geoError: geo.current.error, virtual,
       menu, setMenu, paused: menu, resetProgress,
       round, rounds: CONFIG.rounds, canReplay, nextRound,
     }),
-    [screen, go, back, stamps, count, complete, stamp, finish, finish, fresh, coupons, refresh, demo, pos, here, virtual, menu, resetProgress, round, canReplay, nextRound],
+    [screen, go, back, stamps, count, complete, stamp, finish, fresh, coupons, refresh, syncError, demo, pos, here, virtual, menu, resetProgress, round, canReplay, nextRound],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

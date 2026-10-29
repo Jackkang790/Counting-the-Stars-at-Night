@@ -1,0 +1,57 @@
+"""초기 스팟과 가상 매장, 데모 쿠폰 설정."""
+
+import sqlite3
+
+
+# 기존 프론트 API.md의 스팟 ID를 유지한다.
+SPOTS = (
+    ("a", "관사 16호", "소제동 철도관사촌 투어 스팟", 1),
+    ("b", "관사 42호", "소제동 철도관사촌 투어 스팟. 실제 사용 가능 여부 확인 필요", 2),
+    ("c", "헤레디움", "인동 투어 스팟", 3),
+)
+
+
+def seed_spots(db: sqlite3.Connection) -> None:
+    # 재시작 시 중복 생성하거나 기존 내용을 덮어쓰지 않는다.
+    db.executemany(
+        "INSERT INTO spots (id, name, description, display_order) "
+        "VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING",
+        SPOTS,
+    )
+
+
+DEMO_STORES = (
+    ("demo-store-1", "[가상] 별빛 카페", "시연용 가상 매장. 실제 제휴 매장이 아닙니다.",
+     "[데모] 소제동 구역 A", 1, 1),
+    ("demo-store-2", "[가상] 골목 카페", "시연용 가상 매장. 실제 제휴 매장이 아닙니다.",
+     "[데모] 소제동 구역 B", 1, 1),
+    ("demo-store-3", "[가상] 밤하늘 카페", "쿠폰 사용 불가 상태를 보여주는 시연용 가상 매장입니다.",
+     "[데모] 인동 구역 A", 0, 1),
+)
+
+# 지도 표시와 시간 계산 시연용 가상 값. 실제 매장 좌표·영업시간이 아니다.
+DEMO_STORE_DETAILS = {
+    "demo-store-1": (36.3328, 127.4376, "11:00", "22:00"),
+    "demo-store-2": (36.3335, 127.4389, "12:00", "02:00"),
+    "demo-store-3": (36.3259, 127.4317, "09:00", "20:00"),
+}
+
+
+def seed_stores(db: sqlite3.Connection) -> None:
+    db.executemany(
+        "INSERT INTO stores (id, name, description, display_location, accepts_coupon, is_demo) "
+        "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING",
+        DEMO_STORES,
+    )
+    for store_id, (lat, lng, opening, closing) in DEMO_STORE_DETAILS.items():
+        # 기존 가상 매장의 비어 있는 정보만 채우고 수정한 값·비데모 매장은 유지한다.
+        db.execute(
+            "UPDATE stores SET lat = ?, lng = ? "
+            "WHERE id = ? AND is_demo = 1 AND lat IS NULL AND lng IS NULL",
+            (lat, lng, store_id),
+        )
+        db.execute(
+            "UPDATE stores SET opens_at = ?, closes_at = ? "
+            "WHERE id = ? AND is_demo = 1 AND opens_at IS NULL AND closes_at IS NULL",
+            (opening, closing, store_id),
+        )

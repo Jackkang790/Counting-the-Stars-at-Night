@@ -13,3 +13,4 @@ import './escape.css';
 import './stamps.css';
 import './coupons.css';
 import './stores.css';
+import './integration.css';

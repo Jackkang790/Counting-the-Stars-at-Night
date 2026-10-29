@@ -6,6 +6,7 @@
 //   img · w · h = 그 사진과 크기(px). 02 지도에서 이 스팟을 고르면 이 사진이 나옴.
 // server: 서버(Rest-Backend) 스팟 id 짝
 import mapImg from '../assets/spots/spot1.webp';
+import tour from '../../shared/tour.json';
 
 export default {
   id: 'h1',
@@ -40,4 +41,5 @@ export default {
   short: '관사 16호', // 화면에 줄여 쓰는 이름
   // 단서 얻기(07) 별자리 퍼즐은 회차마다 섞어서 배정 → src/lib/puzzles.js
   escape: { minutes: 15 },
+  ...tour.spots.find((spot) => spot.id === 'h1'),
 };
