@@ -3,7 +3,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
-from app.config import coupon_required_stars, coupon_valid_days
+from app.config import coupon_valid_days
 from app.database import connection, init_db
 from app.routers.coupons import router
 import test_stars
@@ -19,9 +19,14 @@ class CouponsTests(unittest.TestCase):
         test_stars.StarsTests.setUp(self)
         self.client.app.include_router(router)
 
-    def enable_coupon(self, required="2"):
-        with patch.dict("os.environ", {"DEMO_COUPON_REQUIRED_STARS": required}):
-            init_db()
+    def prepare_final_star(self):
+        for spot in "abc":
+            self.checkin(spot)
+            for kind in ["role", "escape"]:
+                if (spot, kind) != ("c", "escape"):
+                    response = self.complete(spot, kind=kind)
+                    self.assertEqual(response.status_code, 200)
+                    self.assertFalse(response.json()["coupon_issued"])
 
     def coupons(self, session_id=None):
         return self.client.get("/api/v1/coupons", params={
@@ -29,9 +34,8 @@ class CouponsTests(unittest.TestCase):
         })
 
     def earn_coupon(self):
-        self.enable_coupon("1")
-        self.checkin()
-        self.assertTrue(self.complete().json()["coupon_issued"])
+        self.prepare_final_star()
+        self.assertTrue(self.complete("c", kind="escape").json()["coupon_issued"])
         return self.coupons().json()[0]
 
     def redeem(self, coupon_id, session_id=None):
@@ -39,16 +43,16 @@ class CouponsTests(unittest.TestCase):
             "session_id": session_id or self.session_id,
         })
 
-    def test_threshold_and_issuance_once(self):
-        self.enable_coupon()
+    def test_all_six_combinations_and_issuance_once(self):
         self.assertEqual(self.coupons().json(), [])
+        self.prepare_final_star()
+        self.assertEqual(self.stars().json()["total_stars"], 5)
+        self.assertEqual(self.coupons().json(), [])
+        self.assertTrue(self.complete("c", kind="escape").json()["coupon_issued"])
+        self.assertFalse(self.complete("c", kind="escape").json()["coupon_issued"])
+        self.assertEqual(self.complete("a").status_code, 409)
         self.checkin("a")
         self.assertFalse(self.complete("a").json()["coupon_issued"])
-        self.checkin("b")
-        self.assertTrue(self.complete("b").json()["coupon_issued"])
-        self.assertFalse(self.complete("b").json()["coupon_issued"])
-        self.checkin("c")
-        self.assertFalse(self.complete("c").json()["coupon_issued"])
         coupons = self.coupons().json()
         self.assertEqual(len(coupons), 1)
         self.assertEqual(coupons[0]["status"], "issued")
@@ -67,7 +71,7 @@ class CouponsTests(unittest.TestCase):
         self.assertEqual(repeated.json(), {"detail": "already_redeemed"})
         init_db()
         self.assertEqual(self.coupons().json(), [response.json()])
-        self.assertFalse(self.complete().json()["coupon_issued"])
+        self.assertFalse(self.complete("c", kind="escape").json()["coupon_issued"])
 
     def test_coupon_session_isolation_and_errors(self):
         coupon = self.earn_coupon()
@@ -84,11 +88,9 @@ class CouponsTests(unittest.TestCase):
         self.assertEqual(self.coupons().json()[0]["status"], "issued")
 
     def test_concurrent_coupon_issue(self):
-        self.enable_coupon("1")
-        self.checkin("a")
-        self.checkin("b")
+        self.prepare_final_star()
         with ThreadPoolExecutor(max_workers=4) as pool:
-            results = list(pool.map(self.complete, ["a", "b", "a", "b"]))
+            results = list(pool.map(lambda _: self.complete("c", kind="escape"), range(4)))
         self.assertTrue(all(r.status_code == 200 for r in results))
         self.assertEqual(sum(r.json()["coupon_issued"] for r in results), 1)
         self.assertEqual(len(self.coupons().json()), 1)
@@ -100,28 +102,31 @@ class CouponsTests(unittest.TestCase):
         self.assertEqual(sorted(r.status_code for r in results), [200, 409, 409, 409])
 
     def test_issuance_failure_rolls_back_star(self):
-        self.enable_coupon("1")
-        self.checkin()
+        self.prepare_final_star()
         with patch("app.routers.stars.issue_coupon", side_effect=RuntimeError("test failure")):
             with self.assertRaises(RuntimeError):
-                self.complete()
-        self.assertEqual(self.stars().json()["total_stars"], 0)
+                self.complete("c", kind="escape")
+        self.assertEqual(self.stars().json()["total_stars"], 5)
         self.assertEqual(self.coupons().json(), [])
-        self.assertTrue(self.complete().json()["coupon_issued"])
+        self.assertTrue(self.complete("c", kind="escape").json()["coupon_issued"])
 
     def test_config_change_preserves_issued_benefit(self):
         coupon = self.earn_coupon()
-        with patch.dict("os.environ", {"DEMO_COUPON_TITLE": "changed", "DEMO_COUPON_REQUIRED_STARS": "3"}):
+        with patch.dict("os.environ", {"DEMO_COUPON_TITLE": "changed", "DEMO_COUPON_BENEFIT": "changed benefit"}):
             init_db()
+            second = self.new_session()
+            for spot in "abc":
+                self.checkin(spot, session_id=second)
+                for kind in ["role", "escape"]:
+                    self.complete(spot, session_id=second, kind=kind)
+            self.assertEqual(self.coupons(second).json()[0]["title"], "changed")
+            self.assertEqual(self.coupons(second).json()[0]["benefit"], "changed benefit")
         self.assertEqual(self.coupons().json()[0], coupon)
-        for value in ["0", "-1", "bad"]:
-            with patch.dict("os.environ", {"DEMO_COUPON_REQUIRED_STARS": value}):
-                with self.assertRaises(ValueError):
-                    coupon_required_stars()
 
     def test_coupon_openapi(self):
         spec = self.client.get("/openapi.json").json()
-        redeem = spec["paths"]["/api/v1/coupons/{coupon_id}/redeem"]["post"]
+        self.assertNotIn("/api/v1/coupons/{coupon_id}/redeem", spec["paths"])
+        redeem = spec["paths"]["/api/v1/coupons/redeem-by-code"]["post"]
         self.assertIn("409", redeem["responses"])
         self.assertEqual(redeem["responses"]["200"]["content"]["application/json"]["schema"]["$ref"],
                          "#/components/schemas/CouponResponse")
@@ -194,6 +199,8 @@ class CouponsTests(unittest.TestCase):
         coupon = self.earn_coupon()
         # v0.1.0 형식(store_id 없음)으로 실제 쿠폰을 보관한 뒤 초기화를 반복한다.
         with connection() as db:
+            db.execute("CREATE TABLE coupon_templates (id TEXT PRIMARY KEY)")
+            db.execute("INSERT INTO coupon_templates VALUES ('demo-cafe')")
             db.execute("""
                 CREATE TABLE old_coupons (
                     id TEXT PRIMARY KEY,
@@ -205,7 +212,7 @@ class CouponsTests(unittest.TestCase):
                     UNIQUE(session_id, template_id)
                 )
             """)
-            db.execute("INSERT INTO old_coupons SELECT id, session_id, template_id, title, "
+            db.execute("INSERT INTO old_coupons SELECT id, session_id, 'demo-cafe', title, "
                        "benefit, code, status, issued_at, redeemed_at FROM coupons")
             db.execute("DROP TABLE coupons")
             db.execute("ALTER TABLE old_coupons RENAME TO coupons")
@@ -254,7 +261,7 @@ class CouponsTests(unittest.TestCase):
                 for response in [self.redeem(coupon["id"]), self.redeem_code(coupon["code"])]:
                     self.assertEqual(response.status_code, 410)
                     self.assertEqual(response.json(), {"detail": "coupon_expired"})
-                self.assertFalse(self.complete().json()["coupon_issued"])
+                self.assertFalse(self.complete("c", kind="escape").json()["coupon_issued"])
         with connection() as db:
             stored = db.execute("SELECT redeemed_at, store_id FROM coupons WHERE id = ?", (coupon["id"],)).fetchone()
             self.assertIsNone(stored["redeemed_at"])
@@ -287,5 +294,5 @@ class CouponsTests(unittest.TestCase):
         self.assertIn("expires_at", schema["required"])
         self.assertEqual(schema["properties"]["expires_at"]["format"], "date-time")
         self.assertIn("expired", schema["properties"]["status"]["enum"])
-        for path in ["/api/v1/coupons/redeem-by-code", "/api/v1/coupons/{coupon_id}/redeem"]:
+        for path in ["/api/v1/coupons/redeem-by-code"]:
             self.assertIn("410", spec["paths"][path]["post"]["responses"])

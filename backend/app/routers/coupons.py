@@ -81,6 +81,7 @@ def redeem_by_code(body: RedeemByCodeRequest, db: sqlite3.Connection = Depends(g
 
 @router.post(
     "/coupons/{coupon_id}/redeem", response_model=CouponResponse,
+    include_in_schema=False,
     responses={
         404: {"model": ErrorResponse, "description": "세션 또는 해당 세션의 쿠폰 없음"},
         409: {"model": ErrorResponse, "description": "이미 사용한 쿠폰"},

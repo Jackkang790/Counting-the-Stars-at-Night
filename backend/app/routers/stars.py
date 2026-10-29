@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ..config import stars_per_spot
+from ..rules import REQUIRED_STARS
 from ..coupons import issue_coupon
 from ..database import get_db
 from ..schemas.session import ErrorResponse
@@ -20,7 +20,7 @@ def require_session(db: sqlite3.Connection, session_id: str) -> None:
 
 def total_stars(db: sqlite3.Connection, session_id: str) -> int:
     return db.execute(
-        "SELECT COALESCE(SUM(amount), 0) FROM stars WHERE session_id = ?", (session_id,),
+        "SELECT COUNT(*) FROM stars WHERE session_id = ?", (session_id,),
     ).fetchone()[0]
 
 
@@ -38,24 +38,25 @@ def complete(body: CompleteRequest, db: sqlite3.Connection = Depends(get_db)):
     실제 AR 완료·시청 시간을 검증하지 않는다. 재요청에는 별을 추가 지급하지 않는다.
     조건을 충족하면 같은 트랜잭션에서 쿠폰을 한 번만 발급한다.
     """
-    amount = stars_per_spot()
     # 동시 완료 요청의 판정과 지급을 직렬화한다. UNIQUE 제약도 중복을 방지한다.
     db.execute("BEGIN IMMEDIATE")
     require_session(db, body.session_id)
     if db.execute("SELECT 1 FROM spots WHERE id = ?", (body.spot_id,)).fetchone() is None:
         raise HTTPException(status_code=404, detail="spot_not_found")
+    if (body.spot_id, body.kind) not in REQUIRED_STARS:
+        raise HTTPException(status_code=422, detail="unsupported_experience")
     if db.execute(
         "SELECT 1 FROM visits WHERE session_id = ? AND spot_id = ?",
         (body.session_id, body.spot_id),
     ).fetchone() is None:
         raise HTTPException(status_code=409, detail="checkin_required")
     cursor = db.execute(
-        "INSERT INTO stars (id, session_id, spot_id, amount, created_at) VALUES (?, ?, ?, ?, ?) "
-        "ON CONFLICT(session_id, spot_id) DO NOTHING",
-        (str(uuid4()), body.session_id, body.spot_id, amount, datetime.now(timezone.utc).isoformat()),
+        "INSERT INTO stars (id, session_id, spot_id, kind, created_at) VALUES (?, ?, ?, ?, ?) "
+        "ON CONFLICT(session_id, spot_id, kind) DO NOTHING",
+        (str(uuid4()), body.session_id, body.spot_id, body.kind, datetime.now(timezone.utc).isoformat()),
     )
     total = total_stars(db, body.session_id)
-    coupon_issued = issue_coupon(db, body.session_id, total)
+    coupon_issued = issue_coupon(db, body.session_id)
     result = {
         "star_awarded": cursor.rowcount == 1,
         "total_stars": total,
@@ -76,9 +77,10 @@ def list_stars(
 ):
     require_session(db, session_id)
     rows = db.execute(
-        "SELECT stars.spot_id, stars.amount, stars.created_at FROM stars "
+        "SELECT stars.spot_id, stars.kind, stars.created_at FROM stars "
         "JOIN spots ON spots.id = stars.spot_id "
-        "WHERE stars.session_id = ? ORDER BY spots.display_order", (session_id,),
+        "WHERE stars.session_id = ? ORDER BY spots.display_order, "
+        "CASE stars.kind WHEN 'role' THEN 0 ELSE 1 END", (session_id,),
     ).fetchall()
     stars = [dict(row) for row in rows]
-    return {"stars": stars, "total_stars": sum(row["amount"] for row in stars)}
+    return {"stars": stars, "total_stars": len(stars)}

@@ -39,7 +39,6 @@ class DemoIntegrationTests(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         env = patch.dict(os.environ, {
             "DATABASE_PATH": str(Path(tmp.name) / "demo.sqlite3"),
-            "DEMO_STARS_PER_SPOT": "1", "DEMO_COUPON_REQUIRED_STARS": "3",
         })
         env.start()
         self.addCleanup(env.stop)
@@ -53,21 +52,25 @@ class DemoIntegrationTests(unittest.TestCase):
         self.assertEqual(session.status_code, 201)
         session_id = session.json()["session_id"]
         spots = self.client.get("/api/v1/spots").json()
-        for index, spot in enumerate(spots, start=1):
+        total = 0
+        for spot in spots:
             body = {"session_id": session_id, "spot_id": spot["id"]}
             self.assertEqual(self.client.post("/api/v1/checkin", json=body).status_code, 200)
-            completed = self.client.post("/api/v1/experiences/complete", json=body)
-            self.assertEqual(completed.status_code, 200)
-            self.assertEqual(completed.json(), {
-                "star_awarded": True, "total_stars": index, "coupon_issued": index == 3,
-            })
+            for kind in ["role", "escape"]:
+                completed = self.client.post("/api/v1/experiences/complete", json={**body, "kind": kind})
+                self.assertEqual(completed.status_code, 200)
+                total += 1
+                self.assertEqual(completed.json(), {
+                    "star_awarded": True, "total_stars": total, "coupon_issued": total == 6,
+                })
         params = {"session_id": session_id}
-        self.assertEqual(self.client.get("/api/v1/stars", params=params).json()["total_stars"], 3)
+        self.assertEqual(self.client.get("/api/v1/stars", params=params).json()["total_stars"], 6)
         coupons = self.client.get("/api/v1/coupons", params=params).json()
         self.assertEqual(len(coupons), 1)
-        path = f'/api/v1/coupons/{coupons[0]["id"]}/redeem'
-        self.assertEqual(self.client.post(path, json=params).status_code, 200)
-        self.assertEqual(self.client.post(path, json=params).status_code, 409)
+        path = '/api/v1/coupons/redeem-by-code'
+        redemption = {"code": coupons[0]["code"], "store_id": "demo-store-1"}
+        self.assertEqual(self.client.post(path, json=redemption).status_code, 200)
+        self.assertEqual(self.client.post(path, json=redemption).status_code, 409)
         self.assertEqual(len(self.client.get("/api/v1/stores").json()), 3)
 
     def test_cors_allowed_and_disallowed_origins(self):

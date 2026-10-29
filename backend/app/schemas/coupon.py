@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class RedeemRequest(BaseModel):
-    session_id: str = Field(min_length=1, max_length=128)
+    session_id: str = Field(min_length=1, max_length=128, description="쿠폰을 발급받은 이용자의 투어 세션 ID")
 
 
 class RedeemByCodeRequest(BaseModel):
@@ -15,7 +15,6 @@ class RedeemByCodeRequest(BaseModel):
 
 class CouponResponse(BaseModel):
     id: str
-    template_id: str
     title: str
     benefit: str
     code: str

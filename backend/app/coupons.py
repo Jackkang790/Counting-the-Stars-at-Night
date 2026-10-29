@@ -2,10 +2,11 @@
 
 import secrets
 import sqlite3
+import os
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from .seed import DEMO_TEMPLATE_ID
+from .rules import REQUIRED_STARS
 from .config import coupon_valid_days
 
 
@@ -24,15 +25,14 @@ def coupon_response(coupon, now: datetime | None = None) -> dict:
     return result
 
 
-def issue_coupon(db: sqlite3.Connection, session_id: str, total_stars: int) -> bool:
-    template = db.execute(
-        "SELECT * FROM coupon_templates WHERE id = ?", (DEMO_TEMPLATE_ID,),
-    ).fetchone()
-    if total_stars < template["required_stars"]:
+def issue_coupon(db: sqlite3.Connection, session_id: str) -> bool:
+    collected = {(row["spot_id"], row["kind"]) for row in db.execute(
+        "SELECT spot_id, kind FROM stars WHERE session_id = ?", (session_id,),
+    )}
+    if not REQUIRED_STARS.issubset(collected):
         return False
     if db.execute(
-        "SELECT 1 FROM coupons WHERE session_id = ? AND template_id = ?",
-        (session_id, template["id"]),
+        "SELECT 1 FROM coupons WHERE session_id = ?", (session_id,),
     ).fetchone():
         return False
     # 12자리 표시용 번호. QR 인증이나 로그인 자격증명으로 사용하지 않는다.
@@ -44,9 +44,10 @@ def issue_coupon(db: sqlite3.Connection, session_id: str, total_stars: int) -> b
     expires_at = issued_at + timedelta(days=coupon_valid_days())
     db.execute(
         "INSERT INTO coupons "
-        "(id, session_id, template_id, title, benefit, code, status, issued_at, expires_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, 'issued', ?, ?)",
-        (str(uuid4()), session_id, template["id"], template["title"], template["benefit"],
+        "(id, session_id, title, benefit, code, status, issued_at, expires_at) "
+        "VALUES (?, ?, ?, ?, ?, 'issued', ?, ?)",
+        (str(uuid4()), session_id, os.environ.get("DEMO_COUPON_TITLE", "[데모] 카페 체험 쿠폰"),
+         os.environ.get("DEMO_COUPON_BENEFIT", "[가상 혜택] 음료 1,000원 할인"),
          code, issued_at.isoformat(), expires_at.isoformat()),
     )
     return True

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -6,6 +7,7 @@ from pydantic import BaseModel, Field
 class CompleteRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=128)
     spot_id: str = Field(min_length=1, max_length=128)
+    kind: Literal["role", "escape"]
 
 
 class CompleteResponse(BaseModel):
@@ -16,7 +18,7 @@ class CompleteResponse(BaseModel):
 
 class StarResponse(BaseModel):
     spot_id: str
-    amount: int
+    kind: Literal["role", "escape"]
     created_at: datetime
 
 

@@ -9,7 +9,6 @@ from unittest.mock import patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.config import stars_per_spot
 from app.database import connection, init_db
 from app.routers.sessions import router as sessions_router
 from app.routers.stars import router as stars_router
@@ -21,8 +20,6 @@ class StarsTests(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         env = patch.dict(os.environ, {
             "DATABASE_PATH": str(Path(tmp.name) / "test.sqlite3"),
-            "DEMO_STARS_PER_SPOT": "1",
-            "DEMO_COUPON_REQUIRED_STARS": "99",
             "DEMO_COUPON_VALID_DAYS": "14",
         })
         env.start()
@@ -50,9 +47,9 @@ class StarsTests(unittest.TestCase):
         })
         self.assertEqual(response.status_code, 200)
 
-    def complete(self, spot_id="a", session_id=None):
+    def complete(self, spot_id="a", session_id=None, kind="role"):
         return self.client.post("/api/v1/experiences/complete", json={
-            "session_id": session_id or self.session_id, "spot_id": spot_id,
+            "session_id": session_id or self.session_id, "spot_id": spot_id, "kind": kind,
         })
 
     def stars(self, session_id=None):
@@ -69,14 +66,32 @@ class StarsTests(unittest.TestCase):
             self.assertEqual(response.json(), {
                 "star_awarded": True, "total_stars": i, "coupon_issued": False,
             })
-        self.assertEqual(self.complete().json(), {
+        self.assertEqual(self.complete("b").json(), {
             "star_awarded": False, "total_stars": 3, "coupon_issued": False,
         })
         init_db()
         payload = self.stars().json()
         self.assertEqual(payload["total_stars"], 3)
         self.assertEqual([s["spot_id"] for s in payload["stars"]], ["a", "b", "c"])
-        self.assertTrue(all(s["amount"] == 1 and s["created_at"] for s in payload["stars"]))
+        self.assertTrue(all(s["kind"] == "role" and s["created_at"] for s in payload["stars"]))
+
+    def test_switching_location_blocks_previous_spot_and_preserves_stars(self):
+        self.checkin("a")
+        self.assertEqual(self.complete("a").json()["total_stars"], 1)
+        self.checkin("b")
+        for kind in ["role", "escape"]:
+            response = self.complete("a", kind=kind)
+            self.assertEqual(response.status_code, 409)
+            self.assertEqual(response.json(), {"detail": "checkin_required"})
+        self.assertEqual(self.complete("c").status_code, 409)
+        self.assertEqual(self.complete("b").json()["total_stars"], 2)
+        init_db()
+        self.assertEqual(self.complete("a", kind="escape").status_code, 409)
+        self.assertEqual(self.stars().json()["total_stars"], 2)
+        self.checkin("a")
+        self.assertFalse(self.complete("a").json()["star_awarded"])
+        self.assertEqual(self.complete("a", kind="escape").json()["total_stars"], 3)
+        self.assertEqual(self.complete("b", kind="escape").status_code, 409)
 
     def test_session_isolation_and_required_visit(self):
         self.checkin()
@@ -115,16 +130,18 @@ class StarsTests(unittest.TestCase):
         self.assertEqual(sum(r.json()["star_awarded"] for r in responses), 1)
         self.assertTrue(all(r.json()["total_stars"] == 1 for r in responses))
 
-    def test_demo_amount_is_configurable_and_not_retroactive(self):
+    def test_kinds_are_separate_and_invalid_kinds_do_not_award(self):
         self.checkin()
-        with patch.dict(os.environ, {"DEMO_STARS_PER_SPOT": "2"}):
-            self.assertEqual(self.complete().json()["total_stars"], 2)
+        self.assertEqual(self.complete(kind="escape").json()["total_stars"], 1)
+        self.assertEqual(self.complete(kind="role").json()["total_stars"], 2)
         self.assertFalse(self.complete().json()["star_awarded"])
+        for kind in ["unknown", "ROLE", "", None]:
+            self.assertEqual(self.complete(kind=kind).status_code, 422)
+        self.assertEqual(self.client.post("/api/v1/experiences/complete", json={
+            "session_id": self.session_id, "spot_id": "a",
+        }).status_code, 422)
         self.assertEqual(self.stars().json()["total_stars"], 2)
-        for invalid in ["0", "-1", "bad"]:
-            with patch.dict(os.environ, {"DEMO_STARS_PER_SPOT": invalid}):
-                with self.assertRaises(ValueError):
-                    stars_per_spot()
+        self.assertEqual([s["kind"] for s in self.stars().json()["stars"]], ["role", "escape"])
 
     def test_openapi_contract(self):
         spec = self.client.get("/openapi.json").json()
@@ -132,6 +149,9 @@ class StarsTests(unittest.TestCase):
         self.assertEqual(complete["responses"]["200"]["content"]["application/json"]["schema"]["$ref"],
                          "#/components/schemas/CompleteResponse")
         self.assertIn("409", complete["responses"])
+        request = spec["components"]["schemas"]["CompleteRequest"]
+        self.assertIn("kind", request["required"])
+        self.assertEqual(request["properties"]["kind"]["enum"], ["role", "escape"])
         query = spec["paths"]["/api/v1/stars"]["get"]["parameters"][0]
         self.assertEqual(query["name"], "session_id")
         self.assertTrue(query["required"])

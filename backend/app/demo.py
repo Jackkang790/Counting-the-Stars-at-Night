@@ -5,10 +5,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
 
 from . import __version__
 from .config import cors_origins
 from .database import init_db
+from .demo_scenarios import GUIDE, TAGS, seed_demo_scenarios, walkthrough_schema
 from .routers.coupons import router as coupons_router
 from .routers.sessions import router as sessions_router
 from .routers.spots import router as spots_router
@@ -19,6 +21,7 @@ from .routers.stores import router as stores_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    seed_demo_scenarios()
     yield
 
 
@@ -28,6 +31,8 @@ def create_app() -> FastAPI:
         docs_url=None, redoc_url=None,
         # 명세 파일 위치 기준으로 API를 호출해 프록시의 경로 접두사도 유지한다.
         servers=[{"url": "."}], root_path_in_servers=False,
+        description=GUIDE, openapi_tags=TAGS,
+        swagger_ui_parameters={"docExpansion": "list", "defaultModelsExpandDepth": -1},
     )
     app.add_middleware(
         CORSMiddleware,
@@ -42,11 +47,24 @@ def create_app() -> FastAPI:
     @app.get("/docs", include_in_schema=False)
     def docs():
         # /proxy/8000/docs로 접속해도 /proxy/8000/openapi.json을 요청한다.
-        return get_swagger_ui_html(openapi_url="./openapi.json", title=f"{app.title} - Swagger UI")
+        return get_swagger_ui_html(
+            openapi_url="./openapi.json", title=f"{app.title} - Swagger UI",
+            swagger_ui_parameters=app.swagger_ui_parameters,
+        )
 
     @app.get("/api/v1/health", tags=["health"])
     def health():
         return {"status": "ok", "service": "starry-night-api"}
+
+    def openapi():
+        if app.openapi_schema is None:
+            app.openapi_schema = walkthrough_schema(get_openapi(
+                title=app.title, version=app.version, description=app.description,
+                routes=app.routes, tags=TAGS, servers=app.servers,
+            ))
+        return app.openapi_schema
+
+    app.openapi = openapi
 
     return app
 

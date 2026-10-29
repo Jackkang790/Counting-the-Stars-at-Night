@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
 from unittest.mock import patch
@@ -56,8 +57,33 @@ class SessionsTests(unittest.TestCase):
             self.assertEqual(response.json(), {"spot_id": spot_id, "arrived": True})
         init_db()
         with connection() as db:
-            self.assertEqual(db.execute("SELECT COUNT(*) FROM visits").fetchone()[0], 3)
-            self.assertEqual(db.execute("SELECT COUNT(*) FROM visits WHERE session_id = ?", (first,)).fetchone()[0], 2)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM visits").fetchone()[0], 2)
+            self.assertEqual(db.execute("SELECT spot_id FROM visits WHERE session_id = ?", (first,)).fetchone()[0], "b")
+            self.assertEqual(db.execute("SELECT spot_id FROM visits WHERE session_id = ?", (second,)).fetchone()[0], "a")
+
+    def test_same_spot_retry_preserves_record_and_invalid_switch_preserves_location(self):
+        session_id = self.new_session()
+        body = {"session_id": session_id, "spot_id": "a"}
+        self.assertEqual(self.client.post("/api/v1/checkin", json=body).status_code, 200)
+        with connection() as db:
+            before = dict(db.execute("SELECT * FROM visits WHERE session_id = ?", (session_id,)).fetchone())
+        self.assertEqual(self.client.post("/api/v1/checkin", json=body).status_code, 200)
+        self.assertEqual(self.client.post("/api/v1/checkin", json={**body, "spot_id": "unknown"}).status_code, 404)
+        with connection() as db:
+            after = dict(db.execute("SELECT * FROM visits WHERE session_id = ?", (session_id,)).fetchone())
+        self.assertEqual(before, after)
+
+    def test_concurrent_checkins_keep_one_current_location(self):
+        session_id = self.new_session()
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            responses = list(pool.map(lambda spot: self.client.post("/api/v1/checkin", json={
+                "session_id": session_id, "spot_id": spot,
+            }), "abc"))
+        self.assertTrue(all(response.status_code == 200 for response in responses))
+        with connection() as db:
+            rows = db.execute("SELECT spot_id FROM visits WHERE session_id = ?", (session_id,)).fetchall()
+            self.assertEqual(len(rows), 1)
+            self.assertIn(rows[0]["spot_id"], "abc")
 
     def test_missing_resources_and_invalid_input(self):
         session_id = self.new_session()

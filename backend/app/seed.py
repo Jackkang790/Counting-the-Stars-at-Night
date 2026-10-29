@@ -1,9 +1,6 @@
 """초기 스팟과 가상 매장, 데모 쿠폰 설정."""
 
 import sqlite3
-import os
-
-from .config import coupon_required_stars
 
 
 # 기존 프론트 API.md의 스팟 ID를 유지한다.
@@ -20,21 +17,6 @@ def seed_spots(db: sqlite3.Connection) -> None:
         "INSERT INTO spots (id, name, description, display_order) "
         "VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING",
         SPOTS,
-    )
-
-
-DEMO_TEMPLATE_ID = "demo-cafe"
-
-
-def seed_coupon_template(db: sqlite3.Connection) -> None:
-    # 설정은 시작 시 읽는다. 재시작 시 기준은 갱신하되 기존 발급 쿠폰은 보존한다.
-    db.execute(
-        "INSERT INTO coupon_templates (id, title, benefit, required_stars) VALUES (?, ?, ?, ?) "
-        "ON CONFLICT(id) DO UPDATE SET title=excluded.title, benefit=excluded.benefit, "
-        "required_stars=excluded.required_stars",
-        (DEMO_TEMPLATE_ID, os.environ.get("DEMO_COUPON_TITLE", "[데모] 카페 체험 쿠폰"),
-         os.environ.get("DEMO_COUPON_BENEFIT", "[가상 혜택] 음료 1,000원 할인"),
-         coupon_required_stars()),
     )
 
 
