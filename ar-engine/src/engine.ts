@@ -30,6 +30,15 @@ import { buildPlaceholderArtwork } from "./scenes/placeholder";
 
 const DEFAULT_MANIFEST_URL = "/models/asset-manifest.json";
 
+// 배포 base 경로(GitHub Pages 서브경로 등) 대응 — 루트 절대 경로(/models/..)를 base 기준으로 해석.
+// 매니페스트의 절대 url("/models/..")도 동일하게 정규화하므로 Codex 에셋 파일을 수정하지 않는다.
+const BASE_URL: string = import.meta.env.BASE_URL || "/";
+function withBase(url: string): string {
+  if (!url.startsWith("/")) return url; // 상대/절대 URL은 그대로
+  const b = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
+  return b + url;
+}
+
 export class AREngine implements ARExperience {
   private readonly bus = new EventBus();
   private readonly options: AREngineOptions;
@@ -282,7 +291,7 @@ export class AREngine implements ARExperience {
       const assetId = await this.resolveAssetId(req);
       this.assetId = assetId;
       if (!req.overrides?.forcePlaceholder) {
-        const manifest = await loadAssetManifest(manifestUrl);
+        const manifest = await loadAssetManifest(withBase(manifestUrl));
         asset = findAsset(manifest, assetId);
       }
     } catch (err) {
@@ -296,7 +305,7 @@ export class AREngine implements ARExperience {
     if (asset?.url && !req.overrides?.forcePlaceholder) {
       const t0 = performance.now();
       try {
-        model = await loadGLB(asset.url, (loaded, total) =>
+        model = await loadGLB(withBase(asset.url), (loaded, total) =>
           this.bus.emit("assetProgress", { assetId: this.assetId, loaded, total })
         );
         loadedUrl = asset.url;
@@ -343,7 +352,7 @@ export class AREngine implements ARExperience {
   private async loadStandaloneExperience(req: StartRequest, manifestUrl: string): Promise<void> {
     let man;
     try {
-      man = await loadStandaloneManifest(manifestUrl);
+      man = await loadStandaloneManifest(withBase(manifestUrl));
     } catch (err) {
       const msg = `정합 매니페스트 로드 실패: ${err instanceof Error ? err.message : String(err)}`;
       console.error(`[ar-engine] ${msg}`);
@@ -355,7 +364,7 @@ export class AREngine implements ARExperience {
     let model;
     const t0 = performance.now();
     try {
-      model = await loadGLB(man.url, (loaded, total) =>
+      model = await loadGLB(withBase(man.url), (loaded, total) =>
         this.bus.emit("assetProgress", { assetId: this.assetId, loaded, total })
       );
       console.info(`[ar-engine] GLB 로드 시간: ${Math.round(performance.now() - t0)}ms (${man.url})`);

@@ -5,7 +5,10 @@
   "description": "별 헤는 밤 · 테미오래 — WebXR AR 엔진 (AR 담당). 지도·쿠폰·도장·게임 UI는 범위 밖.",
   "type": "module",
   "scripts": {
+    "stage:assets": "node scripts/stage-assets.mjs",
+    "predev": "node scripts/stage-assets.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/stage-assets.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",

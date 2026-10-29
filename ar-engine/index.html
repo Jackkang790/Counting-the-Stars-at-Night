@@ -47,55 +47,46 @@
         font-size: 0.72rem; color: #cfcfe0; background: #1f1f29; border: 1px solid #33333f;
         border-radius: 6px; padding: 5px 7px; margin: 2px 3px 2px 0; }
       #cal-save { background: #2b5bd7 !important; } #cal-reset { background: #5a2b2b !important; }
+      .hintline { font-size: 0.78rem; color: #9a9aa8; margin: 4px 0 2px; }
+      details.card summary { cursor: pointer; font-weight: 600; }
+      #ar-glb { position: absolute; top: 12px; left: 10px; font-family: ui-monospace, Menlo, monospace;
+        font-size: 0.68rem; color: #8fe; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 6px; max-width: 70vw; }
+      #ar-error { position: absolute; top: 50%; left: 8px; right: 8px; transform: translateY(-50%);
+        display: none; background: rgba(120,20,20,0.92); color: #fff; padding: 14px 16px; border-radius: 10px;
+        font-size: 0.9rem; pointer-events: auto; }
     </style>
   </head>
   <body>
     <div id="app">
-      <h1>별 헤는 밤 · AR 엔진 테스트 하네스</h1>
-      <div class="sub">엔진 검증용 페이지 — 전체 게임 UI 아님 (지도/도장/쿠폰 제외)</div>
+      <h1>테미오래 WebAR 실기기 테스트</h1>
+      <div class="sub">실제 카메라 AR 테스트 · Android Chrome 전용 · 전체 게임 UI 아님</div>
+
+      <div class="card" id="support">지원 여부 확인 중…</div>
 
       <div class="card">
-        <div id="support">지원 여부 확인 중…</div>
+        <button id="start-star" class="primary">① 별의 새싹 AR 테스트</button>
+        <div class="hintline">바닥 인식 → 작품 배치 → Emerge · Idle · Disappear</div>
+        <button id="start-align" class="primary" style="margin-top:12px;">② 외벽 정합 AR 테스트</button>
+        <div class="hintline">※ <strong>시험용</strong> 외벽 모델(실제 관사 16호 아님) · 레이어 토글 · 수동 보정</div>
+        <div class="row" style="margin-top:12px;">
+          <button id="check" style="flex:1;">기기 AR 지원 확인</button>
+          <button id="diag" style="flex:1;">환경 진단</button>
+        </div>
+        <div id="loadStatus" class="sub" style="margin:8px 0 0;">에셋 로드 상태: 대기</div>
       </div>
 
-      <div class="card">
-        <div class="row"><label>건물</label>
-          <select id="buildingId">
-            <option value="residence-16">관사 16호</option>
-            <option value="residence-42">관사 42호(소제동)</option>
-            <option value="heredium">헤레디움(인동)</option>
-          </select>
-        </div>
-        <div class="row"><label>스팟</label>
-          <select id="spotId"><option value="spot-01">spot-01</option></select>
-        </div>
-        <div class="row"><label>체험</label>
-          <select id="experienceId">
-            <option value="emergent-artwork">빈 땅 작품 (emergent-artwork)</option>
-            <option value="facade-alignment">외벽 정합 시험 (alignment)</option>
-          </select>
-        </div>
-        <div class="row"><label>모드</label>
-          <select id="mode"><option value="demo">demo(행사장)</option><option value="geo">geo(실제)</option></select>
-        </div>
-        <div class="row"><label>임시 모델</label>
-          <select id="forcePlaceholder"><option value="false">Codex GLB 우선</option><option value="true">임시 모델 강제</option></select>
-        </div>
-        <div class="row"><button id="start" class="primary" disabled>AR 시작</button></div>
-        <div class="row"><button id="diag" style="width:100%;">환경 진단 로그</button></div>
-        <div id="loadStatus" class="sub" style="margin:4px 0 0;">에셋 로드 상태: 대기</div>
-      </div>
-
-      <div class="card">
-        <div class="row" style="justify-content: space-between;"><strong>이벤트 로그</strong>
-          <button id="clear" style="padding:4px 10px;">지우기</button></div>
+      <details class="card">
+        <summary>이벤트 로그</summary>
+        <div class="row" style="justify-content:flex-end;"><button id="clear" style="padding:4px 10px;">지우기</button></div>
         <div id="log"></div>
-      </div>
+      </details>
     </div>
 
     <div id="ar-overlay">
+      <div id="ar-glb">GLB: —</div>
       <div id="ar-hint">바닥을 비추세요…</div>
       <div id="ar-telemetry">telemetry…</div>
+      <div id="ar-error"></div>
       <button id="ar-dismiss">작품 퇴장(Disappear)</button>
 
       <!-- 건물 정합 보정 패널 (alignment 체험에서만 표시) -->
