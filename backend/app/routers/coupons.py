@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..database import get_db
-from ..schemas.coupon import CouponResponse, RedeemRequest
+from ..schemas.coupon import CouponResponse, RedeemByCodeRequest, RedeemRequest
 from ..schemas.session import ErrorResponse
 
 router = APIRouter(prefix="/api/v1", tags=["coupons"])
@@ -13,6 +13,20 @@ router = APIRouter(prefix="/api/v1", tags=["coupons"])
 def require_session(db: sqlite3.Connection, session_id: str) -> None:
     if not db.execute("SELECT 1 FROM sessions WHERE id = ?", (session_id,)).fetchone():
         raise HTTPException(status_code=404, detail="session_not_found")
+
+
+def mark_redeemed(db: sqlite3.Connection, coupon_id: str, store_id: str | None = None):
+    """호출자의 트랜잭션에서 두 사용 경로 모두 한 번만 처리한다."""
+    cursor = db.execute(
+        "UPDATE coupons SET status = 'redeemed', redeemed_at = ?, store_id = ? "
+        "WHERE id = ? AND status = 'issued'",
+        (datetime.now(timezone.utc).isoformat(), store_id, coupon_id),
+    )
+    if cursor.rowcount != 1:
+        raise HTTPException(status_code=409, detail="already_redeemed")
+    result = dict(db.execute("SELECT * FROM coupons WHERE id = ?", (coupon_id,)).fetchone())
+    db.commit()
+    return result
 
 
 @router.get(
@@ -32,6 +46,31 @@ def list_coupons(
 
 
 @router.post(
+    "/coupons/redeem-by-code", response_model=CouponResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "매장 또는 쿠폰 없음"},
+        409: {"model": ErrorResponse, "description": "사용 불가 매장 또는 이미 사용한 쿠폰"},
+    },
+    summary="쿠폰 번호로 데모 매장 사용 처리",
+)
+def redeem_by_code(body: RedeemByCodeRequest, db: sqlite3.Connection = Depends(get_db)):
+    """손님 session_id 없이 12자리 번호로 사용한다. 매장 자격증명은 검증하지 않는다.
+
+    매장 등록과 accepts_coupon 상태를 확인한다. QR 서명 인증은 제공하지 않는다.
+    """
+    db.execute("BEGIN IMMEDIATE")
+    store = db.execute("SELECT accepts_coupon FROM stores WHERE id = ?", (body.store_id,)).fetchone()
+    if store is None:
+        raise HTTPException(status_code=404, detail="store_not_found")
+    if not store["accepts_coupon"]:
+        raise HTTPException(status_code=409, detail="store_not_accepting_coupon")
+    coupon = db.execute("SELECT id FROM coupons WHERE code = ?", (body.code,)).fetchone()
+    if coupon is None:
+        raise HTTPException(status_code=404, detail="coupon_not_found")
+    return mark_redeemed(db, coupon["id"], body.store_id)
+
+
+@router.post(
     "/coupons/{coupon_id}/redeem", response_model=CouponResponse,
     responses={
         404: {"model": ErrorResponse, "description": "세션 또는 해당 세션의 쿠폰 없음"},
@@ -48,13 +87,4 @@ def redeem(coupon_id: str, body: RedeemRequest, db: sqlite3.Connection = Depends
     ).fetchone()
     if row is None:
         raise HTTPException(status_code=404, detail="coupon_not_found")
-    cursor = db.execute(
-        "UPDATE coupons SET status = 'redeemed', redeemed_at = ? "
-        "WHERE id = ? AND session_id = ? AND status = 'issued'",
-        (datetime.now(timezone.utc).isoformat(), coupon_id, body.session_id),
-    )
-    if cursor.rowcount != 1:
-        raise HTTPException(status_code=409, detail="already_redeemed")
-    result = dict(db.execute("SELECT * FROM coupons WHERE id = ?", (coupon_id,)).fetchone())
-    db.commit()
-    return result
+    return mark_redeemed(db, row["id"])

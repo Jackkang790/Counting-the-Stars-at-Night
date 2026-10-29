@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import patch
 
 from app.config import coupon_required_stars
-from app.database import init_db
+from app.database import connection, init_db
 from app.routers.coupons import router
 import test_stars
 
@@ -126,3 +126,99 @@ class CouponsTests(unittest.TestCase):
                          "#/components/schemas/CouponResponse")
         self.assertEqual(spec["paths"]["/api/v1/coupons"]["get"]["responses"]["200"]
                          ["content"]["application/json"]["schema"]["type"], "array")
+
+    def redeem_code(self, code, store_id="demo-store-1"):
+        return self.client.post("/api/v1/coupons/redeem-by-code", json={
+            "code": code, "store_id": store_id,
+        })
+
+    def test_redeem_by_code_records_store_without_session(self):
+        coupon = self.earn_coupon()
+        self.assertIsNone(coupon["store_id"])
+        response = self.redeem_code(coupon["code"])
+        self.assertEqual(response.status_code, 200)
+        used = response.json()
+        self.assertEqual(used["id"], coupon["id"])
+        self.assertEqual(used["status"], "redeemed")
+        self.assertEqual(used["store_id"], "demo-store-1")
+        self.assertIsNotNone(used["redeemed_at"])
+        self.assertNotIn("session_id", used)
+        self.assertEqual(self.redeem(coupon["id"]).status_code, 409)
+        self.assertEqual(self.redeem_code(coupon["code"], "demo-store-2").status_code, 409)
+        init_db()
+        self.assertEqual(self.coupons().json(), [used])
+
+    def test_redeem_by_code_rejects_store_and_unknown_coupon(self):
+        coupon = self.earn_coupon()
+        for store_id, status, detail in [
+            ("missing", 404, "store_not_found"),
+            ("demo-store-3", 409, "store_not_accepting_coupon"),
+        ]:
+            response = self.redeem_code(coupon["code"], store_id)
+            self.assertEqual(response.status_code, status)
+            self.assertEqual(response.json(), {"detail": detail})
+            self.assertEqual(self.coupons().json()[0], coupon)
+        unknown_code = "000000000000" if coupon["code"] != "000000000000" else "000000000001"
+        response = self.redeem_code(unknown_code)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json(), {"detail": "coupon_not_found"})
+
+    def test_redeem_by_code_validates_ascii_12_digit_string(self):
+        coupon = self.earn_coupon()
+        for code in [123456789012, "123", "1234567890123", "abcdefghijkl",
+                     "１２３４５６７８９０１２", " 123456789012", None]:
+            self.assertEqual(self.redeem_code(code).status_code, 422)
+        for body in [{}, {"code": coupon["code"]}, {"code": coupon["code"], "store_id": ""}]:
+            self.assertEqual(self.client.post("/api/v1/coupons/redeem-by-code", json=body).status_code, 422)
+        self.assertEqual(self.coupons().json()[0], coupon)
+        with connection() as db:
+            db.execute("UPDATE coupons SET code = '000000000001' WHERE id = ?", (coupon["id"],))
+        self.assertEqual(self.redeem_code("000000000001").status_code, 200)
+
+    def test_both_redemption_routes_share_one_use(self):
+        coupon = self.earn_coupon()
+        actions = [
+            lambda: self.redeem_code(coupon["code"], "demo-store-1"),
+            lambda: self.redeem_code(coupon["code"], "demo-store-2"),
+            lambda: self.redeem(coupon["id"]),
+            lambda: self.redeem(coupon["id"]),
+        ]
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            responses = list(pool.map(lambda action: action(), actions))
+        self.assertEqual(sorted(r.status_code for r in responses), [200, 409, 409, 409])
+        winner = next(r.json() for r in responses if r.status_code == 200)
+        self.assertEqual(self.coupons().json(), [winner])
+
+    def test_v010_coupon_table_migration_preserves_data(self):
+        coupon = self.earn_coupon()
+        # v0.1.0 형식(store_id 없음)으로 실제 쿠폰을 보관한 뒤 초기화를 반복한다.
+        with connection() as db:
+            db.execute("""
+                CREATE TABLE old_coupons (
+                    id TEXT PRIMARY KEY,
+                    session_id TEXT NOT NULL REFERENCES sessions(id),
+                    template_id TEXT NOT NULL REFERENCES coupon_templates(id),
+                    title TEXT NOT NULL, benefit TEXT NOT NULL, code TEXT NOT NULL UNIQUE,
+                    status TEXT NOT NULL CHECK(status IN ('issued', 'redeemed')),
+                    issued_at TEXT NOT NULL, redeemed_at TEXT,
+                    UNIQUE(session_id, template_id)
+                )
+            """)
+            db.execute("INSERT INTO old_coupons SELECT id, session_id, template_id, title, "
+                       "benefit, code, status, issued_at, redeemed_at FROM coupons")
+            db.execute("DROP TABLE coupons")
+            db.execute("ALTER TABLE old_coupons RENAME TO coupons")
+        init_db()
+        init_db()
+        self.assertEqual(self.coupons().json(), [coupon])
+        self.assertEqual(self.redeem_code(coupon["code"]).status_code, 200)
+
+    def test_redeem_by_code_openapi(self):
+        spec = self.client.get("/openapi.json").json()
+        operation = spec["paths"]["/api/v1/coupons/redeem-by-code"]["post"]
+        self.assertEqual(operation["requestBody"]["content"]["application/json"]["schema"]["$ref"],
+                         "#/components/schemas/RedeemByCodeRequest")
+        self.assertIn("404", operation["responses"])
+        self.assertIn("409", operation["responses"])
+        self.assertEqual(set(spec["components"]["schemas"]["RedeemByCodeRequest"]["required"]),
+                         {"code", "store_id"})

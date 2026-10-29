@@ -86,6 +86,7 @@ def init_db() -> None:
                 status TEXT NOT NULL CHECK(status IN ('issued', 'redeemed')),
                 issued_at TEXT NOT NULL,
                 redeemed_at TEXT,
+                store_id TEXT REFERENCES stores(id),
                 UNIQUE(session_id, template_id)
             )
         """)
@@ -101,6 +102,10 @@ def init_db() -> None:
             )
         """)
         seed_stores(db)
+        # v0.1.0 DB도 기존 쿠폰·사용 기록을 보존하며 확장한다.
+        columns = {row["name"] for row in db.execute("PRAGMA table_info(coupons)")}
+        if "store_id" not in columns:
+            db.execute("ALTER TABLE coupons ADD COLUMN store_id TEXT REFERENCES stores(id)")
 
 
 def get_db():

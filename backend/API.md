@@ -1,4 +1,4 @@
-# REST API — v0.1.0
+# REST API — v0.1.0 이후 작업본
 
 기본 주소: `http://localhost:8000`. 모든 API는 `/api/v1` 접두사를 사용한다.
 실행 앱의 `/openapi.json`과 `/docs`가 실제 스키마를 제공한다.
@@ -14,6 +14,7 @@
 | POST | `/api/v1/experiences/complete` | JSON: `session_id`, `spot_id` | 200: `star_awarded`, `total_stars`, `coupon_issued` |
 | GET | `/api/v1/stars` | 쿼리: `session_id` | 200: `stars`, `total_stars` |
 | GET | `/api/v1/coupons` | 쿼리: `session_id` | 200: 쿠폰 배열 |
+| POST | `/api/v1/coupons/redeem-by-code` | JSON: `code`, `store_id` | 200: 사용한 쿠폰 객체 |
 | POST | `/api/v1/coupons/{coupon_id}/redeem` | 경로: 쿠폰 ID, JSON: `session_id` | 200: 사용한 쿠폰 객체 |
 | GET | `/api/v1/stores` | 선택 쿼리: `accepts_coupon=true/false` | 200: 매장 배열 |
 
@@ -21,9 +22,10 @@
 
 - 스팟: `id`, `name`, `description`, `display_order`. ID는 a(관사 16호), b(관사 42호), c(헤레디움).
 - 별 목록 항목: `spot_id`, `amount`, `created_at`. total_stars는 amount의 합이다.
-- 쿠폰: `id`, `template_id`, `title`, `benefit`, `code`, `status`, `issued_at`, `redeemed_at`.
-  code는 표시용 숫자 12자리 문자열, status는 issued/redeemed다.
+- 쿠폰: `id`, `template_id`, `title`, `benefit`, `code`, `status`, `issued_at`, `redeemed_at`, `store_id`.
+  code는 ASCII 숫자 12자리 문자열, status는 issued/redeemed다.
   redeemed_at은 미사용 시 null, 사용 후 UTC 시각이다.
+  store_id는 번호 기반 사용 시 매장 ID이며 미사용·기존 세션 기반 사용·과거 기록은 null이다.
 - 매장: `id`, `name`, `description`, `display_location`, `accepts_coupon`, `is_demo`.
   현재 모든 매장은 가상 데이터이며 is_demo는 true다. 실제 주소·좌표는 없다.
 
@@ -38,8 +40,9 @@
 - 데모 쿠폰 기준 충족 시 별 지급과 같은 트랜잭션에서 쿠폰을 발급한다.
   coupon_issued는 해당 요청에서 새로 발급했을 때만 true다.
 - 쿠폰은 세션·템플릿별 한 장이다. 사용 후에도 재발급하지 않는다.
-- 쿠폰 사용은 해당 세션 ID로 요청하며 최초 한 번만 성공한다. 매장 인증·만료 처리는 없다.
-- 매장의 accepts_coupon은 데모 표시·필터 값이다. 쿠폰 사용 API와 매장 연결은 아직 없다.
+- 번호 기반 쿠폰 사용은 code와 store_id만 요청한다. 등록된 매장의 accepts_coupon을 확인하고
+  사용 매장을 저장한다. 손님 session_id는 필요 없다. 매장 자격증명·QR 서명·만료 처리는 없다.
+- 기존 세션 기반 사용 API도 유지한다. 두 경로를 섞거나 동시 요청해도 한 번만 성공한다.
 
 ## 오류
 
@@ -48,8 +51,10 @@
 | 404 | `session_not_found` | 없는 세션 |
 | 404 | `spot_not_found` | 없는 스팟 |
 | 404 | `coupon_not_found` | 없는 쿠폰 또는 다른 세션의 쿠폰 |
+| 404 | `store_not_found` | 등록되지 않은 매장 |
 | 409 | `checkin_required` | 완료 요청 전 체크인 필요 |
 | 409 | `already_redeemed` | 이미 사용한 쿠폰 |
+| 409 | `store_not_accepting_coupon` | 쿠폰을 받지 않는 매장 |
 | 422 | 검증 오류 배열 | 필수 필드 누락, 빈 ID, 잘못된 필터 등 |
 
 404/409 본문은 `{"detail":"오류 코드"}`다. 라우트 자체가 없으면 FastAPI의
@@ -63,3 +68,21 @@
 실제 프론트 주소는 CORS_ORIGINS 환경변수에 쉼표로 구분해 설정한다.
 기존 앱에 라우터만 연결할 때는 해당 앱의 CORS 설정을 따른다.
 예전 GPS+QR, X-Device-Token, `/stars`, `/coupons/me` 계약과는 다르다.
+
+## 번호 기반 사용 예시
+
+카페 리더기에서 받은 QR·바코드의 12자리 번호 또는 직접 입력한 번호를 전달한다.
+현재는 code 자체를 사용하며 별도 QR 서명 형식을 추가하지 않았다.
+
+```bash
+curl -X POST http://localhost:8000/api/v1/coupons/redeem-by-code \
+  -H 'Content-Type: application/json' \
+  -d '{"code":"123456789012","store_id":"demo-store-1"}'
+```
+
+code는 실제 발급된 번호로 바꾼다. 성공 시 200과 쿠폰 객체를 반환하고
+status=redeemed, store_id=demo-store-1, redeemed_at=사용 시각이 된다.
+세션별 쿠폰 조회에서도 동일한 사용 결과를 확인할 수 있다.
+매장 존재 → 사용 가능 여부 → 쿠폰 존재 → 사용 상태 순으로 확인한다.
+실패 시 쿠폰 사용 상태와 사용 매장을 변경하지 않는다.
+기존 v0.1.0 DB는 시작 시 store_id 열을 자동 추가하며 기존 기록을 보존한다.
