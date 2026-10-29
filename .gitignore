@@ -208,3 +208,15 @@ sketch
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/react,python,visualstudiocode
+docs/
+
+# Backend local data and environment overrides
+/backend/data/
+.env.*
+!.env.example
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
