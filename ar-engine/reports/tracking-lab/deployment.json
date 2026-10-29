@@ -1,0 +1,18 @@
+{
+  "files": 82,
+  "bytes": 39751407,
+  "sha256": "db99ee2505b67cf8d1db94f02212194b3b1a4c02b1ceea658076229245a46cb4",
+  "image": "ar-site:tracking-lab-db99ee25",
+  "indexSha256": "7f4104dd54cfaf423851b47b1d2d8c867a3c06229c91eabbb16593214f235b23",
+  "nftUrl": "https://ar.lobodoc.com/?trackingLab=1&engine=nft&v=db99ee25",
+  "mindarUrl": "https://ar.lobodoc.com/?trackingLab=1&engine=mindar&v=db99ee25",
+  "catalogUrl": "https://ar.lobodoc.com/api/ar/v1/catalog.json",
+  "physicalPhoneARVerified": false,
+  "paidAPICalls": 0,
+  "rollbackImage": "ar-site:rollback-20261029T233931Z",
+  "previousRelease": "ar-site:tracking-lab-cb765014",
+  "publicBytesVerified": true,
+  "publicReadOnlyAPICorsVerified": true,
+  "studioAPI": "health OK; worker/DB unchanged",
+  "otherBackend": "stars-backend unchanged"
+}

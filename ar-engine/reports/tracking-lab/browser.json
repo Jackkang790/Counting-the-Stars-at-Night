@@ -1,0 +1,17 @@
+{
+  "results": [
+    {
+      "engine": "nft",
+      "result": "PASS",
+      "physicalPhoneARVerified": false
+    },
+    {
+      "engine": "mindar",
+      "result": "PASS",
+      "physicalPhoneARVerified": false
+    }
+  ],
+  "testedUrl": "https://ar.lobodoc.com/",
+  "physicalPhoneARVerified": false,
+  "source": "real engines / synthetic camera stimulus"
+}

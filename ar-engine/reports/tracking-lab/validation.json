@@ -1,0 +1,12 @@
+{
+  "result": "PASS",
+  "typecheck": true,
+  "productionBuild": true,
+  "commonTargetHashCheck": true,
+  "measurementUnitTests": true,
+  "protectedOriginalFiles": 38,
+  "quartetRegression": "PASS / mocked world tracker",
+  "publicActualImageEngines": "PASS / synthetic video",
+  "readOnlyAPICors": "PASS",
+  "phoneARVerified": false
+}

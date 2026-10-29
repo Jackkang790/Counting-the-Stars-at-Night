@@ -11,3 +11,6 @@
 # Raw CC0 proxy/shape files retain upstream whitespace and provenance hashes.
 /performer-service/assets/makehuman/appearance/** whitespace=-blank-at-eol,-blank-at-eof
 /performer-service/assets/makehuman/*.target whitespace=-blank-at-eol
+# Preserve the pinned upstream NFT worker and its license notices byte-for-byte.
+/ar-engine/src/tracking-lab/vendor/** -text
+/ar-engine/src/tracking-lab/vendor/LICENSE.ARToolkit whitespace=-blank-at-eof
