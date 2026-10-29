@@ -50,10 +50,15 @@ function codexWorktreeModels(): Plugin {
   };
 }
 
+// USB 포트포워딩(chrome://inspect)으로 폰의 localhost에 연결할 때는 HTTP가 더 간단하다.
+// localhost는 HTTP여도 secure context로 인정되어 WebXR이 동작하고 인증서 경고가 없다.
+// AR_HTTP=1 이면 자체 서명 인증서(basic-ssl)를 끄고 평문 HTTP로 서빙한다.
+const useHttp = process.env.AR_HTTP === "1";
+
 export default defineConfig({
   root: ".",
   publicDir: resolve(REPO_ROOT, "public"),
-  plugins: [basicSsl(), codexWorktreeModels()],
+  plugins: [...(useHttp ? [] : [basicSsl()]), codexWorktreeModels()],
   server: {
     host: true, // 같은 네트워크의 스마트폰에서 접속 허용
     port: 5173,
