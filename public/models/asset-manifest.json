@@ -1,0 +1,146 @@
+{
+  "schema_version": "1.0.0",
+  "project": "별 헤는 밤 · 테미오래 AR",
+  "assets": [
+    {
+      "id": "starseed_sculpture",
+      "version": "0.1.0",
+      "name_ko": "별의 새싹",
+      "category": "emergent-artwork",
+      "status": "provisional_concept",
+      "reference": {
+        "wireframe_available": false,
+        "historical_reconstruction": false,
+        "note_ko": "첨부 와이어프레임 미확인 상태의 창작 임시 조형물. 실존 작품·건물의 재현이 아님."
+      },
+      "url": "/models/starseed_sculpture.glb",
+      "repository_path": "public/models/starseed_sculpture.glb",
+      "source_blend": "blender/scenes/starseed_sculpture.blend",
+      "generator": "blender/scripts/build_starseed.py",
+      "blender_version": "4.5.15 LTS",
+      "sha256": "aa947bbbfe1e8e37e9548645e3386108aac663bebb2122795610d8eb0fc5306d",
+      "source_blend_sha256": "17e8abb696e059aeb77079951fcad98335a4b859bb3f45514d4b663e40019adb",
+      "units": "meters",
+      "meters_per_unit": 1,
+      "coordinates": {
+        "gltf": "right-handed; +Y up; -Z front",
+        "blender": "right-handed; +Z up; +Y front",
+        "gltf_conversion": "(x,y,z) Blender -> (x,z,-y) glTF"
+      },
+      "anchor": {
+        "node": "ANCHOR_Ground",
+        "type": "ground_center",
+        "position_gltf_m": [
+          0,
+          0,
+          0
+        ],
+        "contact_plane": "Y=0",
+        "placement": "horizontal surface",
+        "instruction_ko": "별도 배치용 Group으로 GLB를 감싸고 그 Group에 AR hit-test 변환을 적용한다."
+      },
+      "rest_state": "visible_full_size",
+      "bounds_gltf_m": {
+        "min": [
+          -0.6200000047683716,
+          0.0,
+          -0.6200000047683716
+        ],
+        "max": [
+          0.6200000047683716,
+          2.213874101638794,
+          0.6200000047683716
+        ],
+        "size": [
+          1.2400000095367432,
+          2.213874101638794,
+          1.2400000095367432
+        ]
+      },
+      "footprint_diameter_m": 1.24,
+      "recommended_scale": 1,
+      "animations": [
+        {
+          "name": "Emerge",
+          "duration_seconds": 3,
+          "loop": "once",
+          "clamp_when_finished": true,
+          "next": "Idle",
+          "start_state": "hidden",
+          "end_state": "visible"
+        },
+        {
+          "name": "Idle",
+          "duration_seconds": 4,
+          "loop": "repeat",
+          "clamp_when_finished": false,
+          "start_state": "visible",
+          "end_state": "visible",
+          "motion": "yaw +/- 2 degrees"
+        },
+        {
+          "name": "Disappear",
+          "duration_seconds": 1.5,
+          "loop": "once",
+          "clamp_when_finished": true,
+          "start_state": "visible",
+          "end_state": "hidden"
+        }
+      ],
+      "animation_fps": 30,
+      "meshes": [
+        "Starseed_Plinth",
+        "Starseed_Leaves",
+        "Starseed_Orbit",
+        "Starseed_Stars"
+      ],
+      "materials": [
+        "MAT_Basalt",
+        "MAT_PatinatedBronze",
+        "MAT_BrushedBrass",
+        "MAT_Starlight"
+      ],
+      "performance": {
+        "triangles": 8484,
+        "vertices_exported": 4594,
+        "mesh_primitives": 4,
+        "estimated_draw_calls_per_main_pass": 4,
+        "material_count": 4,
+        "textures": 0,
+        "glb_bytes": 174832,
+        "alpha_mode": "OPAQUE",
+        "backface_culling": true,
+        "skinning": false,
+        "morph_targets": false,
+        "required_extensions": [],
+        "compression": "none; no decoder required",
+        "budgets": {
+          "triangles_max": 12000,
+          "vertices_max": 15000,
+          "glb_bytes_max": 1500000
+        }
+      },
+      "render_preview": "blender/renders/starseed_hero.png",
+      "validation": {
+        "binary_and_reimport_passed": true,
+        "source_blend_reopened": true,
+        "khronos_errors": 0,
+        "khronos_warnings": 0,
+        "roundtrip_rendered": true,
+        "three_loader_and_animation_passed": true,
+        "three_revision": "186",
+        "desktop_webgl_viewer_passed": true,
+        "image_comparison_passed": true,
+        "reports": [
+          "blender/reports/asset-validation.json",
+          "blender/reports/khronos-validation.json",
+          "blender/reports/render-comparison.json",
+          "blender/reports/three-validation.json",
+          "blender/reports/source-validation.json",
+          "blender/reports/viewer-validation.json"
+        ],
+        "mobile_webxr_device_tested": false
+      }
+    }
+  ]
+}

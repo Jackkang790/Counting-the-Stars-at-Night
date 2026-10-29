@@ -1,0 +1,29 @@
+{
+  "glb_sha256": "aa947bbbfe1e8e37e9548645e3386108aac663bebb2122795610d8eb0fc5306d",
+  "passed": true,
+  "comparisons": [
+    {
+      "source": "starseed_hero.png",
+      "glb_reimport": "starseed_glb_roundtrip.png",
+      "rgb_rmse_0_to_1": 0.004356905817985535,
+      "max_rmse": 0.025,
+      "passed": true
+    },
+    {
+      "source": "starseed_emerge_1.5.png",
+      "glb_reimport": "starseed_glb_emerge_mid.png",
+      "rgb_rmse_0_to_1": 0.0025680274702608585,
+      "max_rmse": 0.025,
+      "passed": true
+    },
+    {
+      "source": "starseed_disappear_0.75.png",
+      "glb_reimport": "starseed_glb_disappear_mid.png",
+      "rgb_rmse_0_to_1": 0.0016605117125436664,
+      "max_rmse": 0.025,
+      "passed": true
+    }
+  ],
+  "metric": "linear RGB RMSE from Blender PNG image load",
+  "note": "Automated image comparison supplements visual review; not a mobile renderer benchmark."
+}

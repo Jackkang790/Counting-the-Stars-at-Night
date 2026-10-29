@@ -1,0 +1,321 @@
+{
+  "passed": true,
+  "three_revision": "186",
+  "package_version": "0.186.1",
+  "glb_sha256": "aa947bbbfe1e8e37e9548645e3386108aac663bebb2122795610d8eb0fc5306d",
+  "scope": "Node GLTFLoader parse + PBR geometry + AnimationMixer playback; WebGL checked separately",
+  "checks": [
+    {
+      "name": "Metre bounds / Y up",
+      "passed": true,
+      "evidence": [
+        1.2400000095367432,
+        2.213874101638794,
+        1.2400000095367432
+      ]
+    },
+    {
+      "name": "Anchor name",
+      "passed": true
+    },
+    {
+      "name": "Four PBR meshes",
+      "passed": true
+    },
+    {
+      "name": "Opaque / frontface culling",
+      "passed": true
+    },
+    {
+      "name": "Unified clips",
+      "passed": true
+    },
+    {
+      "name": "Emerge duration",
+      "passed": true,
+      "evidence": 3
+    },
+    {
+      "name": "Emerge start",
+      "passed": true
+    },
+    {
+      "name": "Emerge end",
+      "passed": true
+    },
+    {
+      "name": "Emerge intermediate geometry",
+      "passed": true
+    },
+    {
+      "name": "Idle duration",
+      "passed": true,
+      "evidence": 4
+    },
+    {
+      "name": "Idle start",
+      "passed": true
+    },
+    {
+      "name": "Idle end",
+      "passed": true
+    },
+    {
+      "name": "Idle yaw motion",
+      "passed": true
+    },
+    {
+      "name": "Disappear duration",
+      "passed": true,
+      "evidence": 1.5
+    },
+    {
+      "name": "Disappear start",
+      "passed": true
+    },
+    {
+      "name": "Disappear end",
+      "passed": true
+    },
+    {
+      "name": "Disappear intermediate geometry",
+      "passed": true
+    }
+  ],
+  "poses": {
+    "Emerge": [
+      {
+        "time": 0,
+        "scale": [
+          0,
+          0,
+          0
+        ],
+        "size": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "time": 0.75,
+        "scale": [
+          0.22222839295864105,
+          0.17462500929832458,
+          0.22222839295864105
+        ],
+        "size": [
+          0.3251769267038377,
+          0.3865977855839944,
+          0.3251769267038377
+        ],
+        "rotation": [
+          0,
+          -0.10066777283145582,
+          0,
+          0.9949200970495845
+        ]
+      },
+      {
+        "time": 1.5,
+        "scale": [
+          0.6619898080825806,
+          0.5478073358535767,
+          0.6619898080825806
+        ],
+        "size": [
+          0.9063762018040988,
+          1.212776473533978,
+          0.9063762018040988
+        ],
+        "rotation": [
+          0,
+          -0.05521767437868628,
+          0,
+          0.9984743403994965
+        ]
+      },
+      {
+        "time": 3,
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "size": [
+          1.2400000095367432,
+          2.213874101638794,
+          1.2400000095367432
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    ],
+    "Idle": [
+      {
+        "time": 0,
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "size": [
+          1.2400000095367432,
+          2.213874101638794,
+          1.2400000095367432
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "time": 1,
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "size": [
+          1.282520009047103,
+          2.213874101638794,
+          1.282520009047103
+        ],
+        "rotation": [
+          0,
+          0.017452405504526185,
+          0,
+          0.9998476951726727
+        ]
+      },
+      {
+        "time": 2,
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "size": [
+          1.2400000095367432,
+          2.213874101638794,
+          1.2400000095367432
+        ],
+        "rotation": [
+          0,
+          2.1374119553701783e-18,
+          0,
+          1
+        ]
+      },
+      {
+        "time": 4,
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "size": [
+          1.2400000095367432,
+          2.213874101638794,
+          1.2400000095367432
+        ],
+        "rotation": [
+          0,
+          -4.2748239107403566e-18,
+          0,
+          1
+        ]
+      }
+    ],
+    "Disappear": [
+      {
+        "time": 0,
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "size": [
+          1.2400000095367432,
+          2.213874101638794,
+          1.2400000095367432
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "time": 0.375,
+        "scale": [
+          0.8252793464225934,
+          0.8436131683053295,
+          0.8252793464225934
+        ],
+        "size": [
+          1.0454461741556238,
+          1.867653345112618,
+          1.0454461741556238
+        ],
+        "rotation": [
+          0,
+          0.010917644302165179,
+          0,
+          0.9999404007454101
+        ]
+      },
+      {
+        "time": 0.75,
+        "scale": [
+          0.4522194266319275,
+          0.5,
+          0.4522194266319275
+        ],
+        "size": [
+          0.5985022288137898,
+          1.106937050819397,
+          0.5985022288137898
+        ],
+        "rotation": [
+          0,
+          0.034899506996443286,
+          0,
+          0.9993908266596233
+        ]
+      },
+      {
+        "time": 1.5,
+        "scale": [
+          0,
+          0,
+          0
+        ],
+        "size": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    ]
+  }
+}

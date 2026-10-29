@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "source_blend_sha256": "17e8abb696e059aeb77079951fcad98335a4b859bb3f45514d4b663e40019adb",
+  "checks": [
+    {
+      "name": "Source uses metres",
+      "passed": true,
+      "evidence": null
+    },
+    {
+      "name": "Source anchor loads",
+      "passed": true,
+      "evidence": null
+    },
+    {
+      "name": "Source four meshes",
+      "passed": true,
+      "evidence": null
+    },
+    {
+      "name": "Source NLA clips",
+      "passed": true,
+      "evidence": null
+    },
+    {
+      "name": "Source rest pose dimensions",
+      "passed": true,
+      "evidence": {
+        "min": [
+          -0.6200000047683716,
+          -0.6200000047683716,
+          0.0
+        ],
+        "max": [
+          0.6200000047683716,
+          0.6200000047683716,
+          2.213874101638794
+        ],
+        "size": [
+          1.2400000095367432,
+          1.2400000095367432,
+          2.213874101638794
+        ]
+      }
+    },
+    {
+      "name": "Source preview isolated",
+      "passed": true,
+      "evidence": null
+    }
+  ],
+  "blender_version": "4.5.15 LTS"
+}

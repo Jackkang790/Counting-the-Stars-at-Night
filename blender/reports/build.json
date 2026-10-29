@@ -1,0 +1,58 @@
+{
+  "asset_id": "starseed_sculpture",
+  "blender_version": "4.5.15 LTS",
+  "units": "meters",
+  "blender_bounds_z_up": {
+    "min": [
+      -0.6200000047683716,
+      -0.6200000047683716,
+      0.0
+    ],
+    "max": [
+      0.6200000047683716,
+      0.6200000047683716,
+      2.213874101638794
+    ],
+    "size": [
+      1.2400000095367432,
+      1.2400000095367432,
+      2.213874101638794
+    ]
+  },
+  "triangles": 8484,
+  "mesh_objects": 4,
+  "export_materials": [
+    "MAT_Basalt",
+    "MAT_PatinatedBronze",
+    "MAT_BrushedBrass",
+    "MAT_Starlight"
+  ],
+  "clips": {
+    "Emerge": {
+      "blender_frames": [
+        1,
+        91
+      ],
+      "duration_seconds": 3.0
+    },
+    "Idle": {
+      "blender_frames": [
+        121,
+        241
+      ],
+      "duration_seconds": 4.0
+    },
+    "Disappear": {
+      "blender_frames": [
+        301,
+        346
+      ],
+      "duration_seconds": 1.5
+    }
+  },
+  "reference_status": "provisional_concept_wireframe_not_available",
+  "historical_reconstruction": false,
+  "render_engine": "Cycles CPU",
+  "render_samples": 32,
+  "glb_includes_preview_stage": false
+}

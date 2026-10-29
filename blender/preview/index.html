@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>별의 새싹 · GLB 검수</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101e29;color:#e4eced;font-family:system-ui,sans-serif}canvas{display:block;width:100%;height:100vh}
+aside{position:fixed;left:24px;top:24px;max-width:420px;padding:22px;background:#102330ee;border:1px solid #557277;border-radius:14px}h1{margin:0 0 8px;font-size:24px}p{line-height:1.6;margin:8px 0;font-size:14px;color:#c2d3d7}button{background:#d9b878;color:#17232a;border:0;border-radius:7px;padding:10px 14px;margin:4px 4px 4px 0;cursor:pointer}button:disabled{opacity:.45}output{display:block;margin-top:12px;font-size:13px;white-space:pre-line}#status{color:#93e2b5}.badge{color:#ffda95;font-size:12px}footer{position:fixed;bottom:18px;left:24px;color:#b7c8ce;font-size:12px}
+@media(max-width:600px){aside{left:12px;top:12px;max-width:calc(100% - 24px);padding:14px}h1{font-size:19px}}
+</style>
+<aside><span class="badge">임시 콘셉트 · 실존 작품 재현 아님</span><h1>별의 새싹</h1><p>미터 단위 GLB · 지면 중앙 원점 · Y-up / -Z 정면<br>높이 2.214m · 삼각형 8,484개 · PBR 재질 4개</p>
+<button data-clip="Emerge" disabled>등장 3초</button><button data-clip="Idle" disabled>대기 반복</button><button data-clip="Disappear" disabled>퇴장 1.5초</button><button id="rest" disabled>완성 모습</button>
+<output id="status">GLB 로딩 중…</output><output id="details"></output></aside>
+<footer>드래그: 회전 · 스크롤: 확대/축소 · 실제 WebXR 및 기기 성능 검사와 별도</footer>
+<script type="importmap">{"imports":{"three":"/blender/.tools/qa/node_modules/three/build/three.module.js","three/addons/":"/blender/.tools/qa/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+const status=document.querySelector('#status'), details=document.querySelector('#details');
+try {
+ const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.toneMapping=THREE.ACESFilmicToneMapping;document.body.append(renderer.domElement);
+ const scene=new THREE.Scene();scene.background=new THREE.Color('#263947');
+ const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();
+ const camera=new THREE.PerspectiveCamera(36,innerWidth/innerHeight,.01,100);camera.position.set(-3,2.6,-5.2);
+ const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,1.05,0);controls.update();
+ scene.add(new THREE.HemisphereLight(0xddeeff,0x665039,2));const key=new THREE.DirectionalLight(0xffeed0,3);key.position.set(-2,4,-3);scene.add(key);
+ const grid=new THREE.GridHelper(8,16,0x617a83,0x3b515d);grid.position.y=-.003;scene.add(grid);
+ const gltf=await new GLTFLoader().loadAsync('/public/models/starseed_sculpture.glb');
+ const placement=new THREE.Group();scene.add(placement);placement.add(gltf.scene);
+ const mixer=new THREE.AnimationMixer(gltf.scene);const clips=new Map(gltf.animations.map(c=>[c.name,c]));
+ function play(name){mixer.stopAllAction();const a=mixer.clipAction(clips.get(name));a.reset();a.setLoop(name==='Idle'?THREE.LoopRepeat:THREE.LoopOnce,Infinity);a.clampWhenFinished=name!=='Idle';a.play();mixer.update(0);details.textContent='재생: '+name;}
+ mixer.addEventListener('finished',e=>{if(e.action.getClip().name==='Emerge')play('Idle');});
+ for(const button of document.querySelectorAll('[data-clip]')){button.disabled=false;button.onclick=()=>play(button.dataset.clip);}
+ document.querySelector('#rest').disabled=false;document.querySelector('#rest').onclick=()=>{mixer.stopAllAction();details.textContent='완성 포즈';};
+ renderer.render(scene,camera);
+ const info={passed:true,three_revision:THREE.REVISION,webgl:renderer.capabilities.isWebGL2?'WebGL2':'WebGL',
+  mesh_count:4,animations:gltf.animations.map(c=>({name:c.name,duration:c.duration})),
+  render_calls_with_grid:renderer.info.render.calls,render_triangles:renderer.info.render.triangles,
+  note:'Desktop browser WebGL preview; no XR/device FPS claim'};
+ status.textContent='WebGL 렌더 성공 · Three.js r'+THREE.REVISION+'\n클립 3개 로드 완료';
+ try{await fetch('/__report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(info)});}catch{}
+ play('Idle');let previous=performance.now();
+ function tick(now){mixer.update(Math.min((now-previous)/1000,.1));previous=now;controls.update();renderer.render(scene,camera);requestAnimationFrame(tick);}requestAnimationFrame(tick);
+ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+}catch(error){status.style.color='#ffb2a9';status.textContent='뷰어 오류: '+error.message;console.error(error);}
+</script>
+</html>

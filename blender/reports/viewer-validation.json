@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "three_revision": "186",
+  "webgl": "WebGL2",
+  "mesh_count": 4,
+  "animations": [
+    {
+      "name": "Emerge",
+      "duration": 3
+    },
+    {
+      "name": "Idle",
+      "duration": 4
+    },
+    {
+      "name": "Disappear",
+      "duration": 1.5
+    }
+  ],
+  "render_calls_with_grid": 5,
+  "render_triangles": 8484,
+  "note": "Desktop browser WebGL preview; no XR/device FPS claim",
+  "glb_sha256": "aa947bbbfe1e8e37e9548645e3386108aac663bebb2122795610d8eb0fc5306d"
+}
