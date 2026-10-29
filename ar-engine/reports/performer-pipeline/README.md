@@ -1,5 +1,9 @@
 # 공연자 파이프라인 검증 기록 · 2026-10-30
 
+추가 배포 완료: https://ar.lobodoc.com/?studio=1 및 https://ar.lobodoc.com/?musical=1 . [공개 HTTPS 검사](./deployment.json)에서 로그인·실제 업로드·3D 미리보기·두 단계 검수·공개 등록·두 배우 슬롯 로드를 확인했다. [서버 변환 검사](./server-retarget.json)는 실제 서버 Blender 3.4.1에서 업로드→리타기팅→스킨/본 동작 GLB 검증을 통과했다. Debian NumPy 1.24와 구버전 glTF 가져오기 호환을 워커 프로세스 안에서 보완했다. 로컬 4.5 LTS 검증과 구분한다. Tripo/DeepMotion 키는 미설정이며 유료 호출은 하지 않았다. 합성 시험 자료만 사용했고 실제 스마트폰 AR 검증은 여전히 미완료다.
+
+기존 ar-site 이미지 백업은 `ar-site:rollback-20261029T181356Z`, 이전 dist/nginx는 `/home/ubuntu/ar-docker/backups/performer-20261029T181356Z`에 보존했다. 기존 compose/Dockerfile은 유지하고 제작용 override를 추가했다. 운영 방법은 [배포 안내](../../../performer-service/deploy/README.md)를 참조한다. 관리 암호·원본·DB는 Git 및 공개 웹 루트에 포함하지 않는다.
+
 구현 브랜치: `feat/performer-generation-pipeline`. 기존 루트의 별의 새싹·외벽·Quick Look 코드를 유지하고 별도 제작 서비스와 렌더러를 추가했다. 보호 대상 38개 파일 검사는 통과했다. 기존 패키지·잠금파일·배포 설정은 수정하지 않았다.
 
 | 검사 | 결과 | 실제 검증 범위 |

@@ -4,6 +4,13 @@ from pathlib import Path
 import bpy
 from mathutils import Vector
 
+# Debian's Blender 3.4 glTF importer uses aliases removed by its NumPy 1.24
+# package. Keep this compatibility shim scoped to the offline worker process.
+if bpy.app.version < (3, 5, 0):
+    import numpy as np
+    for name, value in [('bool', np.bool_), ('int', int), ('float', float)]:
+        if name not in np.__dict__:setattr(np, name, value)
+
 p=argparse.ArgumentParser();p.add_argument('--model',required=True);p.add_argument('--motion',required=True);p.add_argument('--output',required=True);p.add_argument('--report',required=True)
 args=p.parse_args(sys.argv[sys.argv.index('--')+1:])
 bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)

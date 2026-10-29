@@ -1,0 +1,50 @@
+{
+  "result": "PASS",
+  "url": "https://ar.lobodoc.com/",
+  "serverWorkerActuallyRan": true,
+  "syntheticCalibration": true,
+  "liveAPICalls": 0,
+  "resultInfo": {
+    "meshes": 17,
+    "skins": 1,
+    "bones": 17,
+    "animations": [
+      {
+        "name": "RetargetedPerformance",
+        "channels": 51
+      }
+    ],
+    "extensions": [],
+    "syntheticCalibration": true
+  },
+  "retargetReport": {
+    "boneMap": {
+      "Hips": "Hips",
+      "Spine": "Spine",
+      "Chest": "Chest",
+      "Neck": "Neck",
+      "Head": "Head",
+      "LeftUpperArm": "LeftUpperArm",
+      "LeftLowerArm": "LeftLowerArm",
+      "LeftHand": "LeftHand",
+      "RightUpperArm": "RightUpperArm",
+      "RightLowerArm": "RightLowerArm",
+      "RightHand": "RightHand",
+      "LeftUpperLeg": "LeftUpperLeg",
+      "LeftLowerLeg": "LeftLowerLeg",
+      "LeftFoot": "LeftFoot",
+      "RightUpperLeg": "RightUpperLeg",
+      "RightLowerLeg": "RightLowerLeg",
+      "RightFoot": "RightFoot"
+    },
+    "frames": 720,
+    "fps": 24,
+    "durationSeconds": 29.958333333333332,
+    "rootMotion": "horizontal root locked; vertical retained",
+    "footCorrection": "bounded stance stabilization, not guaranteed cleanup",
+    "stanceSamples": 1440,
+    "maxCorrectionMeters": 0.000001571417188349137,
+    "maxStanceResidualMeters": 0.0000653128828719374,
+    "manualMotionAndFootReviewRequired": true
+  }
+}

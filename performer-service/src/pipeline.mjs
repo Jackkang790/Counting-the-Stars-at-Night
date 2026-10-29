@@ -1,5 +1,5 @@
 import { randomUUID,createHash } from 'node:crypto';
-import { mkdir,readFile,copyFile,stat } from 'node:fs/promises';
+import { mkdir,readFile,copyFile,writeFile } from 'node:fs/promises';
 import { resolve,join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { inspectFile } from './glb.mjs';
@@ -82,7 +82,20 @@ export class Pipeline {
   }
   safeError(error){let text=String(error.message??error).slice(0,1200);for(const secret of [this.config.tripoKey,this.config.deepID,this.config.deepSecret,this.config.adminToken].filter(Boolean))text=text.replaceAll(secret,'[redacted]');return text.replace(/https?:\/\/[^\s'"<>]+/g,'[provider URL]').replaceAll(this.store.folder,'[private data]')}
   async artifact(job,url,name){const path=join(this.store.folder,job.id,'artifacts',name);await this.transfer(url,{destination:path,hosts:this.config.artifactHosts??[]});return {path,name,sha256:sha(await readFile(path))}}
-  async finishLocal(job){if(!job.rig||!job.motion)throw Error('리깅 모델과 모션 파일이 필요합니다');job.result=await this.local(job);job.resultInfo=await inspectFile(job.result.path,{requireRig:true,requireAnimation:true});job.status='animation_review';job.animationReview=null}
+  async finishLocal(job){
+    if(!job.rig||!job.motion)throw Error('리깅 모델과 모션 파일이 필요합니다');
+    job.result=await this.local(job);job.resultInfo=await inspectFile(job.result.path,{requireRig:true,requireAnimation:true});
+    // Some Blender exporters drop armature extras. Preserve test provenance in the
+    // GLB itself as well as the registry, including when the file is downloaded.
+    if(job.testOnly&&!job.resultInfo.syntheticCalibration){
+      const bytes=await readFile(job.result.path),end=20+bytes.readUInt32LE(12),json=JSON.parse(bytes.subarray(20,end));
+      json.asset.extras={...json.asset.extras,syntheticCalibration:true};
+      let text=JSON.stringify(json);text+=' '.repeat((4-Buffer.byteLength(text)%4)%4);
+      const data=Buffer.concat([bytes.subarray(0,20),Buffer.from(text),bytes.subarray(end)]);data.writeUInt32LE(data.length,8);data.writeUInt32LE(Buffer.byteLength(text),12);
+      await writeFile(job.result.path,data);job.result.sha256=sha(data);job.resultInfo=await inspectFile(job.result.path,{requireRig:true,requireAnimation:true});
+    }
+    job.status='animation_review';job.animationReview=null;
+  }
   async blender(job){
     if(!this.config.blenderPath)throw Error('서버 BLENDER_PATH를 설정하거나 애니메이션이 포함된 GLB 결과를 입력하세요');
     const output=join(this.store.folder,job.id,'artifacts',`performance-${job.attempt??0}.glb`),report=output+'.json';
