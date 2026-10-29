@@ -1,0 +1,16 @@
+[
+  {
+    "base": "http://localhost:5190/",
+    "result": "PASS",
+    "assetsAndVideosLoad": true,
+    "previewDoesNotClaimARTracking": true,
+    "errors": []
+  },
+  {
+    "base": "http://localhost:5191/ar-musical/",
+    "result": "PASS",
+    "assetsAndVideosLoad": true,
+    "previewDoesNotClaimARTracking": true,
+    "errors": []
+  }
+]

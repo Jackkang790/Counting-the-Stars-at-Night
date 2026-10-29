@@ -21,10 +21,24 @@
         background: #1f1f29; color: #eaeaf0; }
       button.primary { background: #3a63ff; border-color: #3a63ff; font-weight: 600; width: 100%; }
       button.primary:disabled { background: #2a2a36; border-color: #2a2a36; color: #76768a; }
+      /* iOS AR Quick Look 버튼(앵커의 유일 자식은 img여야 하므로 라벨은 ::after로) */
+      a.iosar { position: relative; display: block; width: 100%; height: 46px; margin: 8px 0 2px;
+        background: #3a63ff; border-radius: 8px; text-decoration: none; }
+      a.iosar img { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+      a.iosar::after { content: attr(data-label); position: absolute; inset: 0; display: flex;
+        align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 0.95rem; }
+      a.iosar[aria-disabled="true"] { background: #2a2a36; }
+      a.iosar[aria-disabled="true"]::after { color: #76768a; }
       #support { font-size: 0.9rem; }
       .ok { color: #58d68d; } .bad { color: #ff6b6b; } .warn { color: #ffd166; }
       #log { font-family: ui-monospace, Menlo, monospace; font-size: 0.78rem; white-space: pre-wrap;
         background: #0a0a0e; border: 1px solid #22222b; border-radius: 8px; padding: 10px; height: 220px; overflow: auto; }
+      /* 화면 진단(실기기) */
+      #env-info { font-size: 0.74rem; color: #8a8a98; margin: -8px 0 14px; word-break: break-all;
+        white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace; }
+      #diag-banner { display: none; background: #3a1414; border: 1px solid #7a2a2a; color: #ffdede;
+        border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; white-space: pre-wrap;
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.8rem; }
       /* AR 중 DOM 오버레이 */
       #ar-overlay { position: fixed; inset: 0; display: none; pointer-events: none; z-index: 10; }
       #ar-hint { position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
@@ -36,6 +50,11 @@
       #ar-telemetry { position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
         font-family: ui-monospace, Menlo, monospace; font-size: 0.72rem; color: #9ad;
         background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 8px; white-space: pre; text-align: center; }
+      #ar-debug { position: absolute; top: 118px; left: 50%; transform: translateX(-50%); display: none;
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.7rem; color: #9effa0; text-align: center;
+        background: rgba(0,0,0,0.6); padding: 6px 12px; border-radius: 8px; white-space: pre; pointer-events: none; }
+      #ar-debug-toggle { position: absolute; top: 12px; right: 10px; display: none; pointer-events: auto;
+        background: #ff2d95; border: none; color: #fff; padding: 8px 12px; border-radius: 999px; font-size: 0.78rem; }
       #ar-align { position: absolute; left: 8px; right: 8px; bottom: 150px; display: none;
         pointer-events: auto; background: rgba(0,0,0,0.6); border-radius: 10px; padding: 8px 10px;
         max-height: 48vh; overflow: auto; }
@@ -60,6 +79,9 @@
     <div id="app">
       <h1>테미오래 WebAR 실기기 테스트</h1>
       <div class="sub">실제 카메라 AR 테스트 · Android Chrome 전용 · 전체 게임 UI 아님</div>
+      <div id="env-info">환경 확인 중…</div>
+
+      <div id="diag-banner"></div>
 
       <div class="card" id="support">지원 여부 확인 중…</div>
 
@@ -75,9 +97,20 @@
         <div id="loadStatus" class="sub" style="margin:8px 0 0;">에셋 로드 상태: 대기</div>
       </div>
 
-      <details class="card">
+      <!-- iPhone 폴백: WebXR 미지원 iOS에서 AR Quick Look(USDZ)로 배치 -->
+      <div class="card" id="ios-ar" style="display:none;">
+        <div class="hintline">📱 iPhone은 WebXR 대신 <strong>AR Quick Look</strong>으로 봅니다(바닥 배치·회전·크기). 레이어 토글·수동 보정은 Android 전용입니다.</div>
+        <a class="iosar" id="ios-star" rel="ar" href="#" aria-disabled="true" data-label="① 별의 새싹 (iPhone AR · 준비 중)"><img alt="별의 새싹 AR" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" /></a>
+        <a class="iosar" id="ios-align" rel="ar" href="#" aria-disabled="true" data-label="② 외벽 정합 (iPhone AR · 준비 중)"><img alt="외벽 정합 AR" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" /></a>
+        <div id="ios-status" class="sub" style="margin:6px 0 0;">USDZ 준비 중…</div>
+      </div>
+
+      <details class="card" open>
         <summary>이벤트 로그</summary>
-        <div class="row" style="justify-content:flex-end;"><button id="clear" style="padding:4px 10px;">지우기</button></div>
+        <div class="row" style="justify-content:flex-end; gap:6px;">
+          <button id="copy-log" style="padding:4px 10px;">로그 복사</button>
+          <button id="clear" style="padding:4px 10px;">지우기</button>
+        </div>
         <div id="log"></div>
       </details>
     </div>
@@ -86,6 +119,8 @@
       <div id="ar-glb">GLB: —</div>
       <div id="ar-hint">바닥을 비추세요…</div>
       <div id="ar-telemetry">telemetry…</div>
+      <div id="ar-debug"></div>
+      <button id="ar-debug-toggle">큐브 끄기</button>
       <div id="ar-error"></div>
       <button id="ar-dismiss">작품 퇴장(Disappear)</button>
 
@@ -117,6 +152,26 @@
       <button id="ar-stop">AR 종료</button>
     </div>
 
-    <script type="module" src="/src/main.ts"></script>
+    <!-- 조기 오류 포착(모듈 로드/파싱 오류까지) — 모듈 스크립트보다 먼저 실행되는 클래식 스크립트 -->
+    <script>
+      (function () {
+        window.__arDiag = [];
+        function showEarly(msg) {
+          var el = document.getElementById("diag-banner");
+          if (el) { el.textContent = msg; el.style.display = "block"; }
+        }
+        window.addEventListener("error", function (e) {
+          var m = "✗ JS 오류: " + (e.message || (e.error && e.error.message) || e.error) +
+            (e.filename ? " @ " + e.filename + ":" + e.lineno + ":" + e.colno : "");
+          window.__arDiag.push(m); showEarly(m);
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          var r = e.reason;
+          var m = "✗ Promise 오류: " + (r && r.message ? (r.name + ": " + r.message) : String(r));
+          window.__arDiag.push(m); showEarly(m);
+        });
+      })();
+    </script>
+    <script type="module" src="/src/bootstrap.ts"></script>
   </body>
 </html>

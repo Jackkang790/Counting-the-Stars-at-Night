@@ -1,0 +1,255 @@
+{
+    "verifiedAt":  "2026-10-30T00:42:30.6986098+09:00",
+    "branch":  "feat/live-action-ar-musical-mvp",
+    "status":  "Spatial live-action video performers and dynamic 3D mesh sequence loader implemented; physical phones and real human volumetric capture pending",
+    "physicalDeviceARVerified":  false,
+    "realHumanVolumetricFootageProvided":  false,
+    "adbConnectedDevices":  0,
+    "commonTracking":  "Image target pose while visible; not persistent markerless SLAM",
+    "originalIphoneQuickLookPreserved":  true,
+    "quickLookNativeExecutionTested":  false,
+    "previousSessionNativeAnchorTransferImplemented":  false,
+    "licensedStockHumanSamples":  2,
+    "calibration3DContent":  "12 nonhuman changing GLB frames, box and cone, source.kind=synthetic-calibration",
+    "localChecks":  {
+                        "typecheck":  "PASS",
+                        "rootBuild":  "PASS",
+                        "subpathBuild":  "PASS: /ar-musical/",
+                        "existing38FilesProtected":  "PASS; only HTML module entry changes main.ts -\u003e bootstrap.ts",
+                        "starseedAsset":  "PASS",
+                        "alignmentAsset":  "PASS",
+                        "gitDiffCheck":  "PASS; existing line-ending warnings only",
+                        "spatialVolumeUnit":  "PASS: dynamic nonplanar GLBs, static/plane rejection, camera-independent and parent-relative transforms",
+                        "spatialVolumeBrowser":  "PASS: subpath production build, both slots, timeline, camera views, renderer swaps, local file loading",
+                        "musicalIntegrationBrowser":  "PASS: root production build, full 30 sec, both real stock videos, simulated camera pose motion, photo, loss/recovery, original USDZ web handoff",
+                        "rootAndSubpathRoutes":  "PASS"
+                    },
+    "browserEnvironment":  "Windows Chrome 155.0.8059.86 headless, ANGLE SwiftShader; not a phone performance benchmark",
+    "archive":  {
+                    "sha256":  "a8a4e7ed9c5a225c953bea0b5d85e6bc3dd3c07b439a7af275bb0aa79539348f",
+                    "name":  "demo-root.zip",
+                    "bytes":  2922939,
+                    "hostingBase":  "/"
+                },
+    "limits":  [
+                   "No physical Android/iPhone AR run",
+                   "No actual human volumetric capture supplied",
+                   "Image target must stay visible; default low-contrast panel may need large framing or replacement",
+                   "Prior Quick Look/WebXR session world origins are not transferred",
+                   "Provisional wall dimensions and optional depth masks",
+                   "Phase 1 is fixed planar video with limited side/back view",
+                   "3D sequence preload capped at 48MiB per performer; no streaming/compressed decoder",
+                   "Stock B is not full body; approximate keying",
+                   "Final choreography and audio/video output latency not measured on phones"
+               ],
+    "sourceHashes":  [
+                         {
+                             "sha256":  "97c0eec6f61d7d379a3bb207db40313d1d902c80db5889b8f341970db0f76e35",
+                             "path":  "ar-engine/index.html"
+                         },
+                         {
+                             "sha256":  "bc6afbc36973b3a13fd08a58b14f1d81b07d72f8ac704c24c37d25057248aba4",
+                             "path":  "ar-engine/musical-assets/actor-a-demo.mp4"
+                         },
+                         {
+                             "sha256":  "3313007ac8557ca7148af01e310075e0ebd7eef1ee48e3c48973eab64b6b3bcd",
+                             "path":  "ar-engine/musical-assets/actor-b-demo.mp4"
+                         },
+                         {
+                             "sha256":  "31263cf24dc1d8e7ecf1722a8e235d8adbed0f8c55c54f24595a18ea3fa833dd",
+                             "path":  "ar-engine/musical-assets/MEDIA-CREDITS.md"
+                         },
+                         {
+                             "sha256":  "9c02f4c160a95b9b4e49d82abc13f171083808bf6da79c4e2155b44e34c545fe",
+                             "path":  "ar-engine/musical-assets/panel.mind"
+                         },
+                         {
+                             "sha256":  "45a90f1bb4ddb4dbc41e936efdd3ffd43c9631080e3ab1f0d4af8afbf42a3e6b",
+                             "path":  "ar-engine/musical-assets/show.json"
+                         },
+                         {
+                             "sha256":  "66b302f9b324f2a574210fb237c943ca4a81a038b813459a250391814c8fa7b9",
+                             "path":  "ar-engine/musical-assets/volume-calibration/calibration.vseq.json"
+                         },
+                         {
+                             "sha256":  "efa34c0170fe6feeccd2849b8aad4398dfcf238e3983a0067156bc04c8fc22fa",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-00.glb"
+                         },
+                         {
+                             "sha256":  "f04350c5201551d4c66d2f999270b47e8ac8f4f4c850594c3ef3911ae7697e0d",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-01.glb"
+                         },
+                         {
+                             "sha256":  "005f8a56cf5160a5e2cda7f933499ca90ccc67f50ef2bbe0141ac0988ffbfe8d",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-02.glb"
+                         },
+                         {
+                             "sha256":  "4688af81fa03705f884b9b6794d7468c0c0bb7aed2a976254a6e63dc65465589",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-03.glb"
+                         },
+                         {
+                             "sha256":  "93df0d9432c64a0cd1887d62649afed0aae5cbc125e49e00786fac7b7be1444c",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-04.glb"
+                         },
+                         {
+                             "sha256":  "a2d4e50c31a7b9985b58c489a431c34207eb29607b58a50fb8a362d35fcde8a4",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-05.glb"
+                         },
+                         {
+                             "sha256":  "a3f8d28b5850174b79d9ab2666165b94ba592eab0f7fe292c5521a316022ebdf",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-06.glb"
+                         },
+                         {
+                             "sha256":  "c501a2ddd9196dceebec41b84011bf89416e338c2a4120e0f64977a7124e3630",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-07.glb"
+                         },
+                         {
+                             "sha256":  "5021d249ced1a474bf46bac93b4265cbc3e2a471d98f171c1a11830e556700b5",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-08.glb"
+                         },
+                         {
+                             "sha256":  "666548c35bb15485683b9c1f9495549e12957790ca008e49b06d02b3062c4bc9",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-09.glb"
+                         },
+                         {
+                             "sha256":  "e5d6c11cd2e07fd62d8879bd243e4fb35a72ba40f769ce7d7339427f99b96290",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-10.glb"
+                         },
+                         {
+                             "sha256":  "724fc7739dac9f543ae15e0913909fb12b50504e3ed269d0775f77ed406f385d",
+                             "path":  "ar-engine/musical-assets/volume-calibration/frame-11.glb"
+                         },
+                         {
+                             "sha256":  "ff0183658c4b5850bacc36d9e484d90c39826e0eb6e007d6d553337870564f05",
+                             "path":  "ar-engine/MUSICAL-MVP.md"
+                         },
+                         {
+                             "sha256":  "9deb22413b7f3a89f458df894454280849b287caae18cb04b3d739a3f0089d44",
+                             "path":  "ar-engine/scripts/generate-volume-calibration.mjs"
+                         },
+                         {
+                             "sha256":  "7fe3b39cfc8350ee30c2a27bc5b2b2cf51c87514baefee7e23f5f65d1907929b",
+                             "path":  "ar-engine/scripts/prepare-performer.ps1"
+                         },
+                         {
+                             "sha256":  "2bdad0a0d595bccb13f26ab650696959cca4376c99f0bf02f9a33113f91530f0",
+                             "path":  "ar-engine/SPATIAL-PERFORMERS.md"
+                         },
+                         {
+                             "sha256":  "463499f0dd5ad46ca0490f4040aa55280a51e9b8290d07f890636094c62f29e3",
+                             "path":  "ar-engine/src/bootstrap.ts"
+                         },
+                         {
+                             "sha256":  "a80d0cf18285751e1858723e668dd0c5b67e6112437fb9a1fb80fb1d1500b18d",
+                             "path":  "ar-engine/src/musical/app.ts"
+                         },
+                         {
+                             "sha256":  "fbd2a0e05e385075af6a23ac0d8fbcda0060d45050cda0e498ebb0bdd0f0f7d3",
+                             "path":  "ar-engine/src/musical/director.ts"
+                         },
+                         {
+                             "sha256":  "8d9a8adde19a099ea5a8a28f44d9cf7317e1c8a359337f420a6e64b8f3f798a3",
+                             "path":  "ar-engine/src/musical/launcher.ts"
+                         },
+                         {
+                             "sha256":  "da2dbc41974d715123e68cb4030cee792771e310ac7514c6b704387b7c482ea8",
+                             "path":  "ar-engine/src/musical/meshSequence.ts"
+                         },
+                         {
+                             "sha256":  "b9c3656464d72857e0e5872a3cfef7a320a089c35516167d4e2d490fcdc2bd00",
+                             "path":  "ar-engine/src/musical/performer.ts"
+                         },
+                         {
+                             "sha256":  "2d9855e92f53a1579c39268b0f25a47b1cadd42eacb38ddf058bab3025a53aea",
+                             "path":  "ar-engine/src/musical/performerSlot.ts"
+                         },
+                         {
+                             "sha256":  "c81dd4e7db40492bff549490b58d758be8ec8f0ac0ddea73625e833da08fe2a8",
+                             "path":  "ar-engine/src/musical/reference.ts"
+                         },
+                         {
+                             "sha256":  "64d2c65c5a6d61d82dbdfd455cb42667d682c62551c3e30f0ab7dbd5744cb36a",
+                             "path":  "ar-engine/src/musical/spatial.ts"
+                         },
+                         {
+                             "sha256":  "e1a021a0883b9ba7bbc11e71d2527052c77cb61bbd9213b79e868b288f3c6425",
+                             "path":  "ar-engine/src/musical/stage.ts"
+                         },
+                         {
+                             "sha256":  "fb071cb76079bfe38c101d07a4e57155f058c762a89893786e34df3c901b350e",
+                             "path":  "ar-engine/src/musical/style.css"
+                         },
+                         {
+                             "sha256":  "25c7dd472efd2c0c93e75542bfe96a6a1acde0018981abd5809c0f1921abf17b",
+                             "path":  "ar-engine/src/musical/timeline.ts"
+                         },
+                         {
+                             "sha256":  "6962876f3c0a16d2ab2f5d7139164f1a8effee106f488c9ff67aaf0a25cef3cd",
+                             "path":  "ar-engine/src/musical/tracking.ts"
+                         },
+                         {
+                             "sha256":  "f63e9fc29d189b2bf6f55e5214d8d55cf3dcef73b6b82d0d5070e087d4c44bd6",
+                             "path":  "ar-engine/src/musical/types.ts"
+                         },
+                         {
+                             "sha256":  "e221f5eebed2d6ce04c3b456b0080deed1ba2f16752cafbb880920f7515732ea",
+                             "path":  "ar-engine/src/musical/vendor/controller-mGt1s8dJ.js"
+                         },
+                         {
+                             "sha256":  "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                             "path":  "ar-engine/src/musical/vendor/LICENSE.apache-2.0"
+                         },
+                         {
+                             "sha256":  "4f3aa5215ac0346a823170c9f9677da25c3e8bdb8243693118a3711e157d7fff",
+                             "path":  "ar-engine/src/musical/vendor/LICENSE.mind-ar"
+                         },
+                         {
+                             "sha256":  "c437ae8465a2e6a6e694ae850a54dc35bfd42b8589489cc145121ec0a748628d",
+                             "path":  "ar-engine/src/musical/vendor/mindar-image.prod.d.ts"
+                         },
+                         {
+                             "sha256":  "a21eef9a98ed73aee589a219b35e580c50b501c6f50f88d6eed16dcef9b8dec2",
+                             "path":  "ar-engine/src/musical/vendor/mindar-image.prod.js"
+                         },
+                         {
+                             "sha256":  "49b6c518039900ca70cbebf5fb7fdcab4eedf757422c3cfd1857da3f02418465",
+                             "path":  "ar-engine/src/musical/vendor/THIRD_PARTY.md"
+                         },
+                         {
+                             "sha256":  "aed9538fec28fecfb0a564da48fbf053ac2549d3314746e67182d381b3a24c31",
+                             "path":  "ar-engine/src/musical/vendor/ui-fBadYuor.js"
+                         },
+                         {
+                             "sha256":  "489c69d2376081a58f9251d6cc57ab8bfc78ccc744a2c328fde0abf71632eec1",
+                             "path":  "ar-engine/src/musical/volumeCalibration.ts"
+                         },
+                         {
+                             "sha256":  "5e71d94e2b450b462d13857541e268854a4df6292bed1b35d93f5bb25e9b9cab",
+                             "path":  "ar-engine/src/musical/volumeManifest.ts"
+                         },
+                         {
+                             "sha256":  "9e6e025888313580aa3aef9ee811ac641ed8560b6dae9ec36160a49306aa67e3",
+                             "path":  "ar-engine/tests/musical-browser.mjs"
+                         },
+                         {
+                             "sha256":  "fe6b60ae6391b2aabab2e27b3757028c0e7d2f3fcd4dabe3f44977e9f10224da",
+                             "path":  "ar-engine/tests/musical-route-smoke.mjs"
+                         },
+                         {
+                             "sha256":  "71fe07105af6079ed0769b49069c79ff7de17d388eb09f4e90850b7e7398f3e8",
+                             "path":  "ar-engine/tests/musical-unit.mjs"
+                         },
+                         {
+                             "sha256":  "66d7e94c8e3d3dfc5670891c66502481f9bcea0341ae6b362f61a8babfe66317",
+                             "path":  "ar-engine/tests/serve-built.mjs"
+                         },
+                         {
+                             "sha256":  "1e59fa60232aec76270ef048ab36b85c5b109d8ec97e62706e8a2fba21d3844b",
+                             "path":  "ar-engine/tests/spatial-volume-browser.mjs"
+                         },
+                         {
+                             "sha256":  "9bd9fc44c3b2c3e48790bcce1044c327fe21a57250200e5bac57dd09c3f210c0",
+                             "path":  "ar-engine/tests/spatial-volume-unit.mjs"
+                         }
+                     ]
+}

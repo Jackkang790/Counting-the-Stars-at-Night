@@ -9,6 +9,7 @@ import type {
   ARSupportReport,
   CalibrationDelta,
   LayerVisibility,
+  ARDebugInfo,
 } from "./types";
 import { EventBus } from "./events";
 import { checkSupport } from "./core/support";
@@ -74,8 +75,19 @@ export class AREngine implements ARExperience {
   private reticleWasVisible = false;
   private readonly tmpVec = new THREE.Vector3();
 
+  // 디버그(테스트 전용) 상태 — 지시 A/B/C.
+  private readonly debug: boolean;
+  private debugCube?: THREE.Object3D;
+  private debugAxes?: THREE.AxesHelper;
+  private debugBox?: THREE.Box3Helper;
+  private debugMeshCount = 0;
+  private readonly debugBoxSize = new THREE.Vector3();
+  private readonly debugProjScreen = new THREE.Matrix4();
+  private readonly debugFrustum = new THREE.Frustum();
+
   constructor(options: AREngineOptions = {}) {
     this.options = { mode: "geo", ...options };
+    this.debug = this.options.debug ?? false;
   }
 
   checkSupport(): Promise<ARSupportReport> {
@@ -86,6 +98,28 @@ export class AREngine implements ARExperience {
     const d = await collectDiagnostics();
     console.info(formatDiagnostics(d));
     return d;
+  }
+
+  /**
+   * iOS(AR Quick Look) 폴백용 USDZ 내보내기. WebXR 세션 없이 GLB만 로드해 USDZ 바이트로 변환한다.
+   * (안드로이드 WebXR 경로와 완전히 분리 — iOS 전용 호출. 실제 GLB/매니페스트는 수정하지 않음.)
+   */
+  async exportExperienceUSDZ(req: StartRequest): Promise<Uint8Array> {
+    const { USDZExporter } = await import("three/examples/jsm/exporters/USDZExporter.js");
+    let root: THREE.Object3D;
+    if (req.overrides?.manifestUrl) {
+      const man = await loadStandaloneManifest(withBase(req.overrides.manifestUrl));
+      root = (await loadGLB(withBase(man.url))).root;
+    } else {
+      const assetId = await this.resolveAssetId(req);
+      const manifest = await loadAssetManifest(withBase(this.options.assetManifestUrl ?? DEFAULT_MANIFEST_URL));
+      const asset = findAsset(manifest, assetId);
+      if (!asset?.url) throw new Error(`USDZ 내보내기: 에셋 URL을 찾지 못함 (assetId=${assetId})`);
+      root = (await loadGLB(withBase(asset.url))).root;
+    }
+    root.updateWorldMatrix(true, true);
+    const exporter = new USDZExporter();
+    return exporter.parseAsync(root);
   }
 
   on<K extends keyof ARExperienceEventMap>(
@@ -119,7 +153,8 @@ export class AREngine implements ARExperience {
     try {
       session = await xr.requestSession("immersive-ar", {
         requiredFeatures: ["hit-test"],
-        optionalFeatures: ["dom-overlay", "light-estimation", "anchors"],
+        // 'local-floor'는 선택 기능으로만 요청 → 미지원 기기에서도 세션 자체는 성립.
+        optionalFeatures: ["dom-overlay", "light-estimation", "anchors", "local-floor"],
         domOverlay: { root },
       });
     } catch (err) {
@@ -133,17 +168,52 @@ export class AREngine implements ARExperience {
     this.session = session;
 
     this.setupThree(root);
-    await this.renderer!.xr.setSession(session);
-    this.bus.emit("sessionStarted", undefined);
 
-    // 참조 공간 + hit-test 소스
-    this.renderer!.xr.setReferenceSpaceType("local");
-    this.refSpace = this.renderer!.xr.getReferenceSpace() ?? undefined;
-    const viewerSpace = await session.requestReferenceSpace("viewer");
-    const hitSource = await session.requestHitTestSource?.({ space: viewerSpace });
+    // 월드(world) 참조 공간: three.js setSession 이 내부적으로 requestReferenceSpace 를
+    // 호출하므로 반드시 setSession '이전에' 타입을 확정한다. three.js 기본값은 'local-floor'
+    // 인데 이는 선택 공간이라 일부 기기에서 거부된다 → 'local'(immersive 보장) 기준 + 폴백.
+    let worldType: XRReferenceSpaceType;
+    try {
+      worldType = await this.selectWorldReferenceSpace(session);
+      this.renderer!.xr.setReferenceSpaceType(worldType);
+      await this.renderer!.xr.setSession(session);
+      this.refSpace = this.renderer!.xr.getReferenceSpace() ?? undefined;
+      if (!this.refSpace) throw new Error(`'${worldType}' 참조 공간 생성 결과가 비어 있습니다`);
+    } catch (err) {
+      await this.failReferenceSpaceInit(session, "world(local-floor→local)", err);
+      throw err instanceof Error ? err : new Error(String(err));
+    }
+    this.bus.emit("sessionStarted", undefined);
+    if (this.debug) {
+      this.bus.emit(
+        "info",
+        `DEBUG XR: enabled=${this.renderer!.xr.enabled} isPresenting=${this.renderer!.xr.isPresenting} ` +
+          `referenceSpace=${worldType}`
+      );
+    }
+
+    // hit-test 전용 'viewer' 참조 공간은 월드 공간과 분리해 관리한다(지시 #5).
+    // (월드 공간이 local/local-floor 중 무엇이든 hit-test 결과는 refSpace 기준으로 해석되어
+    //  배치 좌표계가 일관되게 유지된다 — 지시 #7.)
+    let hitSource: XRHitTestSource | undefined;
+    try {
+      const viewerSpace = await session.requestReferenceSpace("viewer");
+      this.bus.emit("info", "참조 공간 확보: 'viewer' (hit-test 전용)");
+      hitSource = await session.requestHitTestSource?.({ space: viewerSpace });
+    } catch (err) {
+      await this.failReferenceSpaceInit(session, "viewer", err);
+      throw err instanceof Error ? err : new Error(String(err));
+    }
     if (!hitSource) {
       this.emitError("no-hit-test", "이 기기에서 바닥 인식(hit-test)을 사용할 수 없습니다.", false);
-      await this.stop();
+      this.teardownAfterFailedInit();
+      try {
+        await session.end();
+      } catch {
+        /* 이미 종료됨 */
+      }
+      this.session = undefined;
+      this.bus.emit("sessionEnded", undefined);
       throw new Error("hit-test unavailable");
     }
     this.hitTestSource = hitSource;
@@ -244,7 +314,66 @@ export class AREngine implements ARExperience {
     this.placement.applyCalibration(this.alignInitialCalib);
   }
 
+  setDebugCubeVisible(visible: boolean): void {
+    if (this.debugCube) this.debugCube.visible = visible;
+  }
+
   // ---------------------------------------------------------------
+
+  /**
+   * 월드 참조 공간 타입 선택(지시 #3,#4,#6). 'local'은 immersive 세션에서 보장되므로 기준으로
+   * 사용하고, 'local-floor'(선택 공간)는 지원이 확인될 때만 사용한다(바닥 높이 기준이 필요한 경우).
+   */
+  private async selectWorldReferenceSpace(session: XRSession): Promise<XRReferenceSpaceType> {
+    this.bus.emit("info", "참조 공간 요청: 'local-floor' 지원 확인 → 미지원 시 'local' 폴백");
+    try {
+      await session.requestReferenceSpace("local-floor");
+      this.bus.emit("info", "참조 공간 확정: 'local-floor' (바닥 기준)");
+      return "local-floor";
+    } catch (err) {
+      const name = err instanceof DOMException ? err.name : err instanceof Error ? err.name : "Error";
+      this.bus.emit("info", `'local-floor' 미지원(${name}) → 'local'로 폴백`);
+      return "local";
+    }
+  }
+
+  /** 참조 공간/세션 초기화 실패 처리(지시 #8,#9): 타입·name·message 로그 + 리소스 정리 + 세션 종료. */
+  private async failReferenceSpaceInit(
+    session: XRSession,
+    requestedType: string,
+    err: unknown
+  ): Promise<void> {
+    const name = err instanceof DOMException ? err.name : err instanceof Error ? err.name : "Error";
+    const detail = err instanceof Error ? err.message : String(err);
+    const message = `참조 공간(${requestedType}) 요청 실패: ${name} — ${detail}`;
+    console.error(`[ar-engine] ${message}`);
+    console.error(formatDiagnostics(await collectDiagnostics()));
+    this.emitError("no-reference-space", message, false);
+    this.teardownAfterFailedInit();
+    try {
+      await session.end();
+    } catch {
+      /* 이미 종료됨 */
+    }
+    this.session = undefined;
+    this.bus.emit("sessionEnded", undefined);
+  }
+
+  /**
+   * 세션 'end' 리스너가 아직 연결되기 전(초기화 도중) 실패 시의 수동 정리.
+   * (정상 종료 경로는 onSessionEnd 가 담당한다.)
+   */
+  private teardownAfterFailedInit(): void {
+    this.renderer?.setAnimationLoop(null);
+    window.removeEventListener("resize", this.onResize);
+    if (this.renderer) {
+      this.renderer.domElement.remove();
+      this.renderer.dispose();
+    }
+    this.renderer = undefined;
+    this.hitTestSource = undefined;
+    this.refSpace = undefined;
+  }
 
   private setupThree(root: HTMLElement): void {
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -275,6 +404,127 @@ export class AREngine implements ARExperience {
     this.controller = controller;
 
     window.addEventListener("resize", this.onResize);
+
+    if (this.debug) this.setupDebug();
+  }
+
+  // ---- 디버그(테스트 전용) 계측 ----
+
+  /** A. 카메라 전방 테스트 큐브 + B. 배치 축. (실제 장면과 독립) */
+  private setupDebug(): void {
+    if (!this.scene) return;
+    // A. 불투명·고대비·조명 무관(MeshBasic) 25cm 큐브. 매 프레임 카메라 전방 1m로 이동.
+    const cube = new THREE.Mesh(
+      new THREE.BoxGeometry(0.25, 0.25, 0.25),
+      new THREE.MeshBasicMaterial({ color: 0xff2d95 })
+    );
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(cube.geometry),
+      new THREE.LineBasicMaterial({ color: 0xffffff })
+    );
+    cube.add(edges);
+    cube.renderOrder = 999;
+    this.scene.add(cube);
+    this.debugCube = cube;
+
+    // B. 배치 위치 RGB(XYZ) 축. placement Group 자식 → 배치 시 함께 표시/이동.
+    const axes = new THREE.AxesHelper(0.5);
+    this.placement.group.add(axes);
+    this.debugAxes = axes;
+
+    this.bus.emit("info", "DEBUG 모드: 전방 1m 테스트 큐브(마젠타) + 배치 축 생성.");
+  }
+
+  /** C. 모델 bounding box + 메시 수 집계. attach 직후 호출. */
+  private setupModelDebug(root: THREE.Object3D): void {
+    if (!this.debug) return;
+    let meshCount = 0;
+    root.updateWorldMatrix(true, true);
+    root.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) meshCount++;
+    });
+    this.debugMeshCount = meshCount;
+
+    const box = new THREE.Box3().setFromObject(root);
+    box.getSize(this.debugBoxSize);
+    if (this.debugBox) {
+      this.placement.group.remove(this.debugBox);
+      this.debugBox.dispose();
+    }
+    const helper = new THREE.Box3Helper(box, new THREE.Color(0x00ffff));
+    this.placement.group.add(helper);
+    this.debugBox = helper;
+
+    this.bus.emit(
+      "info",
+      `DEBUG 모델: meshCount=${meshCount} · bbox=[${round3(this.debugBoxSize.x)}×` +
+        `${round3(this.debugBoxSize.y)}×${round3(this.debugBoxSize.z)}]m · scale=${round3(this.placement.group.scale.x)}`
+    );
+  }
+
+  /** 매 프레임: 테스트 큐브를 XR 카메라 전방 1m에 유지(렌더링 정상 여부 확인용). */
+  private updateDebugCube(): void {
+    if (!this.renderer || !this.debugCube) return;
+    const cam = this.renderer.xr.getCamera();
+    const camPos = new THREE.Vector3().setFromMatrixPosition(cam.matrixWorld);
+    const camQuat = new THREE.Quaternion().setFromRotationMatrix(cam.matrixWorld);
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camQuat);
+    this.debugCube.position.copy(camPos).addScaledVector(forward, 1.0);
+    this.debugCube.quaternion.copy(camQuat);
+  }
+
+  /** C. 가시성/거리/시야 진단 수집(텔레메트리에 실어 화면 표시). */
+  private collectDebugInfo(): ARDebugInfo | undefined {
+    if (!this.debug || !this.renderer || !this.scene) return undefined;
+    const modelRoot = this.alignment?.object ?? this.artwork?.object;
+    const group = this.placement.group;
+    const worldPos = new THREE.Vector3();
+    group.getWorldPosition(worldPos);
+
+    const cam = this.renderer.xr.getCamera();
+    const camPos = new THREE.Vector3().setFromMatrixPosition(cam.matrixWorld);
+    const cameraDistanceM = camPos.distanceTo(worldPos);
+
+    // 대략적 절두체 내부 판정(대표 뷰 기준).
+    this.debugProjScreen.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+    this.debugFrustum.setFromProjectionMatrix(this.debugProjScreen);
+    const inView = this.debugFrustum.containsPoint(worldPos);
+
+    return {
+      inScene: group.parent === this.scene,
+      modelVisible: group.visible && (modelRoot?.visible ?? false),
+      meshCount: this.debugMeshCount,
+      worldPos: { x: round3(worldPos.x), y: round3(worldPos.y), z: round3(worldPos.z) },
+      scale: round3(group.scale.x),
+      bboxSize: {
+        x: round3(this.debugBoxSize.x),
+        y: round3(this.debugBoxSize.y),
+        z: round3(this.debugBoxSize.z),
+      },
+      cameraDistanceM: round3(cameraDistanceM),
+      inView,
+    };
+  }
+
+  private disposeDebug(): void {
+    if (this.debugCube) {
+      this.scene?.remove(this.debugCube);
+      (this.debugCube as THREE.Mesh).geometry?.dispose?.();
+      const mat = (this.debugCube as THREE.Mesh).material;
+      if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+      else mat?.dispose();
+      this.debugCube = undefined;
+    }
+    if (this.debugAxes) {
+      this.placement.group.remove(this.debugAxes);
+      this.debugAxes.dispose();
+      this.debugAxes = undefined;
+    }
+    if (this.debugBox) {
+      this.placement.group.remove(this.debugBox);
+      this.debugBox.dispose();
+      this.debugBox = undefined;
+    }
   }
 
   private async loadExperienceAsset(req: StartRequest): Promise<void> {
@@ -322,6 +572,7 @@ export class AREngine implements ARExperience {
     const scale = req.overrides?.scale ?? asset?.recommended_scale ?? 1;
     this.artwork = new EmergingArtworkScene(model, asset);
     this.placement.attach(this.artwork.object, scale);
+    this.setupModelDebug(this.artwork.object);
 
     // 실제 Codex GLB 로드 여부를 명확히 로깅(지시 #6).
     if (this.usedPlaceholder) {
@@ -378,6 +629,7 @@ export class AREngine implements ARExperience {
     const scale = req.overrides?.scale ?? man.recommended_scale ?? 1;
     this.alignment = new AlignmentScene(model, man);
     this.placement.attach(this.alignment.object, scale);
+    this.setupModelDebug(this.alignment.object);
     this.calibKey = `ar-calib:${req.buildingId}:${req.spotId}:${man.id}`;
     this.usedPlaceholder = false;
 
@@ -501,6 +753,7 @@ export class AREngine implements ARExperience {
     }
 
     this.artwork?.update(dt, elapsed);
+    if (this.debug) this.updateDebugCube();
     if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
@@ -531,6 +784,7 @@ export class AREngine implements ARExperience {
       hitTestActive: !!this.hitTestSource,
       animationPhase: this.artwork?.phase ?? "none",
       anchorWorld,
+      debug: this.collectDebugInfo(),
     });
   }
 
@@ -543,6 +797,7 @@ export class AREngine implements ARExperience {
 
   private onSessionEnd = (): void => {
     this.renderer?.setAnimationLoop(null);
+    this.disposeDebug();
     this.artwork?.dispose();
     this.alignment?.dispose();
     window.removeEventListener("resize", this.onResize);

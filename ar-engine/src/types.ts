@@ -80,6 +80,12 @@ export interface AREngineOptions {
   mode?: ARMode;
   /** DOM 오버레이/안내 UI 루트. 미지정 시 전체화면 오버레이 생성. */
   container?: HTMLElement;
+  /**
+   * 테스트 전용 디버그 모드(지시: 테스트 모드에서만). 카메라 전방 테스트 큐브,
+   * 배치 축(RGB=XYZ), 모델 bounding box, 가시성/거리/시야 진단을 활성화한다.
+   * 실제 GLB·장면 동작에는 영향을 주지 않는다.
+   */
+  debug?: boolean;
 }
 
 // ---- 이벤트 ----
@@ -132,6 +138,28 @@ export interface ARTelemetry {
   animationPhase: "none" | "emerging" | "idle" | "disappearing";
   /** 배치 후 기준점의 월드 좌표(배치 안정성 육안 확인용). */
   anchorWorld?: { x: number; y: number; z: number };
+  /** debug 모드에서만 채워지는 모델 가시성 진단(지시 B,C). */
+  debug?: ARDebugInfo;
+}
+
+/** debug 모드 모델 가시성/위치 진단(지시 B,C). */
+export interface ARDebugInfo {
+  /** placement Group 이 scene 그래프에 연결돼 있는가. */
+  inScene: boolean;
+  /** 모델+Group 이 모두 visible 인가. */
+  modelVisible: boolean;
+  /** 렌더 대상 메시 수. */
+  meshCount: number;
+  /** placement Group 월드 좌표. */
+  worldPos: { x: number; y: number; z: number };
+  /** placement Group 균일 스케일. */
+  scale: number;
+  /** 모델 bounding box 크기(m). */
+  bboxSize: { x: number; y: number; z: number };
+  /** XR 카메라 ↔ 모델(Group) 거리(m). */
+  cameraDistanceM: number;
+  /** 모델(Group) 월드 좌표가 카메라 절두체 내부인가(대략). */
+  inView: boolean;
 }
 
 export interface ARExperienceEventMap {
@@ -145,6 +173,8 @@ export interface ARExperienceEventMap {
   error: ARErrorEvent;
   telemetry: ARTelemetry;
   sessionEnded: void;
+  /** 실기기 진단용 정보 로그(예: 선택된 reference space 타입). 사람이 읽는 문자열. */
+  info: string;
 }
 
 export interface ARExperience {
@@ -181,4 +211,10 @@ export interface ARExperience {
   loadCalibration(): boolean;
   /** 보정값을 배치 직후 상태로 초기화. */
   resetCalibration(): void;
+
+  /** [debug 전용] 카메라 전방 테스트 큐브 표시/숨김. debug 모드가 아니면 no-op. */
+  setDebugCubeVisible(visible: boolean): void;
+
+  /** iOS(AR Quick Look) 폴백용 USDZ 바이트 생성. WebXR 세션을 시작하지 않는다. */
+  exportExperienceUSDZ(req: StartRequest): Promise<Uint8Array>;
 }

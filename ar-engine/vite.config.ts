@@ -13,10 +13,16 @@ const STAGED_PUBLIC = resolve(__dirname, ".assets");
 // 인증서를 제공한다. USB 포트포워딩(localhost)에서는 AR_HTTP=1 로 평문 HTTP 서빙이 가능하다.
 const useHttp = process.env.AR_HTTP === "1";
 
+// 빌드 식별자: 배포본을 기기 간 대조(지시 #1)하기 위해 빌드 시각을 주입한다.
+const BUILD_ID = new Date().toISOString().replace(/\.\d+Z$/, "Z");
+
 export default defineConfig({
   root: ".",
   publicDir: STAGED_PUBLIC,
   base: process.env.AR_BASE ?? "/", // GitHub Pages 서브경로 배포 시 AR_BASE 로 지정
+  define: {
+    __BUILD_ID__: JSON.stringify(BUILD_ID),
+  },
   plugins: [...(useHttp ? [] : [basicSsl()])],
   server: {
     host: true, // 같은 네트워크의 스마트폰에서 접속 허용

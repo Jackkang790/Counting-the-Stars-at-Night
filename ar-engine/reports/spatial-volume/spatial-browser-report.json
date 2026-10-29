@@ -1,0 +1,17 @@
+{
+  "testedUrl": "http://localhost:5191/ar-musical/",
+  "browser": "155.0.8059.86",
+  "physicalDeviceARVerified": false,
+  "realHumanVolumetricFootageProvided": false,
+  "calibrationContent": "Nonhuman asymmetric 3D box/cone; never represented as a real performer",
+  "checks": [
+    "Both real-video planes are under building anchors, never camera children; preview camera movement leaves placement unchanged",
+    "Renderer swap preserves each actor transform; nonhuman 3D calibration cannot start a real-human show",
+    "Both changing 3D frame sequences advance on the common audio/timeline clock after their separate entrance times",
+    "Paused 3D geometry renders different perspectives from left/front/right while building-relative matrices stay fixed",
+    "Local manifest + all GLB file selection uses the same bounded loader and preserves registration",
+    "Returning to both licensed human video planes restores show controls without moving either actor"
+  ],
+  "result": "PASS",
+  "browserErrors": []
+}
