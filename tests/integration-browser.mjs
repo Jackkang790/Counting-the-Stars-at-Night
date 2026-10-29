@@ -54,6 +54,7 @@ const skip = async (screen, expected) => {
   await visit(screen);
   await page.getByRole('button', { name: /건너뛰기/ }).click();
   await expect.poll(stars).toBe(expected);
+  await expect(page).toHaveURL(expected === 6 ? /#stamps/ : /#map/);
 };
 try {
   const health = await json('/health'); assert.equal(health.status, 'ok');
@@ -97,6 +98,7 @@ try {
   await expect(page.getByRole('button', { name: '공연 감상 완료 · 별 받기' })).toBeEnabled({ timeout: 25000 });
   await page.getByRole('button', { name: '공연 감상 완료 · 별 받기' }).click();
   await expect.poll(stars).toBe(1);
+  await expect(page).toHaveURL(/#map/);
   checks.push('four real GLBs and 10-second audio timeline complete through checked iframe bridge (MOCK tracker)');
 
   await skip('escape/h1', 2);
@@ -107,6 +109,7 @@ try {
   await expect(frame.locator('h1')).toHaveText('별의 새싹');
   await page.getByRole('button', { name: '전시 확인 · 별 받기' }).click();
   await expect.poll(stars).toBe(5);
+  await expect(page).toHaveURL(/#map/);
   await skip('escape/h3', 6);
   await expect(page).toHaveURL(/#stamps/);
   const firstSid = await sid();
@@ -146,6 +149,7 @@ try {
   await visit('escape/h1');
   await page.getByRole('button', { name: /건너뛰기/ }).click();
   await expect(page.locator('.sync-notice')).toBeVisible();
+  await expect(page).toHaveURL(/#map/);
   assert.equal(await stars(), 0);
   await page.unroute('**/api/v1/**');
   await page.locator('.sync-notice').getByRole('button', { name: '다시 시도' }).click();
@@ -165,6 +169,14 @@ try {
 
   await visit('stamps');
   await page.screenshot({ path: resolve(out, 'round-two-mobile.png') });
+  await page.goto(base + '/ar/');
+  await expect(page.locator('#start-star')).toBeVisible();
+  await expect(page.locator('#tracking-lab-launcher a')).toBeVisible();
+  for (const engine of ['mindar', 'nft']) {
+    await page.goto(base + '/ar/?trackingLab=1&engine=' + engine);
+    await expect(page.locator('#lab-start')).toBeEnabled({ timeout: 15000 });
+  }
+  checks.push('latest AR branch keeps the original landing page and NFT/MindAR comparison routes under /ar/');
   assert.deepEqual(errors, []);
   const report = { result: 'PASS', checks, completionRequests: completions.length, phoneARVerified: false, tracking: 'MOCK ONLY' };
   await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');

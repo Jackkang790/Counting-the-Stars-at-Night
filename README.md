@@ -45,6 +45,8 @@ AR 소스를 수정하면 `npm run build:ar`로 다시 빌드합니다.
 
 통합 실행 진입점은 `backend/app/integrated.py`입니다. 기존 백엔드 단독 실행
 `app.demo:app`과 AR 단독 빌드는 그대로 사용할 수 있습니다.
+최신 AR 브랜치의 이미지 추적 비교 화면도 `/ar/?trackingLab=1&engine=mindar`
+또는 `/ar/?trackingLab=1&engine=nft`에서 실행합니다.
 
 ## 검증
 

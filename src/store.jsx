@@ -160,8 +160,9 @@ export function AppProvider({ children }) {
   // 미션을 끝냈을 때: 별 받고 → 02 지도로(지도 위에 "★ 별 획득" 안내). 별 6개를 다 모은 순간만 08 나의 별자리(완성 · 쿠폰).
   const finish = useCallback(async (houseId, kind) => {
     const epoch = progressEpoch.current;
+    const startedAt = screenRef.current;
     const n = await stamp(houseId, kind);
-    if (epoch !== progressEpoch.current) return;
+    if (epoch !== progressEpoch.current || screenRef.current !== startedAt) return;
     go((n === false ? count : n) >= TOTAL_STAMPS ? 'stamps' : 'map', null, { replace: true });
   }, [stamp, go, count]);
 
