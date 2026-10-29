@@ -1,0 +1,10 @@
+{
+  "result": "PASS",
+  "url": "https://ar.lobodoc.com/",
+  "uncroppedCamera": true,
+  "portraitControlsDoNotCoverCamera": true,
+  "targetGuide": true,
+  "realEstimatorWithSimulatedCamera": true,
+  "photo": true,
+  "physicalPhoneVerified": false
+}

@@ -95,7 +95,9 @@ export class ImageTrackingHost implements TrackingHost {
     if (!width || !height) return;
     this.renderer.setSize(width, height);
     if (!this.controller || !this.video.videoWidth) return;
-    const scale = Math.max(width / this.video.videoWidth, height / this.video.videoHeight);
+    // Show the entire camera frame. Cover-cropping on portrait phones looked zoomed
+    // and hid the edges users need to frame the landscape-panel target.
+    const scale = Math.min(width / this.video.videoWidth, height / this.video.videoHeight);
     this.camera.projectionMatrix.fromArray(this.controller.getProjectionMatrix());
     this.camera.projectionMatrix.elements[0] *= this.video.videoWidth * scale / width;
     this.camera.projectionMatrix.elements[5] *= this.video.videoHeight * scale / height;
@@ -103,10 +105,11 @@ export class ImageTrackingHost implements TrackingHost {
   }
   async capture(): Promise<Blob> {
     if (!this.found) throw new Error("표적을 인식한 상태에서 촬영하세요.");
-    // Both layers use the identical CSS cover crop; this is image-pose AR, not an untracked overlay.
+    // Camera, projection and exported photo share the same uncropped contain fit.
     const canvas = document.createElement("canvas"), width = this.container.clientWidth, height = this.container.clientHeight;
     const scale = Math.min(1, 1280 / Math.max(width, height)); canvas.width = Math.round(width * scale); canvas.height = Math.round(height * scale);
-    const ctx = canvas.getContext("2d")!, cover = Math.max(canvas.width / this.video.videoWidth, canvas.height / this.video.videoHeight);
+    const ctx = canvas.getContext("2d")!, cover = Math.min(canvas.width / this.video.videoWidth, canvas.height / this.video.videoHeight);
+    ctx.fillStyle = "#111923"; ctx.fillRect(0, 0, canvas.width, canvas.height);
     const vw = this.video.videoWidth * cover, vh = this.video.videoHeight * cover;
     ctx.drawImage(this.video, (canvas.width - vw) / 2, (canvas.height - vh) / 2, vw, vh);
     this.renderer.render(this.scene, this.camera); ctx.drawImage(this.renderer.domElement, 0, 0, canvas.width, canvas.height);

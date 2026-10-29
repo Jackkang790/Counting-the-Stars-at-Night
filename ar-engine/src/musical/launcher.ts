@@ -5,6 +5,6 @@ export function installMusicalLauncher(): void {
   const link = document.createElement("a"), url = new URL(location.href); url.searchParams.set("musical", "1");
   link.href = url.href; link.textContent = "③ 실사 AR 뮤지컬 MVP";
   link.style.cssText = "display:block;padding:14px;border-radius:8px;background:#9a6a2c;color:white;text-align:center;text-decoration:none;font-weight:700";
-  const note = document.createElement("div"); note.className = "hintline"; note.textContent = "별도 공연 화면 · 이미지 추적(iPhone/Android) · 실사 영상 직접 선택";
+  const note = document.createElement("div"); note.className = "hintline"; note.textContent = "사진 없는 웹 공간 추적 · 바닥 탭 배치 · 실사 배우 2명";
   card.append(link, note); app.appendChild(card);
 }

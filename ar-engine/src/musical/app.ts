@@ -15,6 +15,7 @@ import { mountSpatialPerformer, spatialSnapshot } from "./spatial";
 import { loadVolumeCalibration } from "./volumeCalibration";
 import { ShowDirector } from "./director";
 import { ImageTrackingHost, WebXRTrackingHost, type TrackingHost, type TrackingCallbacks } from "./tracking";
+import { WorldTrackingHost, loadWorldSDK } from "./slam";
 import type { VideoMode } from "./types";
 
 const errorText = (e: unknown) => e instanceof Error ? e.message : String(e);
@@ -39,7 +40,8 @@ export async function mountMusical(): Promise<void> {
     <header class="musical-header"><div><span class="musical-kicker">LIVE STAGE · MVP</span><h1>목재 무대, 30초의 공연</h1></div><button id="musical-exit" aria-label="기존 AR 화면으로 돌아가기">종료 ↗</button></header>
     <div class="musical-badges"><span id="musical-track">카메라 시작 전</span><span id="musical-fps">실기기 미검증</span></div>
     <section class="musical-console" aria-label="공연 제어">
-      <p id="musical-status" role="status" aria-live="polite">사진 속 산수화 패널을 표적으로 준비하세요.</p>
+      <div id="musical-target-guide" hidden><img alt="인식할 산수화 패널 표적" /><span>이 산수화 패널 전체를 정면에서 비추세요. 격자문·배경 전체가 아닌 패널 한 장입니다. 가까이 다가가 선명하게 담아 주세요.</span></div>
+      <p id="musical-status" role="status" aria-live="polite">공간 추적 엔진을 준비합니다. 사진 표적 없이 바닥을 탭해 무대를 배치합니다.</p>
       <p id="musical-error" role="alert" hidden></p>
       <div class="musical-progress"><progress id="musical-progress" max="30" value="0"></progress><output id="musical-time">0.0 / 30초</output></div>
       <div class="musical-actions musical-primary"><button id="musical-camera" class="gold">1. AR 카메라 시작</button><button id="musical-confirm" disabled>2. 정합 확정</button><button id="musical-play" class="gold" disabled>3. 공연 시작</button></div>
@@ -47,7 +49,9 @@ export async function mountMusical(): Promise<void> {
       <p class="musical-note" id="musical-media-status">실사 영상 없음 · 아래에서 배우 영상 2개를 선택하세요.</p>
       <p class="musical-note" id="musical-representation">1단계: 건물 좌표에 고정한 실사 영상 평면 · 완전한 입체 인물 아님</p>
       <details id="musical-setup" open><summary>공연 준비 · 영상과 추적</summary><div class="musical-settings">
-        <label>실행 경로<select id="musical-backend"><option value="image">iPhone·Android 공통 — 이미지 표적 추적</option><option value="webxr">Android — WebXR 바닥 배치 후 벽 정합</option></select></label>
+        <label>실행 경로<select id="musical-backend"><option value="world">iPhone·Android — 사진 없는 공간 추적</option><option value="image">기존 이미지 표적 추적</option><option value="webxr">Android — WebXR 바닥 배치 후 벽 정합</option></select></label>
+        <p class="musical-note">공간 추적: 카메라 시작 → 바닥을 천천히 비추기 → 무대 중심 탭 → 공연 시작. 벽 자동 인식은 아니며 필요하면 개발자 정합에서 방향·크기를 맞춥니다.</p>
+        <div class="musical-image-options">
         <p class="musical-note">공통 경로는 표적의 위치·회전을 추적합니다. 표적이 안 보이면 숨김·정지하며, 화면 밖에서도 유지되는 SLAM은 아닙니다. 평면 영상은 옆에서 보면 얇아 보입니다.</p>
         <div class="musical-references"><a target="_blank" rel="noopener" href="${roomPhoto}"><img src="${roomPhoto}" alt="목재 격자문과 기둥 참고 사진" /></a><a target="_blank" rel="noopener" href="${panelPhoto}"><img src="${panelPhoto}" alt="산수화 패널 참고 사진" /></a><div id="musical-target-preview" title="보정된 산수화 표적"></div></div>
         <label>표적 실제 너비(m) <input id="musical-target-width" type="number" min="0.1" max="10" step="0.01" value="${show.building.target.widthMeters}" /></label>
@@ -55,6 +59,7 @@ export async function mountMusical(): Promise<void> {
         <label>정면 표적 사진 교체<input id="musical-target-image" type="file" accept="image/*" /></label>
         <div class="musical-actions"><button id="musical-compile">표적 준비</button><button id="musical-download-target" disabled>표적 파일 저장</button><button id="musical-download-image">보정 표적 이미지</button></div>
         <label>기존 .mind 표적 불러오기<input id="musical-target-file" type="file" accept=".mind" /></label>
+        </div>
         <button id="musical-samples">실사 샘플 배우 2명 불러오기</button>
         <p class="musical-note">Pexels 허용 조건을 확인한 움직이는 실사 샘플입니다. Yoshi Mura / SERGEY ZIMA 촬영. 지역 공연자의 최종 공연본이 아닙니다. <a href="${mediaCreditsUrl}" download="MEDIA-CREDITS.md">영상 출처·사용 조건</a></p>
         ${show.actors.map((a, i) => `<label>${a.label} 실사 영상 교체<input id="musical-video-${i}" type="file" accept="video/mp4,video/webm,video/quicktime" /></label><label>${a.label} 배경 처리<select id="musical-video-mode-${i}"><option value="packed">MP4 좌:컬러 / 우:흑백 알파 (권장)</option><option value="alpha">네이티브 알파 영상 (기기별 확인)</option><option value="chroma">녹색 배경 크로마키</option></select></label>`).join("")}
@@ -75,16 +80,20 @@ export async function mountMusical(): Promise<void> {
         <div class="musical-actions"><button data-view="-35" disabled>미리보기 왼쪽</button><button data-view="0" disabled>미리보기 정면</button><button data-view="35" disabled>미리보기 오른쪽</button></div>
         <output id="musical-spatial"></output>
         <p class="musical-note">MindAR 1.2.5 · <a href="${mindLicenseUrl}" download="LICENSE.mind-ar">MIT 라이선스</a> · <a href="${apacheLicenseUrl}" download="LICENSE.apache-2.0">TensorFlow.js Apache 2.0</a></p>
+        <p class="musical-note">XR Engine © 2026 Niantic Spatial, Inc. All rights reserved. <a href="${import.meta.env.BASE_URL}xr8/LICENSE" target="_blank" rel="noopener">XR Engine License Agreement · 무보증 고지</a></p>
       </div></details>
     </section>`;
   document.body.appendChild(root);
   const $ = <T extends HTMLElement>(id: string) => root.querySelector<T>(`#musical-${id}`)!;
+  if (new URLSearchParams(location.search).get("tracking") === "image") $<HTMLSelectElement>("backend").value = "image";
   $("target-preview").appendChild(panel);
+  $("target-guide").querySelector("img")!.src = panel.toDataURL();
   root.querySelectorAll("button, input, select, summary").forEach(el => el.addEventListener("beforexrselect", e => e.preventDefault()));
   const status = (text: string) => { $("status").textContent = text; };
   let host: TrackingHost | undefined, preview = false, confirmed = false, target: Uint8Array | undefined;
   let targetCanvas: HTMLCanvasElement | HTMLImageElement = panel, targetHash = "", compiling = false, active = false, disposed = false;
   let epoch = 0, lastUi = 0, lastFps = performance.now(), frames = 0, fps = 0, decoderFailures = 0, mediaBusy = false;
+  let worldReady = false;
   const actorSources: string[] = show.actors.map(() => "none");
   const stage = new MusicalStage(show.building, panel), placement = new PlacementGroup();
   placement.attach(stage.root); placement.placeAt(new THREE.Matrix4().elements, true);
@@ -105,8 +114,11 @@ export async function mountMusical(): Promise<void> {
     decoderFailures++; $("error").hidden = false; $("error").textContent = message; director.pause(); updateButtons();
   }
   function updateButtons(): void {
+    root.dataset.backend = $<HTMLSelectElement>("backend").value;
+    $("target-guide").hidden = !active || preview || root.dataset.mode !== "image" || !!host?.tracked;
     const ready = !!host?.tracked && confirmed;
-    $<HTMLButtonElement>("camera").disabled = active || compiling || ($<HTMLSelectElement>("backend").value === "image" && !target);
+    $<HTMLButtonElement>("camera").disabled = active || compiling || ($<HTMLSelectElement>("backend").value === "image" && !target) || ($<HTMLSelectElement>("backend").value === "world" && !worldReady);
+    if (root.dataset.mode === "world" && active && !host?.tracked && $("error").hidden) status(root.dataset.placementHint || (root.dataset.worldTracking === "normal" ? "공간 추적 준비 완료 · 무대가 설 바닥을 탭하세요." : "바닥을 천천히 비춰 공간을 파악합니다. 사진 표적은 필요 없습니다."));
     $<HTMLButtonElement>("confirm").disabled = !host?.tracked || confirmed;
     const missingMedia = actors.some(a => !a.loaded), synthetic = actors.some(a => a.contentKind === "synthetic-calibration");
     $<HTMLButtonElement>("play").disabled = !ready || mediaBusy || synthetic || (missingMedia && !director.testMode) || director.state === "playing";
@@ -221,9 +233,13 @@ export async function mountMusical(): Promise<void> {
     stage.building.visible = true; $<HTMLInputElement>("building").checked = true;
     $("error").hidden = true; updateButtons();
     const mode = $<HTMLSelectElement>("backend").value;
-    host = mode === "webxr" ? new WebXRTrackingHost(root, $("view"), placement.group, { ...callbacks, tracking: tracked => { callbacks.tracking(tracked); $("track").textContent = tracked ? "WebXR 월드 좌표 배치" : "바닥을 비추고 링을 탭하세요"; } }) : new ImageTrackingHost($("view"), placement.group, target!, show.building, callbacks);
-    root.dataset.mode = mode; status(mode === "webxr" ? "바닥 링을 탭해 무대를 배치한 뒤 개발자 정합으로 벽에 맞추세요." : "카메라 준비 중… 산수화 패널 전체를 비추세요.");
-    try { await host.start(); if (generation !== epoch) return; $("track").textContent = mode === "webxr" ? "바닥을 비추고 링을 탭하세요" : "산수화 패널 표적 찾는 중"; }
+    host = mode === "world" ? new WorldTrackingHost(root,$("view"),placement.group,{...callbacks,tracking: tracked => {
+      callbacks.tracking(tracked);
+      $("track").textContent = tracked ? "SLAM 공간 추적 · 무대 배치됨" : "공간 파악 중 · 바닥을 비추세요";
+      if (tracked && !confirmed) { confirmed = true; stage.building.visible = false; $<HTMLInputElement>("building").checked = false; $<HTMLDetailsElement>("setup").open = false; status("무대 배치 완료 · 공연 시작을 누르세요."); updateButtons(); }
+    }}) : mode === "webxr" ? new WebXRTrackingHost(root, $("view"), placement.group, { ...callbacks, tracking: tracked => { callbacks.tracking(tracked); $("track").textContent = tracked ? "WebXR 월드 좌표 배치" : "바닥을 비추고 링을 탭하세요"; } }) : new ImageTrackingHost($("view"), placement.group, target!, show.building, callbacks);
+    root.dataset.mode = mode; status(mode === "world" ? "카메라·동작 센서 권한을 허용하고 바닥을 천천히 비추세요." : mode === "webxr" ? "바닥 링을 탭해 무대를 배치한 뒤 개발자 정합으로 벽에 맞추세요." : "카메라 준비 중… 산수화 패널 전체를 비추세요.");
+    try { await host.start(); if (generation !== epoch) return; $("track").textContent = mode === "world" ? "바닥을 비추고 무대 중심을 탭하세요" : mode === "webxr" ? "바닥을 비추고 링을 탭하세요" : "산수화 패널 표적 찾는 중"; }
     catch (e) { host.dispose(); host = undefined; active = false; fail(errorText(e)); updateButtons(); }
   }
   $("camera").addEventListener("click", () => void startCamera());
@@ -288,4 +304,10 @@ export async function mountMusical(): Promise<void> {
   // Precompiled target is optional during development; no expensive compilation on a phone by default.
   const bundled = new URL("../../musical-assets/panel.mind", import.meta.url);
   try { const r = await fetch(bundled); if (r.ok && !r.headers.get("content-type")?.includes("text/html")) await useTarget(new Uint8Array(await r.arrayBuffer())); } catch { /* Offer explicit compiler/upload controls. */ }
+  if ($<HTMLSelectElement>("backend").value === "world") {
+    status("공간 추적 엔진 준비 중… 처음에는 다운로드에 시간이 걸릴 수 있습니다.");
+    void loadWorldSDK().then(() => { if (disposed) return; worldReady = true; status("준비 완료 · 카메라를 시작한 뒤 바닥을 탭해 무대를 배치하세요."); updateButtons(); }).catch(e => fail(errorText(e)));
+    $("samples").click();
+  }
+  $("backend").addEventListener("change",() => { if ($<HTMLSelectElement>("backend").value === "world" && !worldReady) void loadWorldSDK().then(() => { worldReady = true; updateButtons(); }).catch(e => fail(errorText(e))); });
 }

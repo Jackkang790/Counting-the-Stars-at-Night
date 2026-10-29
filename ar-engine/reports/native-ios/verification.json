@@ -1,0 +1,25 @@
+{
+  "status": "Native source prepared; Mac compilation and iPhone run pending",
+  "swiftCompiled": false,
+  "iPhoneARVerified": false,
+  "webProtectedFiles": 38,
+  "sourceZipSHA256": "5a89e9977f7cee8887c120769fdb83aa9cf1db4e271f0315aa9c56dd4b74505b",
+  "zipBytes": 1303006,
+  "files": [
+    "StarStage-iOS/ar-engine/ios/StarStage/Info.plist",
+    "StarStage-iOS/ar-engine/ios/StarStage/PackedPerformer.swift",
+    "StarStage-iOS/ar-engine/ios/StarStage/README.md",
+    "StarStage-iOS/ar-engine/ios/StarStage/Show.swift",
+    "StarStage-iOS/ar-engine/ios/StarStage/StageController.swift",
+    "StarStage-iOS/ar-engine/ios/StarStage/StageGeometry.swift",
+    "StarStage-iOS/ar-engine/ios/StarStage/StarStage.xcodeproj/project.pbxproj",
+    "StarStage-iOS/ar-engine/ios/StarStage/StarStage.xcodeproj/xcshareddata/xcschemes/StarStage.xcscheme",
+    "StarStage-iOS/ar-engine/ios/StarStage/StarStageApp.swift",
+    "StarStage-iOS/ar-engine/musical-assets/show.json",
+    "StarStage-iOS/ar-engine/musical-assets/actor-a-demo.mp4",
+    "StarStage-iOS/ar-engine/musical-assets/actor-b-demo.mp4",
+    "StarStage-iOS/ar-engine/musical-assets/MEDIA-CREDITS.md",
+    "StarStage-iOS/ar-engine/scripts/generate-ios-project.mjs",
+    "StarStage-iOS/ar-engine/tests/native-project-check.py"
+  ]
+}

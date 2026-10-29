@@ -1,0 +1,23 @@
+﻿{
+    "verifiedAt":  "2026-10-30T02:12:05.2466224+09:00",
+    "url":  "https://ar.lobodoc.com/?musical=1\u0026v=world1",
+    "delivery":  "Executable website, not native source ZIP",
+    "defaultBackend":  "8th Wall web SLAM",
+    "package":  "@8thwall/engine-binary@1.0.0",
+    "actualSdkLoaded":  true,
+    "runtimePageErrors":  [
+
+                          ],
+    "actualSyntheticInputTrackingState":  "limited",
+    "adapterMockResult":  "PASS",
+    "originalImagePathRegression":  "PASS",
+    "protectedOriginalFiles":  38,
+    "typecheck":  "PASS",
+    "build":  "PASS",
+    "deviceARVerified":  false,
+    "real6DoFMovementVerified":  false,
+    "serverImage":  "ar-site:musical-13b3b704",
+    "rollbackImage":  "ar-site:rollback-20261029T170817Z",
+    "archiveSHA256":  "13b3b704fecb0d7bb3ceff6152da8dc429a0b2f75c8eec4f02a4b3b34827528f",
+    "fileCount":  46
+}

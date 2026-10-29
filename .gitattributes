@@ -1,0 +1,4 @@
+# Keep the distributed XR engine byte-identical to the licensed vendor package.
+/ar-engine/vendor/xr8/** -text
+# The original asset stager can use these files when the Blender ref is unavailable.
+/public/models/*.json text eol=lf

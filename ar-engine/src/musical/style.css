@@ -3,7 +3,20 @@
 #musical-app { position: fixed; inset: 0; font-family: system-ui, -apple-system, sans-serif; overflow: hidden; }
 #musical-view { position: absolute; inset: 0; background: #111923; }
 #musical-view canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
-.musical-camera { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.musical-camera { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 0; }
+#musical-target-guide { display: flex; align-items: center; gap: 9px; font-size: 12px; line-height: 1.6; margin-bottom: 10px; }
+#musical-target-guide[hidden] { display: none; }
+#musical-target-guide img { width: 64px; height: 52px; object-fit: contain; flex: none; border: 1px solid #eccd99; }
+#musical-app[data-backend=world] .musical-image-options { display: none; }
+#musical-app[data-backend=world] #musical-confirm { display: none; }
+@media (orientation: portrait) {
+  #musical-app[data-mode=world] #musical-view { top: 120px; bottom: 44dvh; }
+  #musical-app[data-mode=world] .musical-console { max-height: 44dvh; }
+}
+@media (orientation: portrait) {
+  #musical-app[data-mode=image] #musical-view { top: 120px; bottom: 44dvh; }
+  #musical-app[data-mode=image] .musical-console { max-height: 44dvh; }
+}
 .musical-header { position: absolute; inset: 0 0 auto; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: max(15px, env(safe-area-inset-top)) 20px 14px; background: linear-gradient(#101720ee, #10172044); }
 .musical-kicker { font-size: 10px; letter-spacing: .22em; color: #eccd99; }
 .musical-header h1 { font-size: 19px; margin-top: 4px; font-weight: 600; }

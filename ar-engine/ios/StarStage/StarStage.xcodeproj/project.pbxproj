@@ -1,0 +1,36 @@
+// !$*UTF8*$!
+{ archiveVersion = 1; classes = {}; objectVersion = 56; objects = {
+CCF1045D4A9594827AA978D7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PackedPerformer.swift"; sourceTree = "<group>";};
+02373DB35EBF0AACFCBCE2E0 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Show.swift"; sourceTree = "<group>";};
+9B51EDD1BA887D5C845178FF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StageController.swift"; sourceTree = "<group>";};
+1885322BA960E2A8A7AACB77 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StageGeometry.swift"; sourceTree = "<group>";};
+BFA806267EC0569149266E31 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StarStageApp.swift"; sourceTree = "<group>";};
+3D982914F2C6EBF5E757F811 = {isa = PBXFileReference; lastKnownFileType = text.json; name = "show.json"; path = "../../musical-assets/show.json"; sourceTree = SOURCE_ROOT;};
+62838ABBDE5616A28B681859 = {isa = PBXFileReference; lastKnownFileType = file; name = "actor-a-demo.mp4"; path = "../../musical-assets/actor-a-demo.mp4"; sourceTree = SOURCE_ROOT;};
+7EF5CBD53948DE95FF138A91 = {isa = PBXFileReference; lastKnownFileType = file; name = "actor-b-demo.mp4"; path = "../../musical-assets/actor-b-demo.mp4"; sourceTree = SOURCE_ROOT;};
+0FF9806D79E1239323529D65 = {isa = PBXFileReference; lastKnownFileType = text; name = "MEDIA-CREDITS.md"; path = "../../musical-assets/MEDIA-CREDITS.md"; sourceTree = SOURCE_ROOT;};
+CEE539FFDEADBCE69797D30E = {isa = PBXBuildFile; fileRef = CCF1045D4A9594827AA978D7;};
+00C9F0A6C22FA1CE1C647BF3 = {isa = PBXBuildFile; fileRef = 02373DB35EBF0AACFCBCE2E0;};
+1DD32A056975509890ADEB3D = {isa = PBXBuildFile; fileRef = 9B51EDD1BA887D5C845178FF;};
+0D9AD315EB56DE7513865313 = {isa = PBXBuildFile; fileRef = 1885322BA960E2A8A7AACB77;};
+5AC2F6F60BBBDFEBC76F7FB4 = {isa = PBXBuildFile; fileRef = BFA806267EC0569149266E31;};
+951E2E3A544150F380205C16 = {isa = PBXBuildFile; fileRef = 3D982914F2C6EBF5E757F811;};
+555DB57974F9C2E00E85F86A = {isa = PBXBuildFile; fileRef = 62838ABBDE5616A28B681859;};
+E3FB4AA86262F86B0BA86917 = {isa = PBXBuildFile; fileRef = 7EF5CBD53948DE95FF138A91;};
+DF7AD822A30F3A02963EF813 = {isa = PBXBuildFile; fileRef = 0FF9806D79E1239323529D65;};
+A8792157CB4F27FB949C035F = {isa = PBXFileReference; explicitFileType = wrapper.application; path = StarStage.app; sourceTree = BUILT_PRODUCTS_DIR;};
+0A3E27B8CA818264D75C8D81 = {isa = PBXGroup; children = (A8792157CB4F27FB949C035F,); name = Products; sourceTree = "<group>";};
+9CEEC13202AFBF12EE3ABB99 = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>";};
+0D6E4079E36703EBD37C0072 = {isa = PBXGroup; children = (CCF1045D4A9594827AA978D7,02373DB35EBF0AACFCBCE2E0,9B51EDD1BA887D5C845178FF,1885322BA960E2A8A7AACB77,BFA806267EC0569149266E31,3D982914F2C6EBF5E757F811,62838ABBDE5616A28B681859,7EF5CBD53948DE95FF138A91,0FF9806D79E1239323529D65,9CEEC13202AFBF12EE3ABB99,0A3E27B8CA818264D75C8D81,); sourceTree = "<group>";};
+878A52FC5FF6A57D50B7B870 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (CEE539FFDEADBCE69797D30E,00C9F0A6C22FA1CE1C647BF3,1DD32A056975509890ADEB3D,0D9AD315EB56DE7513865313,5AC2F6F60BBBDFEBC76F7FB4,); runOnlyForDeploymentPostprocessing = 0;};
+41D311A605520FC7B8B9A980 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (951E2E3A544150F380205C16,555DB57974F9C2E00E85F86A,E3FB4AA86262F86B0BA86917,DF7AD822A30F3A02963EF813,); runOnlyForDeploymentPostprocessing = 0;};
+E2AA269EB967A8853A258BFA = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+2B23A31EEC75B029432F2445 = {isa = XCBuildConfiguration; buildSettings = { SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; CLANG_ENABLE_MODULES = YES; }; name = Debug;};
+EDDA600A3F771F810A8065C9 = {isa = XCBuildConfiguration; buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.lobodoc.starstage.demo; INFOPLIST_FILE = Info.plist; GENERATE_INFOPLIST_FILE = NO; SWIFT_VERSION = 5.0; SWIFT_STRICT_CONCURRENCY = minimal; TARGETED_DEVICE_FAMILY = "1,2"; CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = ""; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG; }; name = Debug;};
+07CA1E69F6068DEA30A4DA6B = {isa = XCBuildConfiguration; buildSettings = { SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; CLANG_ENABLE_MODULES = YES; }; name = Release;};
+594BCDCC96599D88EF772A08 = {isa = XCBuildConfiguration; buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.lobodoc.starstage.demo; INFOPLIST_FILE = Info.plist; GENERATE_INFOPLIST_FILE = NO; SWIFT_VERSION = 5.0; SWIFT_STRICT_CONCURRENCY = minimal; TARGETED_DEVICE_FAMILY = "1,2"; CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = ""; SWIFT_OPTIMIZATION_LEVEL = "-O";  }; name = Release;};
+1922B098E983995960BE56B0 = {isa = XCConfigurationList; buildConfigurations = (2B23A31EEC75B029432F2445,07CA1E69F6068DEA30A4DA6B,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+6FA5FFADD6E6A4C127CEE419 = {isa = XCConfigurationList; buildConfigurations = (EDDA600A3F771F810A8065C9,594BCDCC96599D88EF772A08,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+34A04005BCAF206EEC990BD9 = {isa = PBXNativeTarget; buildConfigurationList = 6FA5FFADD6E6A4C127CEE419; buildPhases = (878A52FC5FF6A57D50B7B870,E2AA269EB967A8853A258BFA,41D311A605520FC7B8B9A980,); buildRules = (); dependencies = (); name = StarStage; productName = StarStage; productReference = A8792157CB4F27FB949C035F; productType = "com.apple.product-type.application";};
+244210E48437B6556980A702 = {isa = PBXProject; attributes = { LastUpgradeCheck = 1600; TargetAttributes = { 34A04005BCAF206EEC990BD9 = { CreatedOnToolsVersion = 16.0; }; }; }; buildConfigurationList = 1922B098E983995960BE56B0; compatibilityVersion = "Xcode 14.0"; developmentRegion = ko; hasScannedForEncodings = 0; knownRegions = (ko,en,Base,); mainGroup = 0D6E4079E36703EBD37C0072; productRefGroup = 0A3E27B8CA818264D75C8D81; projectDirPath = ""; projectRoot = ""; targets = (34A04005BCAF206EEC990BD9,);};
+}; rootObject = 244210E48437B6556980A702; }

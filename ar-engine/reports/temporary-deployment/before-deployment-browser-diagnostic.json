@@ -1,0 +1,70 @@
+[
+  {
+    "url": "https://ar.lobodoc.com/",
+    "errors": [],
+    "console": [
+      "Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of \"text/html\". Strict MIME type checking is enforced for module scripts per HTML spec."
+    ],
+    "failed": [],
+    "responses": [
+      {
+        "url": "https://ar.lobodoc.com/",
+        "status": 200,
+        "type": "text/html"
+      },
+      {
+        "url": "https://ar.lobodoc.com/Users/USER1/AppData/Local/Programs/Git/assets/index-RS8cgftm.js",
+        "status": 200,
+        "type": "text/html"
+      }
+    ],
+    "title": "별 헤는 밤 · AR 엔진 테스트 하네스",
+    "body": "테미오래 WebAR 실기기 테스트\n실제 카메라 AR 테스트 · Android Chrome 전용 · 전체 게임 UI 아님\n환경 확인 중…\n지원 여부 확인 중…\n① 별의 새싹 AR 테스트\n바닥 인식 → 작품 배치 → Emerge · Idle · Disappear\n② 외벽 정합 AR 테스트\n※ 시험용 외벽 모델(실제 관사 16호 아님) · 레이어 토글 · 수동 보정\n기기 AR 지원 확인\n환경 진단\n에셋 로드 상태: 대기\n이벤트 로그\n로그 복사\n지우기",
+    "scripts": [
+      {
+        "src": "https://ar.lobodoc.com/Users/USER1/AppData/Local/Programs/Git/assets/index-RS8cgftm.js",
+        "type": "module"
+      },
+      {
+        "src": "",
+        "type": ""
+      }
+    ],
+    "launcher": 0,
+    "musical": 0
+  },
+  {
+    "url": "https://ar.lobodoc.com/?musical=1",
+    "errors": [],
+    "console": [
+      "Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of \"text/html\". Strict MIME type checking is enforced for module scripts per HTML spec."
+    ],
+    "failed": [],
+    "responses": [
+      {
+        "url": "https://ar.lobodoc.com/?musical=1",
+        "status": 200,
+        "type": "text/html"
+      },
+      {
+        "url": "https://ar.lobodoc.com/Users/USER1/AppData/Local/Programs/Git/assets/index-RS8cgftm.js",
+        "status": 200,
+        "type": "text/html"
+      }
+    ],
+    "title": "별 헤는 밤 · AR 엔진 테스트 하네스",
+    "body": "테미오래 WebAR 실기기 테스트\n실제 카메라 AR 테스트 · Android Chrome 전용 · 전체 게임 UI 아님\n환경 확인 중…\n지원 여부 확인 중…\n① 별의 새싹 AR 테스트\n바닥 인식 → 작품 배치 → Emerge · Idle · Disappear\n② 외벽 정합 AR 테스트\n※ 시험용 외벽 모델(실제 관사 16호 아님) · 레이어 토글 · 수동 보정\n기기 AR 지원 확인\n환경 진단\n에셋 로드 상태: 대기\n이벤트 로그\n로그 복사\n지우기",
+    "scripts": [
+      {
+        "src": "https://ar.lobodoc.com/Users/USER1/AppData/Local/Programs/Git/assets/index-RS8cgftm.js",
+        "type": "module"
+      },
+      {
+        "src": "",
+        "type": ""
+      }
+    ],
+    "launcher": 0,
+    "musical": 0
+  }
+]

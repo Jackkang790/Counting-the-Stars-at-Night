@@ -79,7 +79,8 @@ try {
       return canvas.captureStream(24);
     } });
   }, { targetPng });
-  await trackedPage.goto(`${base}?musical=1`); await trackedPage.waitForFunction(() => !document.querySelector("#musical-camera")?.disabled);
+  const trackedUrl = new URL(base); trackedUrl.searchParams.set("musical","1"); trackedUrl.searchParams.set("tracking","image");
+  await trackedPage.goto(trackedUrl.href); await trackedPage.waitForFunction(() => !document.querySelector("#musical-camera")?.disabled);
   await trackedPage.locator("#musical-samples").click();
   await trackedPage.waitForFunction(() => document.querySelector("#musical-app").dataset.mediaSource === "samples", undefined, { timeout: 20000 });
   await trackedPage.locator("#musical-camera").click();

@@ -1,0 +1,11 @@
+{
+  "result": "PASS",
+  "sdk": "Mocked public API contract ONLY; actual SDK tested separately",
+  "noImageTarget": true,
+  "untrackedPlacementBlocked": true,
+  "missingHitPlacementBlocked": true,
+  "twoLicensedVideos": true,
+  "trackingLossPauses": true,
+  "recoveryDoesNotAutoPlay": true,
+  "physicalIPhoneVerified": false
+}

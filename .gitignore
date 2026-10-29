@@ -208,3 +208,12 @@ sketch
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/react,python,visualstudiocode
+
+# Local workspaces and generated delivery archives; runtime source/assets remain tracked.
+/.tmp/
+/.worktrees/
+/.idea/
+/ar-engine/reports/**/demo-root.zip
+/ar-engine/reports/**/starstage-ios-source.zip
+**/xcuserdata/
+**/DerivedData/
