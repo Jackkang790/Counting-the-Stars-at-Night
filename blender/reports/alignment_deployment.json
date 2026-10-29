@@ -1,0 +1,17 @@
+{
+  "status": "succeeded",
+  "provider": "Sites",
+  "audience": "owner-private",
+  "url": "https://temiorae-alignment-test-20261029.lobo2u.chatgpt.site",
+  "project_id": "appgprj_6ae3042457988191851156f287300153",
+  "deployment_id": "appgdep_6ae3063cce3081918d870603cbf0c614",
+  "version_id": "appgprj_6ae3042457988191851156f287300153~appgver_2a7a3e1d7fc081918a4c3baa5fdb7640",
+  "source_commit": "53c362c376aa24b38e7950a7d4fa9e9310adc612",
+  "glb_sha256": "a7fbabafece083216d973472002cc84362e0da1826eb4a45947bceb7aaa6792e",
+  "local_browser_checked": ["WebGL model load", "reference layer toggle", "front view", "overlay opacity", "11 point coordinates"],
+  "remote_browser_observation": "ChatGPT sign-in gate reached; owner must sign in to test the private page",
+  "automatic_expiry_configured": false,
+  "webxr_tracking_included": false,
+  "source": "blender/preview_alignment/",
+  "packager": "blender/scripts/package_alignment_preview.py"
+}

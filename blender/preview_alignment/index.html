@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10232d"><meta name="robots" content="noindex,nofollow">
+<title>테미오래 · 외벽 정합 에셋 테스트</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;color:#ecf1ef;background:#10232d}*{box-sizing:border-box}body{margin:0}button,input,a{touch-action:manipulation}button,a.button{font:inherit;cursor:pointer}button:disabled{opacity:.4;cursor:wait}header{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid #304650}header strong{font-size:17px}header span{font-size:12px;color:#afd1cf}.badge{display:inline-block;border:1px solid #6d7870;border-radius:99px;padding:5px 9px;color:#e4d6a4;font-size:11px;letter-spacing:.08em}.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;min-height:calc(100vh - 72px)}main{position:relative;min-height:560px;background:radial-gradient(ellipse at 50% 40%,#344c56,#142830 80%);overflow:hidden}#canvas{width:100%;height:100%;display:block;position:absolute;inset:0;touch-action:none}#poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}#poster[hidden]{display:none}.viewbar{position:absolute;top:22px;left:24px;display:flex;gap:7px}.viewbar button{background:#18303be8;border:1px solid #69868d;border-radius:7px;color:#d3e3e4;padding:9px 13px}.viewbar button[aria-pressed=true]{background:#cae4db;color:#162f33;border-color:#cae4db}.hint{position:absolute;left:24px;bottom:20px;color:#b9ced0;font-size:12px}.viewport-status{position:absolute;bottom:20px;right:22px;font-size:12px;color:#b7e5cf}aside{padding:28px 24px;background:#132a34;border-left:1px solid #304650}h1{font-size:24px;line-height:1.35;margin:14px 0 9px;letter-spacing:-.04em}p{font-size:13px;line-height:1.8;color:#afc3c8;margin:8px 0 18px}h2{font-size:12px;letter-spacing:.06em;color:#a4c0c1;margin:24px 0 12px}label.toggle{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #29424c;padding:12px 0;font-size:14px;cursor:pointer}label.toggle:last-of-type{border-bottom:1px solid #29424c}input[type=checkbox]{accent-color:#c4e6d4;width:18px;height:18px}input[type=range]{width:100%;accent-color:#92d2d3}label.range{font-size:12px;display:flex;justify-content:space-between;margin:16px 0 8px;color:#c8d9d9}.spec{display:grid;grid-template-columns:1fr 1fr;gap:8px}.spec div{border:1px solid #304b54;border-radius:7px;padding:11px}.spec b{display:block;font-size:16px;font-weight:500}.spec small{color:#9ab4ba;font-size:11px}.action{display:block;text-align:center;border:1px solid #71948f;border-radius:7px;padding:11px;color:#e3f0ec;text-decoration:none;font-size:13px;margin-top:9px}.action.primary{background:#c6e7d6;color:#17342e;border-color:#c6e7d6}details{margin-top:19px;font-size:12px;color:#aac2c5}summary{cursor:pointer;padding:8px 0}table{width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums}td,th{text-align:right;border-bottom:1px solid #2b424c;padding:6px 2px}td:first-child,th:first-child{text-align:left}#status{padding:10px 0;font-size:12px;line-height:1.6;color:#a4c2c9;overflow-wrap:anywhere}.error{color:#ffb5a7!important}.footnote{font-size:11px;margin-top:22px;color:#92aaaf}
+@media(max-width:850px){header{padding:0 17px;height:58px}header span{font-size:10px}.layout{grid-template-columns:1fr;min-height:0}main{min-height:58vh}aside{border-left:0;border-top:1px solid #304650;padding:23px 19px}.viewbar{top:14px;left:14px}.hint{left:14px;bottom:12px;font-size:10px}.viewport-status{right:13px;bottom:12px;font-size:10px}.spec{grid-template-columns:repeat(4,1fr)}.spec div{padding:9px}.spec b{font-size:13px}}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/"}}</script>
+</head>
+<body>
+<header><strong>별 헤는 밤 <span>· 테미오래 AR</span></strong><span>3D ASSET PREVIEW / 02</span></header>
+<div class="layout">
+<main id="viewport" aria-label="회전 및 확대 가능한 외벽 3D 미리보기">
+<img id="poster" src="./assets/alignment_oblique.png" alt="외벽 정합 시험물의 사선 렌더 이미지">
+<canvas id="canvas" aria-label="외벽 3D 뷰어"></canvas>
+<div class="viewbar"><button id="front" aria-pressed="false" disabled>정면</button><button id="oblique" aria-pressed="true" disabled>사선</button><button id="reset" disabled>초기화</button></div>
+<div class="hint">드래그: 회전 · 두 손가락/휠: 확대 · 우클릭: 이동</div><div class="viewport-status" id="render-status">GLB 준비 중</div>
+</main>
+<aside>
+<span class="badge">임시 합성 시험물</span><h1>외벽 정합<br>에셋 테스트</h1>
+<p>창·문·기준점과 반투명 건축 요소를 확인하세요. 실제 관사 16호의 형태나 치수를 재현한 모델이 아닙니다.</p>
+<div class="spec"><div><b>6 × 3.6m</b><small>시험 외벽</small></div><div><b>11개</b><small>기준점</small></div><div><b>1,812</b><small>삼각형</small></div><div><b>106 KiB</b><small>GLB</small></div></div>
+<h2>표시 레이어</h2>
+<label class="toggle">외벽·창·문 <input type="checkbox" id="reference" checked disabled></label>
+<label class="toggle">기준점 표시 <input type="checkbox" id="markers" checked disabled></label>
+<label class="toggle">정렬 격자 <input type="checkbox" id="grid" checked disabled></label>
+<label class="toggle">반투명 건축 요소 <input type="checkbox" id="overlay" checked disabled></label>
+<label class="range" for="opacity"><span>건축 요소 불투명도</span><output id="opacity-value">28%</output></label><input type="range" id="opacity" min="5" max="80" value="28" disabled>
+<p style="font-size:11px;margin-top:8px">격자 0.5m · 보조 눈금 1cm. 외벽을 끄면 격자와 반투명 요소만 볼 수 있습니다.</p>
+<details><summary>기준점 좌표 보기 · 미터 / GLB 로컬</summary><table><thead><tr><th>기준점</th><th>X</th><th>Y</th><th>Z</th></tr></thead><tbody id="points"></tbody></table></details>
+<a class="action primary" href="./models/alignment_test_facade.glb" download>GLB 내려받기</a><a class="action" href="./models/alignment_test_facade.manifest.json" target="_blank" rel="noopener">에셋 규격 · 좌표 JSON</a>
+<div id="status" role="status" data-state="loading">3D 모델을 불러오는 중입니다.</div>
+<p class="footnote">이 페이지는 3D 에셋 검수용입니다. 실제 건물 자동 인식·추적·WebXR 정합 기능은 포함하지 않습니다.</p>
+</aside>
+</div>
+<script type="module" src="./app.js"></script>
+</body></html>
