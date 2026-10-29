@@ -1,0 +1,119 @@
+{
+  "asset_id": "alignment_test_facade",
+  "status": "synthetic_alignment_fixture",
+  "blender_version": "4.5.15 LTS",
+  "historical_reconstruction": false,
+  "nominal_wall_dimensions_m": [
+    6,
+    3.6,
+    0.2
+  ],
+  "bounds_gltf_m": {
+    "min": [
+      -3.0799999237060547,
+      -0.07500000298023224,
+      -0.05400000140070915
+    ],
+    "max": [
+      3.0799999237060547,
+      3.680000066757202,
+      0.20000000298023224
+    ],
+    "size": [
+      6.159999847412109,
+      3.7550000697374344,
+      0.2540000043809414
+    ]
+  },
+  "triangles": 1812,
+  "mesh_objects": 11,
+  "material_count": 8,
+  "textures": 0,
+  "animations": [],
+  "reference_points_gltf_m": {
+    "PT_P00_Origin": [
+      0,
+      0,
+      0
+    ],
+    "PT_P01_WallBL": [
+      -3,
+      0,
+      0
+    ],
+    "PT_P02_WallBR": [
+      3,
+      0,
+      0
+    ],
+    "PT_P03_WallTL": [
+      -3,
+      3.6,
+      0
+    ],
+    "PT_P04_WallTR": [
+      3,
+      3.6,
+      0
+    ],
+    "PT_P05_DoorTL": [
+      -0.5,
+      2.2,
+      0
+    ],
+    "PT_P06_DoorTR": [
+      0.5,
+      2.2,
+      0
+    ],
+    "PT_P07_WindowLBL": [
+      -2.35,
+      1.15,
+      0
+    ],
+    "PT_P08_WindowLTR": [
+      -1.15,
+      2.45,
+      0
+    ],
+    "PT_P09_WindowRBL": [
+      1.15,
+      1.15,
+      0
+    ],
+    "PT_P10_WindowRTR": [
+      2.35,
+      2.45,
+      0
+    ]
+  },
+  "layer_depths": {
+    "marker_front_z_m": -0.024,
+    "grid_front_z_m": -0.034,
+    "overlay_front_z_m": -0.054,
+    "target_plane_z_m": 0
+  },
+  "render_samples": 24,
+  "layer_meshes": {
+    "REFERENCE_Facade": [
+      "REF_Frames",
+      "REF_Panels",
+      "REF_Wall"
+    ],
+    "CALIBRATION_Markers": [
+      "MARKERS_Dark",
+      "MARKERS_Lime"
+    ],
+    "CALIBRATION_Grid": [
+      "GRID_MajorAndVernier",
+      "GRID_Minor"
+    ],
+    "OVERLAY_Architecture": [
+      "OVERLAY_Cornice",
+      "OVERLAY_Door",
+      "OVERLAY_WindowLeft",
+      "OVERLAY_WindowRight"
+    ],
+    "POINTS_Facade": []
+  }
+}

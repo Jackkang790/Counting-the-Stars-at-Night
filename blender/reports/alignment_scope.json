@@ -1,0 +1,13 @@
+{
+  "asset_worktree": "Z:\\sjb\\Counting-the-Stars-at-Night\\blender\\.worktrees\\feature-blender-assets",
+  "asset_branch": "feature/blender-assets",
+  "shared_branch": "feature/ar-engine",
+  "new_asset_copied_to_shared_root": false,
+  "old_files_unchanged_git_normalized": [
+    "public/models/asset-manifest.json",
+    "public/models/starseed_sculpture.glb",
+    "public/models/starseed_sculpture.manifest.json",
+    "blender/scenes/starseed_sculpture.blend"
+  ],
+  "note": "Text comparison uses Git normalization to account for CRLF; binary files are unmodified."
+}

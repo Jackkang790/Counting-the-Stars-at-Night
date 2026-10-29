@@ -103,4 +103,17 @@ py -3.13 blender/scripts/preview_server.py
 
 ## Git 작업 위치
 
-사용자가 지정한 **feature/blender-assets** 브랜치는 `blender/.worktrees/feature-blender-assets`의 별도 worktree에서 관리한다. 공유 작업 폴더의 엔진 작업 브랜치를 전환하지 않는다. 원본 작업 폴더에도 동일한 `blender/`·`public/models/` 납품 파일을 두어 엔진 담당자가 접근할 수 있게 한다. `.tools/`·`.worktrees/`·로그는 커밋하지 않는다.
+사용자가 지정한 **feature/blender-assets** 브랜치는 `blender/.worktrees/feature-blender-assets`의 별도 worktree에서 관리한다. 공유 작업 폴더의 엔진 작업 브랜치를 전환하지 않는다. 첫 납품인 별의 새싹은 공유 루트에도 복사본이 있다. 이후 제작한 외벽 정합 시험물은 해당 worktree에서만 생성하며 공유 루트에 복사하지 않는다. `.tools/`·`.worktrees/`·로그는 커밋하지 않는다.
+
+## 외벽 정합 시험물
+
+두 번째 에셋 `alignment_test_facade`는 실존 건물의 형태나 치수가 아닌 **합성 정합 테스트용 외벽**이다. 문·창·기준점 11개·격자·반투명 건축 요소를 별도 그룹으로 제공한다. 정적 에셋으로 애니메이션은 없다.
+
+먼저 작성한 [제작 계획](ALIGNMENT_TEST_PLAN.md)에 기준점 좌표와 시험 치수를, [Claude 인계 문서](ALIGNMENT_HANDOFF.md)에 실제 worktree 경로·배치 규칙·레이어 토글·검증 범위를 기록했다. GLB와 전용 매니페스트는 이 worktree의 `public/models/alignment_test_facade.*`에 있으며, 공통 카탈로그 `asset-manifest.json`에는 자동 추가하지 않는다.
+
+```powershell
+# feature/blender-assets worktree에서 실행. 경로는 사용 중인 Blender 실행 파일로 지정한다.
+.\blender\build_alignment.ps1 -BlenderExe 'C:\path\to\blender.exe'
+```
+
+별의 새싹용 `build.ps1`과 별개 파이프라인이다. 독립 검수 렌더 5장과 `alignment_*.json` 검증 보고서를 생성한다. 실제 정합 알고리즘과 모바일 WebXR 검증은 포함하지 않는다.

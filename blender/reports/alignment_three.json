@@ -1,0 +1,181 @@
+{
+  "passed": true,
+  "three_revision": "186",
+  "glb_sha256": "a7fbabafece083216d973472002cc84362e0da1826eb4a45947bceb7aaa6792e",
+  "checks": [
+    {
+      "name": "Khronos zero errors/warnings",
+      "passed": true,
+      "evidence": {
+        "numErrors": 0,
+        "numWarnings": 0,
+        "numInfos": 0,
+        "numHints": 0,
+        "messages": [],
+        "truncated": false
+      }
+    },
+    {
+      "name": "No animation drift",
+      "passed": true
+    },
+    {
+      "name": "Anchor at origin",
+      "passed": true
+    },
+    {
+      "name": "Named layer REFERENCE_Facade",
+      "passed": true
+    },
+    {
+      "name": "Named layer CALIBRATION_Markers",
+      "passed": true
+    },
+    {
+      "name": "Named layer CALIBRATION_Grid",
+      "passed": true
+    },
+    {
+      "name": "Named layer OVERLAY_Architecture",
+      "passed": true
+    },
+    {
+      "name": "Named layer POINTS_Facade",
+      "passed": true
+    },
+    {
+      "name": "Eleven meshes",
+      "passed": true
+    },
+    {
+      "name": "PBR material and normals",
+      "passed": true
+    },
+    {
+      "name": "Four transparent overlays",
+      "passed": true
+    },
+    {
+      "name": "Reference opaque",
+      "passed": true
+    },
+    {
+      "name": "Front culling",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P00_Origin",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P01_WallBL",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P02_WallBR",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P03_WallTL",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P04_WallTR",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P05_DoorTL",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P06_DoorTR",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P07_WindowLBL",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P08_WindowLTR",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P09_WindowRBL",
+      "passed": true
+    },
+    {
+      "name": "GLB point PT_P10_WindowRTR",
+      "passed": true
+    },
+    {
+      "name": "Exported AABB",
+      "passed": true,
+      "evidence": {
+        "min": [
+          -3.0799999237060547,
+          -0.07500000298023224,
+          -0.05400000140070915
+        ],
+        "max": [
+          3.0799999237060547,
+          3.680000066757202,
+          0.20000000298023224
+        ]
+      }
+    },
+    {
+      "name": "Real-building mode hides proxy",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P00_Origin",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P01_WallBL",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P02_WallBR",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P03_WallTL",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P04_WallTR",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P05_DoorTL",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P06_DoorTR",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P07_WindowLBL",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P08_WindowLTR",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P09_WindowRBL",
+      "passed": true
+    },
+    {
+      "name": "Placement group point PT_P10_WindowRTR",
+      "passed": true
+    },
+    {
+      "name": "Rigid transform keeps 6m baseline",
+      "passed": true,
+      "evidence": 6
+    }
+  ],
+  "scope": "Node GLTFLoader + PBR BLEND + layers + local/world point transforms; not GPU, XR or tracking accuracy"
+}
