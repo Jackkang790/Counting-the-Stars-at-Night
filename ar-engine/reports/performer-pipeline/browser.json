@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "checks": [
+    "authenticated multipart upload, photo direction and four explicit consents",
+    "actual retargeted skinned GLB preview, synthetic provenance preserved",
+    "SHA-bound model and motion review gate; immutable approved registry publication",
+    "two registered skinned GLB objects reuse building anchors and shared musical clock; synthetic actor restricted to test mode",
+    "30-second audio-driven show completion, pause and replay"
+  ],
+  "livePaidAPICalls": 0,
+  "physicalDeviceARVerified": false,
+  "previewIsAR": false
+}

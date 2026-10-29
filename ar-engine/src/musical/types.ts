@@ -17,8 +17,8 @@ export interface ShowConfig { id: string; version: number; duration: number; bui
 export type PlaybackState = "ready" | "playing" | "paused" | "completed";
 export interface PerformerRenderer {
   readonly group: Group;
-  readonly representation: "spatial-video-plane" | "mesh-sequence";
-  readonly contentKind: "video" | "human-capture" | "synthetic-calibration";
+  readonly representation: "spatial-video-plane" | "mesh-sequence" | "rigged-glb";
+  readonly contentKind: "video" | "human-capture" | "synthetic-calibration" | "generated-human";
   readonly loaded: boolean;
   prime(): Promise<void>;
   sample(showTime: number, playing: boolean): void;

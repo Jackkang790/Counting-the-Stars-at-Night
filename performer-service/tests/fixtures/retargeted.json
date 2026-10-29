@@ -1,0 +1,30 @@
+{
+  "boneMap": {
+    "Hips": "Hips",
+    "Spine": "Spine",
+    "Chest": "Chest",
+    "Neck": "Neck",
+    "Head": "Head",
+    "LeftUpperArm": "LeftUpperArm",
+    "LeftLowerArm": "LeftLowerArm",
+    "LeftHand": "LeftHand",
+    "RightUpperArm": "RightUpperArm",
+    "RightLowerArm": "RightLowerArm",
+    "RightHand": "RightHand",
+    "LeftUpperLeg": "LeftUpperLeg",
+    "LeftLowerLeg": "LeftLowerLeg",
+    "LeftFoot": "LeftFoot",
+    "RightUpperLeg": "RightUpperLeg",
+    "RightLowerLeg": "RightLowerLeg",
+    "RightFoot": "RightFoot"
+  },
+  "frames": 720,
+  "fps": 24,
+  "durationSeconds": 29.958333333333332,
+  "rootMotion": "horizontal root locked; vertical retained",
+  "footCorrection": "bounded stance stabilization, not guaranteed cleanup",
+  "stanceSamples": 1440,
+  "maxCorrectionMeters": 3.1033240187115446e-06,
+  "maxStanceResidualMeters": 7.848771525341202e-05,
+  "manualMotionAndFootReviewRequired": true
+}

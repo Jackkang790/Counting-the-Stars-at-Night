@@ -6,6 +6,7 @@ import apacheLicenseUrl from "./vendor/LICENSE.apache-2.0?url";
 import actorASampleUrl from "../../musical-assets/actor-a-demo.mp4?url";
 import actorBSampleUrl from "../../musical-assets/actor-b-demo.mp4?url";
 import mediaCreditsUrl from "../../musical-assets/MEDIA-CREDITS.md?url";
+import testActorUrl from "../../musical-assets/test-actor-animated.glb?url";
 import { PlacementGroup, type CalibrationState } from "../core/placement";
 import { validateShow, cueAt } from "./timeline";
 import { makePanelReference, loadImage, roomPhoto, panelPhoto } from "./reference";
@@ -60,6 +61,11 @@ export async function mountMusical(): Promise<void> {
         <div class="musical-actions"><button id="musical-compile">표적 준비</button><button id="musical-download-target" disabled>표적 파일 저장</button><button id="musical-download-image">보정 표적 이미지</button></div>
         <label>기존 .mind 표적 불러오기<input id="musical-target-file" type="file" accept=".mind" /></label>
         </div>
+        <a href="?studio=1">공연자 사진·영상 등록 및 3D 제작</a>
+        <button id="musical-registry-refresh">검수 완료 공연자 목록 새로고침</button>
+        ${show.actors.map((a,i)=>`<label>${a.label} 등록 공연자<select id="musical-registry-${i}"><option value="">선택하세요</option></select></label><label>${a.label} 본 애니메이션 GLB (이 기기에서만 로드)<input id="musical-rigged-${i}" type="file" accept=".glb" /></label>`).join("")}
+        <button id="musical-rigged-test">테스트 3D 배우 2명 — 합성 검증용</button>
+        <p class="musical-note">사진 기반 생성 인물은 실제 볼류메트릭 촬영본이 아닙니다. 얼굴·몸·의상과 동작을 검수한 결과를 사용하세요.</p>
         <button id="musical-samples">실사 샘플 배우 2명 불러오기</button>
         <p class="musical-note">Pexels 허용 조건을 확인한 움직이는 실사 샘플입니다. Yoshi Mura / SERGEY ZIMA 촬영. 지역 공연자의 최종 공연본이 아닙니다. <a href="${mediaCreditsUrl}" download="MEDIA-CREDITS.md">영상 출처·사용 조건</a></p>
         ${show.actors.map((a, i) => `<label>${a.label} 실사 영상 교체<input id="musical-video-${i}" type="file" accept="video/mp4,video/webm,video/quicktime" /></label><label>${a.label} 배경 처리<select id="musical-video-mode-${i}"><option value="packed">MP4 좌:컬러 / 우:흑백 알파 (권장)</option><option value="alpha">네이티브 알파 영상 (기기별 확인)</option><option value="chroma">녹색 배경 크로마키</option></select></label>`).join("")}
@@ -133,7 +139,7 @@ export async function mountMusical(): Promise<void> {
     root.querySelectorAll<HTMLButtonElement>("[data-view]").forEach(button => { button.disabled = !preview; });
     for (const id of ["target-image", "target-file", "target-width", "backend", "compile"]) $<HTMLInputElement>(id).disabled = active || compiling;
     $("media-status").textContent = `${actors.filter(a => a.loaded).length}/${actors.length} 공연 객체 로드${actorSources.includes("sample") ? " · 라이선스 샘플 포함" : ""} · ${director.audioLabel}${director.testMode ? " · 카드 테스트 모드" : ""}`;
-    $("representation").textContent = actors.map(a => `${a.config.label}: ${a.representation === "spatial-video-plane" ? "공간 고정 영상 평면(입체 인물 아님)" : a.contentKind === "synthetic-calibration" ? "3D 검증 도형(실사 인물 아님)" : "3D 캡처 시퀀스(제공자 메타데이터)"}`).join(" · ");
+    $("representation").textContent = actors.map(a => `${a.config.label}: ${a.representation === "spatial-video-plane" ? "공간 고정 영상 평면(입체 인물 아님)" : a.contentKind === "synthetic-calibration" ? "3D 합성 테스트 배우·도형(실사 인물 아님)" : a.representation === "rigged-glb" ? "생성형 3D 인물·본 애니메이션(볼류메트릭 촬영 아님)" : "3D 캡처 시퀀스(제공자 메타데이터)"}`).join(" · ");
     $("test").textContent = synthetic ? "3D 도형 기술 테스트(실사 아님)" : "카드·조명 테스트";
     const spatial = spatialSnapshot(stage.root, actors, host?.camera);
     root.dataset.spatialAnchored = String(spatial.every(a => a.belongsToStage && !a.attachedToCamera));
@@ -170,6 +176,11 @@ export async function mountMusical(): Promise<void> {
   })());
   $("target-file").addEventListener("change", () => void (async () => { const file = $<HTMLInputElement>("target-file").files?.[0]; if (file) try { await useTarget(new Uint8Array(await file.arrayBuffer())); } catch (e) { fail(errorText(e)); } })());
   actors.forEach((actor, i) => {
+    $(`rigged-${i}`).addEventListener("change",()=>void (async()=>{
+      const file=$<HTMLInputElement>(`rigged-${i}`).files?.[0];if(!file||mediaBusy)return;
+      director.pause();mediaBusy=true;updateButtons();
+      try{await actor.loadRigged(await file.arrayBuffer());actorSources[i]="local-rigged";status("3D 배우 준비 완료 · 외형과 동작을 확인하세요.");}catch(e){fail(errorText(e));}finally{mediaBusy=false;updateButtons();}
+    })());
     const load = async () => {
       const file = $<HTMLInputElement>(`video-${i}`).files?.[0]; if (!file) return;
       director.pause(); status(`${actor.config.label} 로딩 중…`);
@@ -188,6 +199,25 @@ export async function mountMusical(): Promise<void> {
       catch (e) { fail(errorText(e)); } finally { mediaBusy = false; updateButtons(); }
     })());
   });
+  type RegisteredActor={id:string;name:string;url:string;contentKind:"generated-human"|"synthetic-calibration"};
+  let registry:RegisteredActor[]=[];
+  async function registered(i:number,id:string):Promise<void>{
+    const record=registry.find(a=>a.id===id);if(!record||mediaBusy)return;
+    if(!/^\/api\/studio\/published\/[a-f0-9-]{36}\.glb$/.test(record.url))throw new Error("등록 모델 경로 오류");
+    director.pause();mediaBusy=true;updateButtons();
+    try{const response=await fetch(record.url);if(!response.ok)throw new Error("등록 모델 로드 실패");await actors[i].loadRigged(await response.arrayBuffer(),record.contentKind);actorSources[i]=record.id;status("검수 완료 공연자를 건물 앵커에 배치했습니다.");}finally{mediaBusy=false;updateButtons();}
+  }
+  async function refreshRegistry():Promise<void>{
+    const r=await fetch("/api/studio/registry");if(!r.ok||!r.headers.get("content-type")?.includes("application/json"))throw new Error("제작 서버에 연결하세요. 로컬 GLB 입력은 서버 없이 가능합니다.");
+    registry=await r.json();
+    actors.forEach((_,i)=>{const select=$<HTMLSelectElement>(`registry-${i}`);select.replaceChildren(new Option("선택하세요",""),...registry.map(a=>new Option(a.name+(a.contentKind==="synthetic-calibration"?" (합성 테스트)":""),a.id)));});
+  }
+  $("registry-refresh").addEventListener("click",()=>void refreshRegistry().catch(e=>fail(errorText(e))));
+  actors.forEach((_,i)=>$(`registry-${i}`).addEventListener("change",()=>void registered(i,$<HTMLSelectElement>(`registry-${i}`).value).catch(e=>fail(errorText(e)))));
+  $("rigged-test").addEventListener("click",()=>void(async()=>{
+    if(mediaBusy)return;director.restart();mediaBusy=true;updateButtons();
+    try{const r=await fetch(testActorUrl);if(!r.ok)throw new Error("테스트 GLB 로드 실패");const bytes=await r.arrayBuffer();for(const a of actors)await a.loadRigged(bytes.slice(0),"synthetic-calibration");actorSources.fill("synthetic-calibration");status("합성 3D 배우 2명 준비 · 개발 미리보기와 기술 테스트를 사용하세요.");}catch(e){fail(errorText(e));}finally{mediaBusy=false;updateButtons();}
+  })());
   $("volume-test").addEventListener("click", () => void (async () => {
     if (mediaBusy) return; director.restart(); mediaBusy = true; updateButtons(); status("인물이 아닌 3D 검증 도형을 로드합니다…");
     try { await loadVolumeCalibration(actors); actorSources.fill("synthetic-calibration"); root.dataset.mediaSource = "volume-calibration"; status("3D 도형 준비 · 기술 테스트 버튼으로 재생하세요. 실사 볼류메트릭 촬영본은 아직 없습니다."); }

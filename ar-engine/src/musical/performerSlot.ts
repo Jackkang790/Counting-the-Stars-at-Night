@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { VideoPerformer } from "./performer";
+import { RiggedGLBPerformer } from "./riggedGLB";
 import { MeshSequencePerformer, type FrameReader } from "./meshSequence";
 import type { ActorConfig, PerformerRenderer, VideoMode } from "./types";
 
@@ -8,6 +9,7 @@ export class PerformerSlot implements PerformerRenderer {
   readonly group = new THREE.Group();
   private readonly plane: VideoPerformer;
   private volume?: MeshSequencePerformer;
+  private rigged?: RiggedGLBPerformer;
   private current: PerformerRenderer;
   private generation = 0;
   private busy = false;
@@ -31,6 +33,7 @@ export class PerformerSlot implements PerformerRenderer {
       await this.plane.load(file, mode);
       if (this.disposed || generation !== this.generation) return;
       this.volume?.group.removeFromParent(); this.volume?.dispose(); this.volume = undefined;
+      this.rigged?.group.removeFromParent(); this.rigged?.dispose(); this.rigged = undefined;
       this.current = this.plane; this.plane.group.visible = true;
     } finally { if (generation === this.generation) this.busy = false; }
   }
@@ -40,6 +43,7 @@ export class PerformerSlot implements PerformerRenderer {
       const next = await MeshSequencePerformer.load(this.config, manifest, read, () => this.disposed || generation !== this.generation);
       if (this.disposed || generation !== this.generation) { next.dispose(); return; }
       this.volume?.group.removeFromParent(); this.volume?.dispose(); this.volume = next;
+      this.rigged?.group.removeFromParent(); this.rigged?.dispose(); this.rigged = undefined;
       this.plane.pause(); this.plane.group.visible = false; this.current = next; this.group.add(next.group);
     } finally { if (generation === this.generation) this.busy = false; }
   }
@@ -52,8 +56,18 @@ export class PerformerSlot implements PerformerRenderer {
       const file = map.get(path); if (!file) throw new Error(`3D 프레임 누락: ${path}`); return file.arrayBuffer();
     });
   }
+  async loadRigged(bytes: ArrayBuffer, kind: "generated-human" | "synthetic-calibration" = "generated-human"): Promise<void> {
+    const generation=++this.generation; this.busy=true; this.pause();
+    try {
+      const next=await RiggedGLBPerformer.load(this.config,bytes,kind);
+      if(this.disposed || generation!==this.generation){next.dispose();return;}
+      this.volume?.group.removeFromParent();this.volume?.dispose();this.volume=undefined;
+      this.rigged?.group.removeFromParent();this.rigged?.dispose();this.rigged=next;
+      this.plane.pause();this.plane.group.visible=false;this.current=next;this.group.add(next.group);
+    } finally { if(generation===this.generation)this.busy=false; }
+  }
   prime(): Promise<void> { return this.current.prime(); }
   sample(time: number, playing: boolean): void { this.current.sample(time, playing); }
   pause(): void { this.current.pause(); }
-  dispose(): void { this.disposed = true; this.generation++; this.plane.dispose(); this.volume?.dispose(); this.group.clear(); }
+  dispose(): void { this.disposed = true; this.generation++; this.plane.dispose(); this.volume?.dispose(); this.rigged?.dispose(); this.group.clear(); }
 }

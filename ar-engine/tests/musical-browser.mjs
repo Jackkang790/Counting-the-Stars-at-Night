@@ -18,6 +18,8 @@ try {
   await page.goto(base); await page.locator("#musical-launcher").waitFor();
   assert.ok(await page.locator("#start-star").isVisible()); assert.ok(await page.locator("#start-align").isVisible()); report.checks.push("existing page and original buttons available");
   await page.locator("#musical-launcher a").click(); await page.locator("#musical-app").waitFor();
+  // This suite covers the preserved image-target route; world SLAM has its own suite.
+  const imageUrl=new URL(base);imageUrl.searchParams.set("musical","1");imageUrl.searchParams.set("tracking","image");await page.goto(imageUrl.href);await page.locator("#musical-app").waitFor();
   if (await page.locator("#musical-camera").isDisabled()) {
     console.log("Compiling the supplied photo target in real WebGL...");
     await page.locator("#musical-compile").click();
