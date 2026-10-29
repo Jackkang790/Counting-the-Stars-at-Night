@@ -34,11 +34,20 @@ assert.deepEqual(before, placement.group.matrix.elements); assert.equal(placemen
 // The old runtime/assets must be byte-identical to the preceding analysis baseline.
 const baseline = JSON.parse(readFileSync(resolve(root, "contracts/iphone-tracking-compatibility.json"), "utf8"));
 const { createHash } = await import("node:crypto"); let protectedCount = 0;
+// Git checkouts may use LF or CRLF. Permit only that reversible text conversion;
+// binary assets and every other content byte remain protected by the baseline hash.
+function matchesBaseline(data, expected) {
+  const digest = bytes => createHash("sha256").update(bytes).digest("hex");
+  if (digest(data) === expected) return true;
+  if (Buffer.isBuffer(data) && data.includes(0)) return false;
+  const lf = data.toString("utf8").replace(/\r\n/g,"\n");
+  return digest(lf) === expected || digest(lf.replace(/\n/g,"\r\n")) === expected;
+}
 for (const entry of baseline.protectedFileVerification.files) {
   if (entry.path === "ar-engine/index.html") {
     const restored = readFileSync(resolve(root, "index.html"), "utf8").replace('/src/bootstrap.ts', '/src/main.ts');
-    assert.equal(createHash("sha256").update(restored).digest("hex"), entry.sha256, "HTML differs beyond the additive bootstrap entry");
-  } else assert.equal(createHash("sha256").update(readFileSync(resolve(root, "..", entry.path))).digest("hex"), entry.sha256, `Protected file changed: ${entry.path}`);
+    assert.ok(matchesBaseline(restored,entry.sha256), "HTML differs beyond the additive bootstrap entry");
+  } else assert.ok(matchesBaseline(readFileSync(resolve(root, "..", entry.path)),entry.sha256), `Protected file changed: ${entry.path}`);
   protectedCount++;
 }
 console.log(JSON.stringify({ result: "PASS", timelineBoundaryCases: 10, invalidManifestsRejected: 4, placementAnimationSeparation: true, protectedFiles: protectedCount, htmlOnlyChange: "main.ts entry -> bootstrap.ts", deviceARVerified: false }, null, 2));
