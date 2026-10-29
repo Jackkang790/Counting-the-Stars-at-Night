@@ -1,8 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
 import unittest
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
-from app.config import coupon_required_stars
+from app.config import coupon_required_stars, coupon_valid_days
 from app.database import connection, init_db
 from app.routers.coupons import router
 import test_stars
@@ -222,3 +223,69 @@ class CouponsTests(unittest.TestCase):
         self.assertIn("409", operation["responses"])
         self.assertEqual(set(spec["components"]["schemas"]["RedeemByCodeRequest"]["required"]),
                          {"code", "store_id"})
+
+    def test_expiry_from_issue_time_and_setting_changes(self):
+        issued = datetime(2030, 1, 1, 12, 0, tzinfo=timezone.utc)
+        with patch.dict("os.environ", {"DEMO_COUPON_VALID_DAYS": "2"}), \
+                patch("app.coupons.utc_now", return_value=issued):
+            coupon = self.earn_coupon()
+        self.assertEqual(datetime.fromisoformat(coupon["expires_at"]), issued + timedelta(days=2))
+        with patch.dict("os.environ", {"DEMO_COUPON_VALID_DAYS": "30"}):
+            init_db()
+        self.assertEqual(self.coupons().json()[0]["expires_at"], coupon["expires_at"])
+        for invalid in ["0", "-1", "bad", "36501"]:
+            with patch.dict("os.environ", {"DEMO_COUPON_VALID_DAYS": invalid}):
+                with self.assertRaises(ValueError):
+                    coupon_valid_days()
+                with self.assertRaises(ValueError):
+                    init_db()
+
+    def test_expiry_boundary_and_both_redemption_routes(self):
+        coupon = self.earn_coupon()
+        expiry = datetime.fromisoformat(coupon["expires_at"])
+        with patch("app.coupons.utc_now", return_value=expiry - timedelta(microseconds=1)):
+            self.assertEqual(self.coupons().json()[0]["status"], "issued")
+        for at in [expiry, expiry + timedelta(days=1)]:
+            with patch("app.coupons.utc_now", return_value=at):
+                expired = self.coupons().json()[0]
+                self.assertEqual(expired["status"], "expired")
+                self.assertIsNone(expired["redeemed_at"])
+                self.assertIsNone(expired["store_id"])
+                for response in [self.redeem(coupon["id"]), self.redeem_code(coupon["code"])]:
+                    self.assertEqual(response.status_code, 410)
+                    self.assertEqual(response.json(), {"detail": "coupon_expired"})
+                self.assertFalse(self.complete().json()["coupon_issued"])
+        with connection() as db:
+            stored = db.execute("SELECT redeemed_at, store_id FROM coupons WHERE id = ?", (coupon["id"],)).fetchone()
+            self.assertIsNone(stored["redeemed_at"])
+            self.assertIsNone(stored["store_id"])
+
+    def test_redeem_just_before_expiry_stays_redeemed_afterwards(self):
+        coupon = self.earn_coupon()
+        expiry = datetime.fromisoformat(coupon["expires_at"])
+        with patch("app.coupons.utc_now", return_value=expiry - timedelta(microseconds=1)):
+            response = self.redeem_code(coupon["code"])
+            self.assertEqual(response.status_code, 200)
+        with patch("app.coupons.utc_now", return_value=expiry + timedelta(days=1)):
+            self.assertEqual(self.coupons().json(), [response.json()])
+            self.assertEqual(self.redeem(coupon["id"]).status_code, 409)
+            self.assertEqual(self.redeem_code(coupon["code"]).status_code, 409)
+
+    def test_expired_concurrent_redemptions_never_succeed(self):
+        coupon = self.earn_coupon()
+        expiry = datetime.fromisoformat(coupon["expires_at"])
+        with patch("app.coupons.utc_now", return_value=expiry):
+            actions = [lambda: self.redeem_code(coupon["code"]), lambda: self.redeem(coupon["id"])]
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                responses = list(pool.map(lambda action: action(), actions))
+            self.assertTrue(all(r.status_code == 410 for r in responses))
+            self.assertIsNone(self.coupons().json()[0]["redeemed_at"])
+
+    def test_expiry_openapi_contract(self):
+        spec = self.client.get("/openapi.json").json()
+        schema = spec["components"]["schemas"]["CouponResponse"]
+        self.assertIn("expires_at", schema["required"])
+        self.assertEqual(schema["properties"]["expires_at"]["format"], "date-time")
+        self.assertIn("expired", schema["properties"]["status"]["enum"])
+        for path in ["/api/v1/coupons/redeem-by-code", "/api/v1/coupons/{coupon_id}/redeem"]:
+            self.assertIn("410", spec["paths"][path]["post"]["responses"])

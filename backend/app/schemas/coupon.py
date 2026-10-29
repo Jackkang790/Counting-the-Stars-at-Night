@@ -19,7 +19,8 @@ class CouponResponse(BaseModel):
     title: str
     benefit: str
     code: str
-    status: Literal["issued", "redeemed"]
+    status: Literal["issued", "redeemed", "expired"]
     issued_at: datetime
+    expires_at: datetime
     redeemed_at: datetime | None
     store_id: str | None

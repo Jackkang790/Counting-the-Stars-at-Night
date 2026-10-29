@@ -2,10 +2,26 @@
 
 import secrets
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from .seed import DEMO_TEMPLATE_ID
+from .config import coupon_valid_days
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def is_expired(coupon, now: datetime) -> bool:
+    return now >= datetime.fromisoformat(coupon["expires_at"])
+
+
+def coupon_response(coupon, now: datetime | None = None) -> dict:
+    result = dict(coupon)
+    if result["status"] == "issued" and is_expired(result, now or utc_now()):
+        result["status"] = "expired"
+    return result
 
 
 def issue_coupon(db: sqlite3.Connection, session_id: str, total_stars: int) -> bool:
@@ -24,11 +40,13 @@ def issue_coupon(db: sqlite3.Connection, session_id: str, total_stars: int) -> b
         code = f"{secrets.randbelow(10**12):012d}"
         if not db.execute("SELECT 1 FROM coupons WHERE code = ?", (code,)).fetchone():
             break
+    issued_at = utc_now()
+    expires_at = issued_at + timedelta(days=coupon_valid_days())
     db.execute(
         "INSERT INTO coupons "
-        "(id, session_id, template_id, title, benefit, code, status, issued_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, 'issued', ?)",
+        "(id, session_id, template_id, title, benefit, code, status, issued_at, expires_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, 'issued', ?, ?)",
         (str(uuid4()), session_id, template["id"], template["title"], template["benefit"],
-         code, datetime.now(timezone.utc).isoformat()),
+         code, issued_at.isoformat(), expires_at.isoformat()),
     )
     return True

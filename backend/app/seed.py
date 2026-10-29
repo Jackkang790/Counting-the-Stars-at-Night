@@ -47,6 +47,13 @@ DEMO_STORES = (
      "[데모] 인동 구역 A", 0, 1),
 )
 
+# 지도 표시와 시간 계산 시연용 가상 값. 실제 매장 좌표·영업시간이 아니다.
+DEMO_STORE_DETAILS = {
+    "demo-store-1": (36.3328, 127.4376, "11:00", "22:00"),
+    "demo-store-2": (36.3335, 127.4389, "12:00", "02:00"),
+    "demo-store-3": (36.3259, 127.4317, "09:00", "20:00"),
+}
+
 
 def seed_stores(db: sqlite3.Connection) -> None:
     db.executemany(
@@ -54,3 +61,15 @@ def seed_stores(db: sqlite3.Connection) -> None:
         "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING",
         DEMO_STORES,
     )
+    for store_id, (lat, lng, opening, closing) in DEMO_STORE_DETAILS.items():
+        # 기존 가상 매장의 비어 있는 정보만 채우고 수정한 값·비데모 매장은 유지한다.
+        db.execute(
+            "UPDATE stores SET lat = ?, lng = ? "
+            "WHERE id = ? AND is_demo = 1 AND lat IS NULL AND lng IS NULL",
+            (lat, lng, store_id),
+        )
+        db.execute(
+            "UPDATE stores SET opens_at = ?, closes_at = ? "
+            "WHERE id = ? AND is_demo = 1 AND opens_at IS NULL AND closes_at IS NULL",
+            (opening, closing, store_id),
+        )

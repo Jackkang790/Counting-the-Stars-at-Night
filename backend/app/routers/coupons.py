@@ -1,9 +1,9 @@
 import sqlite3
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..database import get_db
+from .. import coupons as coupon_service
 from ..schemas.coupon import CouponResponse, RedeemByCodeRequest, RedeemRequest
 from ..schemas.session import ErrorResponse
 
@@ -17,10 +17,17 @@ def require_session(db: sqlite3.Connection, session_id: str) -> None:
 
 def mark_redeemed(db: sqlite3.Connection, coupon_id: str, store_id: str | None = None):
     """호출자의 트랜잭션에서 두 사용 경로 모두 한 번만 처리한다."""
+    now = coupon_service.utc_now()
+    coupon = db.execute("SELECT * FROM coupons WHERE id = ?", (coupon_id,)).fetchone()
+    # 사용 완료 이력을 만료로 바꾸지 않는다. 재사용은 계속 409다.
+    if coupon["status"] == "redeemed":
+        raise HTTPException(status_code=409, detail="already_redeemed")
+    if coupon_service.is_expired(coupon, now):
+        raise HTTPException(status_code=410, detail="coupon_expired")
     cursor = db.execute(
         "UPDATE coupons SET status = 'redeemed', redeemed_at = ?, store_id = ? "
         "WHERE id = ? AND status = 'issued'",
-        (datetime.now(timezone.utc).isoformat(), store_id, coupon_id),
+        (now.isoformat(), store_id, coupon_id),
     )
     if cursor.rowcount != 1:
         raise HTTPException(status_code=409, detail="already_redeemed")
@@ -42,7 +49,8 @@ def list_coupons(
     rows = db.execute(
         "SELECT * FROM coupons WHERE session_id = ? ORDER BY issued_at, id", (session_id,),
     ).fetchall()
-    return [dict(row) for row in rows]
+    now = coupon_service.utc_now()
+    return [coupon_service.coupon_response(row, now) for row in rows]
 
 
 @router.post(
@@ -50,6 +58,7 @@ def list_coupons(
     responses={
         404: {"model": ErrorResponse, "description": "매장 또는 쿠폰 없음"},
         409: {"model": ErrorResponse, "description": "사용 불가 매장 또는 이미 사용한 쿠폰"},
+        410: {"model": ErrorResponse, "description": "만료된 쿠폰"},
     },
     summary="쿠폰 번호로 데모 매장 사용 처리",
 )
@@ -75,6 +84,7 @@ def redeem_by_code(body: RedeemByCodeRequest, db: sqlite3.Connection = Depends(g
     responses={
         404: {"model": ErrorResponse, "description": "세션 또는 해당 세션의 쿠폰 없음"},
         409: {"model": ErrorResponse, "description": "이미 사용한 쿠폰"},
+        410: {"model": ErrorResponse, "description": "만료된 쿠폰"},
     },
     summary="데모 쿠폰 1회 사용",
 )

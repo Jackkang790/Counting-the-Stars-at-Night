@@ -23,6 +23,7 @@ class StarsTests(unittest.TestCase):
             "DATABASE_PATH": str(Path(tmp.name) / "test.sqlite3"),
             "DEMO_STARS_PER_SPOT": "1",
             "DEMO_COUPON_REQUIRED_STARS": "99",
+            "DEMO_COUPON_VALID_DAYS": "14",
         })
         env.start()
         self.addCleanup(env.stop)
