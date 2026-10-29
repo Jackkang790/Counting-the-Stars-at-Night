@@ -8,6 +8,44 @@
     "base.obj": "8e761e6624b8f54536409135d1636da63b32486a90d4897f84e121d144f6fb4c",
     "LICENSE.ASSETS.md": "f6089cba01cb570a24712b41ab8a586ccd3cc5ef53dc266ca50b95c288956d2c",
     "LICENSE.md": "edd99571ca62698f78c943fd4fffb159a413c315fa0d4819d3cec5cadaf8b4f1",
-    "young-asian-female.png": "1d82f782b7d2da732229633bd2d14754d873fff53cdb1d088977bcf67ae19dde"
+    "young-asian-female.png": "1d82f782b7d2da732229633bd2d14754d873fff53cdb1d088977bcf67ae19dde",
+    "asian-female-young.target": "095fe79694fa19e1fe98d93009ec116199bd524e081c640351a10eccf2cca1eb",
+    "mouth-angles-up.target": "8ddc2f53f4264742f4e10ddafd128e059e09c6a4268a2722e9495bad0f274898",
+    "default_weights.mhw": "0f3641d651ae3d00ad6b4ccee43142edb109d3bd909d27d9e4139ef1beed8625",
+    "appearance/clothes/female_elegantsuit01/female_elegantsuit01.mhclo": "8ed657dbc49466e6a485993cfdcfd7b6ac30a0f44408dfd38de7a649477d8928",
+    "appearance/clothes/female_elegantsuit01/female_elegantsuit01.obj": "3b46cef6d63968954dc00c39ede649d76c05e5d36fe9f9c677349c88fd424de9",
+    "appearance/clothes/shoes02/shoes02.mhclo": "0d447fd6b7415d6b2603e91697336ee51ac2f00ef85878d6667e9acfb45a20fe",
+    "appearance/clothes/shoes02/shoes02.obj": "5726aabac42ff489998d0a769545dea013961bbb71b9c6024d75170181a98818",
+    "appearance/eyebrows/eyebrow001/eyebrow001.mhclo": "54c8892c2ba577f4152d779ce1f20f7cd323beb8cbd9cb701796165c221b4f5b",
+    "appearance/eyebrows/eyebrow001/eyebrow001.obj": "88b13146395133f3901715e11706cdfd293e5d6087ad7c5e01efe1485a26b513",
+    "appearance/eyebrows/eyebrow001/eyebrow001.png": "9940f7d0b1b223709a19b05156ba6f6e9e4dbdbced02d7574f4d51d72c58967b",
+    "appearance/eyes/high-poly/high-poly.mhclo": "b183cfe37120ab726f9b3f2ea6cd3a64c44ce7b4bd91a77c841cf70c04f83a0d",
+    "appearance/eyes/high-poly/high-poly.obj": "da2493215b708a344c33dc72f2a9a5b8fa985dcc5a70ad3b208995cf871da8e1",
+    "appearance/eyes/materials/brown_eye.png": "4659691c7295ad6206c78b003e5fd0e5f91dcd53032fa914a229bb48cabe424b",
+    "appearance/hair/short02/short02.mhclo": "625736cdb73e6d094df6e5a2df18f371781f1d2cd37b0ae15795c5d7051c3ec2",
+    "appearance/hair/short02/short02.obj": "48f979114adfa712165a69cc55c45a70831af1fb3cba8e2a89120f0c87407b64",
+    "appearance/hair/short02/short02_diffuse.png": "47fe33831a3929567c733356dd66243116e05df2ace1f884ddca0080b728229f"
+  },
+  "appearanceRevision": {
+    "asian-female-young.target": "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/macrodetails/asian-female-young.target",
+    "mouth-angles-up.target": "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/mouth/mouth-angles-up.target",
+    "default_weights.mhw": "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/rigs/default_weights.mhw",
+    "archive": "https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+    "archiveEntries": [
+      "clothes/female_elegantsuit01/female_elegantsuit01.mhclo",
+      "clothes/female_elegantsuit01/female_elegantsuit01.obj",
+      "clothes/shoes02/shoes02.mhclo",
+      "clothes/shoes02/shoes02.obj",
+      "eyebrows/eyebrow001/eyebrow001.mhclo",
+      "eyebrows/eyebrow001/eyebrow001.obj",
+      "eyebrows/eyebrow001/eyebrow001.png",
+      "eyes/high-poly/high-poly.mhclo",
+      "eyes/high-poly/high-poly.obj",
+      "eyes/materials/brown_eye.png",
+      "hair/short02/short02.mhclo",
+      "hair/short02/short02.obj",
+      "hair/short02/short02_diffuse.png"
+    ],
+    "changes": "Female macro shape, fitted clothing/shoes/hair/eyes/eyebrows, original anatomical skin weights. Generic identity, not original performer reconstruction."
   }
 }

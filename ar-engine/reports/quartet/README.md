@@ -2,13 +2,13 @@
 
 실행 경로: `?musical=1&show=quartet`. 기존 `?musical=1`의 30초 실사 영상 공연과 루트의 별의 새싹/외벽/Quick Look은 유지한다. 새 구현은 `feat/black-uniform-quartet` 브랜치에서 작업했다.
 
-임시 서버 실행 주소: https://ar.lobodoc.com/?musical=1&show=quartet . 홈페이지의 ④ 버튼에서도 진입한다. 실행용 웹을 배포했으며 제작 API와 영속 업로드 DB는 그대로 유지했다. 배포 이미지 `ar-site:quartet-a79640d3`, 아카이브 SHA256 `a79640d32868e48ce4552be3d5f83166e6f4d70e862b3f1db84b5a357ff5df29` (58파일), 이전 이미지 `ar-site:rollback-20261029T193350Z`, 이전 dist `/home/ubuntu/ar-docker/backups/dist-20261029T193350Z`를 보존했다. 배포 방법은 기존 `ar-engine/BUILD-WEB-SLAM.md`와 `performer-service/deploy/README.md`를 따른다.
+임시 서버 실행 주소: https://ar.lobodoc.com/?musical=1&show=quartet&v=18d81376 . 홈페이지의 ④ 버튼에서도 진입한다. 외형 수정 실행 웹을 배포했다. 배포 이미지 `ar-site:appearance-18d81376`, 아카이브 SHA256 `18d81376919a77049dfefd7330456a8d8c2469e4ab8a3bb51a5917cb9d74a03d` (58파일). 직전 이미지 `ar-site:rollback-20261029T202150Z`와 기존 제작 API/영속 DB를 보존했다. 배포 방법은 기존 `ar-engine/BUILD-WEB-SLAM.md`와 `performer-service/deploy/README.md`를 따른다.
 
 ## 실제 구현
 
 - 사용자 MP4를 다운로드·디코딩하고 프레임을 확인했다. 1280×720, 24fps, 영상 241프레임/10.041667초, 원본 오디오 10초다. [원본 프레임 모음](./source-contact.jpg).
 - MediaPipe의 실제 로컬 추론을 실행했다. 전체 화면만으로는 240프레임 중 7프레임에서 네 명이 검출됐다. 좌우 위치 기반 Hungarian 매칭과 배우별 크롭 재검출로 240프레임×4트랙을 확보했다. [ID 오버레이](./tracked-contact.jpg). 이 영상에서만 확인한 고정 카메라·자리 교차 없음 조건을 사용한다. 100% 관절 정확도나 일반 영상의 ID 유지 성공을 의미하지 않는다.
-- 실제 골격·메시가 있는 4개 GLB를 만들었다. 각각 독립 17본과 애니메이션 클립을 가진다. CC0 MakeHuman 기반 외형에 검정 교복·모자·고무신·흰 칼라/양말·단추·표식을 제작했다. 작은 얼굴/체형·표식 차이를 두었다. [Blender 렌더](./actor-blender.png). 원본 영상 인물의 얼굴·신체를 복원한 모델은 아니며 최고 품질의 실사 디지털 휴먼이라고 주장하지 않는다.
+- 실제 골격·메시가 있는 4개 GLB를 만들었다. 각각 독립 17본과 애니메이션 클립을 가진다. CC0 MakeHuman 여성 체형에 실제 피팅된 재킷/치마·짧은 머리·갈색 눈·눈썹·신발과 자체 학생모/단추를 적용했다. 네 배우의 외형은 같은 일반 인체 기반이며 크기와 동작이 다르다. [Blender 렌더](./actor-blender.png). 원본 영상 인물의 얼굴·신체를 복원한 모델은 아니며 최고 품질의 실사 디지털 휴먼이라고 주장하지 않는다.
 - visibility 0.5 미만 관절은 보간하고 5프레임 평활화했다. 가려진 관절의 추정 오차는 남는다. 17본 rest 방향과 영상의 hip-relative 추정 3D 관절을 연결해 베이크했다. 평가된 고무신 정점의 최저 높이를 기준으로 수직 바닥 접촉을 보정했다. 완전한 발 IK/수평 발 잠금, 손가락·표정·가창 립싱크는 구현하지 않았다.
 - 네 배우를 각각 `BuildingAnchor → PerformerGroup → ANCHOR_stage → PERFORMER → rigged model`에 배치한다. 같은 앵커 아래 `BuildingGroup`, 별도 깊이 모델, `EffectsGroup`을 유지한다. 카메라 자식·영상 평면·빌보드가 아니다.
 - 사진 1을 수동 원근 보정한 외벽과 사진 2의 산수화 패널을 사용한다. 외벽 표면을 5개로 나누고 기둥·프레임·패널 효과를 구분한다. 폭 5.6m/높이 2.5m/깊이는 임시값이다. AR 카메라에서 불투명 외벽은 기본 숨김, 개발 미리보기/정합 확인에서 표시한다. 깊이 가림은 별도 토글이며 실측 전까지 정확한 실물 가림이라고 주장하지 않는다.
@@ -50,3 +50,7 @@ npm run build --prefix ar-engine
 플랫폼 확인: [Apple Quick Look 공식 예제](https://developer.apple.com/quick-look-gallery/)는 USDZ 내부의 애니메이션·내장 동작·오디오를 지원한다고 명시한다. 따라서 Quick Look에 애니메이션 자체가 없다고 단정하지 않는다. 다만 이 저장소의 Three.js 0.169 USDZExporter는 메시 기하와 재질을 내보내며 스킨 애니메이션 클립/웹 AudioContext 타임라인을 직렬화하지 않는다. 신규 4인 공연의 애니메이션 USDZ 및 네이티브 동기 제어는 별도 미완료 항목이며, 현재는 기존 웹 SLAM(iPhone/Android)과 Android WebXR에서 같은 GLB·오디오 타임라인을 실행한다.
 
 향후 등록 경로는 기존 `performer-service`의 동의·비용 승인·3D 생성·모션 입력·리타기팅·검수·GLB 공개 등록을 재사용한다. 공연의 건물/배우/타임라인 데이터는 분리돼 있고, 로컬 또는 등록된 GLB로 배우별 교체가 가능하다. 다른 리그는 기존 retarget 도구로 변환하거나 별도 프로필이 필요하다. 실제 고품질 배우 외형과 움직임 검수·실기기 합격은 추가 작업이다.
+
+## 외형 개선 검증 (2026-10-30)
+
+`fix/quartet-human-appearance`에서 여성 매크로 형태, 원본 2K 피부, 해부학적 가중치와 피팅된 CC0 의상/머리/눈/신발로 재생성했다. 손의 회전을 팔 방향에 안정화하고 실제 신발 정점 기준으로 바닥을 보정한다. [얼굴 근접 렌더](./portrait.png)는 Blender 출력이며 실제 AR 카메라 사진이 아니다. 새 네 GLB의 브라우저 재생/앵커 유지/일시정지/다시 보기 검사와 기존 보호 대상 38개 검사가 통과했다. 실제 iPhone/Android 검증은 수행하지 않았다. 실사급 배우 외형과 개별 얼굴/표정은 미완료다.

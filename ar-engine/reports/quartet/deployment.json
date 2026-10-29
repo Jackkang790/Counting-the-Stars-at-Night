@@ -1,13 +1,14 @@
 {
   "files": 58,
-  "bytes": 21222790,
-  "sha256": "a79640d32868e48ce4552be3d5f83166e6f4d70e862b3f1db84b5a357ff5df29",
-  "image": "ar-site:quartet-a79640d3",
-  "indexSha256": "94850c44402933568d1563346d8478aa5841a0e830637cc9a2463f367d9e38ae",
-  "url": "https://ar.lobodoc.com/?musical=1&show=quartet",
-  "rollbackImage": "ar-site:rollback-20261029T194007Z",
-  "originalPreQuartetRollback": "ar-site:rollback-20261029T193350Z",
-  "performerAPI": "unchanged; localRetarget available, Tripo/DeepMotion unconfigured",
+  "bytes": 38285382,
+  "sha256": "18d81376919a77049dfefd7330456a8d8c2469e4ab8a3bb51a5917cb9d74a03d",
+  "image": "ar-site:appearance-18d81376",
+  "indexSha256": "01a2db5cce8d84c27982531d1ebde6755e38a788f8b409499ba7784b784c42a4",
+  "url": "https://ar.lobodoc.com/?musical=1&show=quartet&v=18d81376",
+  "performerAPI": "unchanged",
   "paidAPICalls": 0,
-  "physicalPhoneARVerified": false
+  "physicalPhoneARVerified": false,
+  "rollbackImage": "ar-site:rollback-20261029T202150Z",
+  "originalPreQuartetRollback": "ar-site:rollback-20261029T193350Z",
+  "publicGLBSha256Verified": true
 }
