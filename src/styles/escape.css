@@ -1,0 +1,52 @@
+/* 07 단서 얻기 */
+.timer { padding: 8px 14px; border-radius: 999px; background: #fff; font-size: 1rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--night); }
+.timer.low { background: var(--bad); color: #fff; }
+.clue-field { position: absolute; left: 50%; width: min(100%, 600px); transform: translateX(-50%); top: 26%; height: 36%; z-index: 1; } /* 태블릿 · 넓은 화면에서도 시트 폭(600px)에 맞춰 가운데 */
+/* 목업 담장 띠와 같은 자리 */
+.clue-dot { position: absolute; transform: translate(-50%, -50%); width: min(96px, 25vw); height: min(96px, 25vw); border-radius: 50%; border: 2px dashed var(--star); background: rgba(20, 26, 51, .55); color: var(--star); font-size: 1.25rem; font-weight: 800; animation: glow 2s ease-in-out infinite; }
+/* 연 실마리: 같은 크기 원(자물쇠 · ? · 실마리 모두 같은 크기), 글씨는 크게 */
+.clue-dot.on { border: 3px solid #fff; background: rgba(20, 26, 51, .9); font-size: 1.0625rem; line-height: 1.1176; padding: 0 8px; color: #fff; animation: none; word-break: keep-all; }
+@keyframes glow { 50% { box-shadow: 0 0 0 8px rgba(244, 197, 74, .25); } }
+.lock-sheet { max-height: 52vh; }
+.lock-head { display: flex; align-items: center; gap: 10px; font-size: 1.0625rem; }
+.clue-box { padding: 12px 14px; border-radius: 10px; font-size: 0.9375rem; line-height: 1.3333; background: rgba(255, 255, 255, .08); }
+.lock-sheet .two .btn { margin-top: 0; }
+/* 07 단서 얻기 · 별자리 퍼즐: 시트가 길어서 단서·담장을 위로 올림 */
+.escape .clue-field { top: 13%; height: 26%; }
+.escape .mock-wall-band { top: 11%; height: 30%; }
+.escape .lock-sheet { max-height: 64vh; gap: 10px; }
+.clue-box.bad { background: var(--bad-bg); color: var(--bad); }
+.puzzle { display: grid; gap: 4px; width: 100%; max-width: min(100%, max(300px, 46vh)); max-height: max(30vh, 240px); align-self: center; padding: 4px; border-radius: 12px; background: var(--night); transition: gap .4s; }
+.puzzle.solved { gap: 0; }
+.escape .puzzle { width: auto; height: min(30vh, 260px); max-width: 100%; }
+.pz-tile { position: relative; border-radius: 6px; background: #1d2547; overflow: hidden; outline: 2px solid transparent; outline-offset: -2px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.pz-tile.dragging { z-index: 2; cursor: grabbing; outline-color: var(--star); box-shadow: 0 8px 20px rgba(0, 0, 0, .45); opacity: .92; }
+.pz-tile.over { outline-color: #fff; outline-style: dashed; }
+.puzzle.solved .pz-tile { border-radius: 0; }
+.pz-tile svg { display: block; width: 100%; height: 100%; }
+.pz-line { stroke: #8a92c0; stroke-width: 1.4; }
+.pz-star { fill: #fff6d6; }
+.puzzle.solved .pz-line { stroke: var(--star); stroke-width: 1.8; transition: stroke .6s; }
+.puzzle.solved .pz-star { fill: var(--star); }
+.choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; } /* 큰 글씨(어르신도 읽게) → 2열 */
+.choice { height: 52px; padding: 0 2px; border-radius: 10px; border: 1.5px solid var(--line-2); background: var(--bg); font-size: 1rem; letter-spacing: -.5px; white-space: nowrap; font-weight: 700; color: var(--ink); }
+.choice.ok { background: var(--star); border-color: var(--star); color: var(--night); }
+.choice.no { border-color: var(--bad); color: var(--bad); }
+/* 07 단서 얻기 · 유도 */
+.steps { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.steps li { flex: 1; padding: 6px 4px; border-radius: 999px; border: 1px solid var(--line-2); font-size: 0.875rem; font-weight: 700; text-align: center; color: var(--muted); white-space: nowrap; }
+.steps li.cur { border-color: var(--star); color: var(--star); background: rgba(244, 197, 74, .1); }
+.steps li.done { border-color: transparent; background: rgba(255, 255, 255, .08); color: var(--sub); }
+.clue-dot.next { animation: glow 1.2s ease-in-out infinite; border-width: 3px; }
+/* 잠긴 실마리: 원 + 자물쇠(누를 수 없음) */
+.clue-dot.locked { display: grid; place-items: center; border: 2px solid rgba(255, 255, 255, .35); color: rgba(255, 255, 255, .7); background: rgba(10, 14, 40, .7); animation: none; }
+.tap-me { position: absolute; left: 50%; top: calc(100% + 8px); transform: translateX(-50%); padding: 4px 10px; border-radius: 999px; background: var(--star); color: var(--night); font-size: 0.875rem; font-weight: 800; white-space: nowrap; animation: bob 1s ease-in-out infinite alternate; pointer-events: none; }
+.tap-me::before { content: ''; position: absolute; left: 50%; top: -5px; margin-left: -5px; border: 5px solid transparent; border-top: 0; border-bottom-color: var(--star); }
+@media (prefers-reduced-motion: reduce) {
+  .clue-dot.next, .tap-me { animation: none; }
+}
+.pz-wrap { display: flex; justify-content: center; }
+/* 07 힌트 = 담장 위 아래쪽 줄(💡). 잠김 → 풀림(반짝) → 열림(문구) */
+@media (prefers-reduced-motion: reduce) {
+}
+

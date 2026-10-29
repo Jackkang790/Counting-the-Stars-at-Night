@@ -1,0 +1,24 @@
+/* 06 역할극 */
+.rp-col { position: absolute; left: 0; right: 0; top: calc(104px + env(safe-area-inset-top)); bottom: 0; display: flex; flex-direction: column; z-index: 1; }
+.rp-stage { position: relative; flex: 1 1 0; min-height: 0; padding-bottom: 22px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.rp-stage svg { display: block; flex: 1 1 0; min-height: 0; width: 130vw; max-width: none; } /* 건물 앞에 선 것처럼 최대한 크게(양옆은 잘려도 됨) */
+/* 땅: 무대 밑변부터 화면 맨 아래까지(대사 카드 양옆도 땅) */
+.rp-stage::after { content: ''; position: absolute; left: 0; right: 0; top: calc(100% - 22px - 1px); height: 100vh; z-index: -1; background: linear-gradient(#3a3a3c, #1c1c1e); }
+.rp-cap { fill: #fff; font-size: 14px; }
+.rp-room { fill: #141414; stroke: #fff; stroke-width: 2; stroke-dasharray: 6 4; }
+.rp-floor { stroke: #8a7f74; stroke-width: 3; }
+.rp-table { fill: none; stroke: #fff; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.person circle, .person path { fill: none; stroke: #fff; stroke-width: 2; stroke-dasharray: 5 3; }
+.person.talk circle, .person.talk path { stroke: var(--star); }
+.talk { animation: talk-bob .6s ease-in-out infinite alternate; }
+@keyframes talk-bob { from { translate: 0 0; } to { translate: 0 -3px; } } /* 말하는 인물만 살짝 위아래(자리는 그대로) */
+@keyframes bob { to { transform: translateY(-3px); } }
+.see-through { animation: restoreIn .8s var(--e-decel) both; }
+.rp-hint { flex: 0 0 auto; margin: 0 0 8px; font-size: 0.875rem; color: #ddd; text-shadow: 0 1px 3px #000; }
+/* 앞 건물 역할극에서 이어져 왔을 때 잠깐 뜨는 안내 */
+.rp-toast { position: absolute; left: 50%; top: calc(110px + env(safe-area-inset-top)); z-index: 4; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 8px 14px; border-radius: 999px; background: var(--star); color: var(--night); font-size: 0.9375rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
+.line-card { position: relative; flex: 0 0 auto; width: 100%; max-width: 600px; margin: 0 auto; border-radius: 18px 18px 0 0; padding: 20px 24px calc(20px + env(safe-area-inset-bottom)); background: #111; color: #fff; z-index: 3; }
+.line-card .cap { color: #bbb; }
+.line-card p { margin: 6px 0 12px; font-size: 1.125rem; line-height: 1.5; font-weight: 500; }
+.line-card .btn { margin-top: 0; }
+@keyframes bob { to { transform: translate(-50%, -4px); } }

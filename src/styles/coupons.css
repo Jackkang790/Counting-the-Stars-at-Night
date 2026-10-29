@@ -1,0 +1,37 @@
+/* 09 쿠폰함 · 10 내 쿠폰 — 기프티콘 모양(흰 카드 · 상품 그림 · 바코드 · 교환처/유효기간) */
+.gift-pic { display: block; width: 100%; height: 100%; }
+.gift-brand { font-size: 0.875rem; font-weight: 700; color: #8a6d00; }
+.gift-dday { position: absolute; left: 8px; top: 8px; padding: 2px 8px; border-radius: 999px; background: var(--star); color: var(--night); font-size: 0.875rem; font-weight: 800; }
+.gift-stamp { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-12deg); padding: 4px 10px; border: 2.5px solid #e24b4b; border-radius: 6px;
+  color: #e24b4b; background: rgba(255, 255, 255, .85); font-size: 0.9375rem; font-weight: 900; white-space: nowrap; }
+.gift-stamp.big { font-size: 1.25rem; padding: 6px 16px; }
+/* 09 쿠폰함: 기프티콘 카드 2열 */
+.gift-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
+.gift-tile { display: flex; flex-direction: column; padding: 0; border: 2px solid transparent; border-radius: 16px; overflow: hidden; background: #fff; color: #1a1d2b; text-align: left; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); }
+.gift-tile.on { border-color: var(--star); }
+.gift-tile-pic { position: relative; display: block; aspect-ratio: 4 / 3; }
+.gift-tile-body { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px 12px; }
+.gift-tile-body b { font-size: 1rem; line-height: 1.25; }
+.gift-tile-body .muted { color: #6b6f7d; }
+.gift-tile.off .gift-tile-pic, .gift-tile.off .gift-tile-body { filter: grayscale(1); opacity: .75; }
+/* 10 내 쿠폰: 기프티콘 한 장 */
+.gifticon { max-width: 380px; margin: 4px auto 0; border-radius: 20px; overflow: hidden; background: #fff; color: #1a1d2b; box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+.gc-pic { position: relative; aspect-ratio: 4 / 3; }
+.gc-info { display: flex; flex-direction: column; gap: 2px; padding: 14px 18px 12px; }
+.gc-name { font-size: 1.25rem; line-height: 1.4; }
+.gc-info .muted { color: #6b6f7d; }
+/* 절취선(양쪽 반원 홈 + 점선) */
+.gc-cut { position: relative; height: 0; margin: 4px 0; border-top: 2px dashed #d9dbe3; }
+.gc-cut::before, .gc-cut::after { content: ''; position: absolute; top: -12px; width: 22px; height: 22px; border-radius: 50%; background: var(--bg, #0b1030); }
+.gc-cut::before { left: -11px; }
+.gc-cut::after { right: -11px; }
+.gc-code { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 18px 6px; }
+.gc-qr { width: 150px; height: 150px; }
+.gc-bar { width: 100%; max-width: 320px; height: 64px; }
+.gc-num { margin: 0; font-size: 1.375rem; font-weight: 800; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+.gc-hint { margin: 0; font-size: 0.875rem; line-height: 1.2857; color: #6b6f7d; text-align: center; }
+.gifticon.off .gc-code canvas, .gifticon.off .gc-pic .gift-pic { filter: grayscale(1); opacity: .45; }
+.gc-table { margin: 10px 18px 18px; padding: 10px 14px; border-radius: 12px; background: #f4f5f8; font-size: 0.9375rem; }
+.gc-table div { display: flex; gap: 12px; padding: 4px 0; }
+.gc-table dt { width: 60px; flex-shrink: 0; color: #6b6f7d; }
+.gc-table dd { margin: 0; font-weight: 700; }

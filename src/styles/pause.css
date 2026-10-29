@@ -1,0 +1,22 @@
+/* 메뉴(일시정지 메뉴, ui/PauseMenu.jsx) — 어느 화면에서나 오른쪽 위 ☰ → 오른쪽에서 열림 */
+.menu-btn { width: 40px; height: 40px; flex-shrink: 0; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink); }
+.menu-btn:active { background: var(--surface); }
+.menu-btn.on-ar { width: 44px; height: 44px; background: rgba(0, 0, 0, .45); color: #fff; }
+.home-menu { position: absolute; right: 12px; top: calc(12px + env(safe-area-inset-top)); z-index: 2; }
+.pause { position: fixed; inset: 0; z-index: 50; display: flex; justify-content: flex-end; background: rgba(5, 8, 22, .6); animation: fadeIn .2s ease both; }
+.pause-panel { width: min(82vw, 320px); height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;
+  padding: calc(14px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom)); background: var(--sheet); border-left: 1px solid var(--line); color: var(--ink);
+  box-shadow: -8px 0 30px rgba(0, 0, 0, .4); animation: slideIn .28s cubic-bezier(.22, .9, .25, 1) both; }
+.pause-head { display: flex; justify-content: space-between; align-items: center; }
+.pause-title { font-size: 1.125rem; font-weight: 800; letter-spacing: 1px; }
+.pause-panel .btn { margin-top: 0; }
+.pause-list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.pause-item { display: flex; align-items: center; gap: 12px; height: 54px; padding: 0 4px; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); font-size: 1.0625rem; font-weight: 700; text-align: left; }
+.pause-ico { width: 24px; display: grid; place-items: center; color: var(--muted); }
+.pause-label { flex: 1; }
+.pause-item.cur, .pause-item.cur .pause-ico { color: var(--star); }
+.pause-demo { margin-top: auto; display: flex; justify-content: space-between; }
+.pause-demo .link { padding: 4px 0; }
+@keyframes slideIn { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pause, .pause-panel { animation: none; } }

@@ -1,0 +1,31 @@
+/* 01 홈 · 키 비주얼 · 처마/청사초롱 */
+.key-visual { display: block; width: 100%; height: 38vh; min-height: 200px; max-height: 300px; max-width: 600px; margin: 0 auto; }
+/* 나의 별자리(ui/MyConstellation.jsx) — 01 홈 카드 · 08 배너 공용: 별 6개를 이은 별자리 */
+.my-const { display: block; width: 100%; height: auto; margin: 8px 0 4px; overflow: visible; }
+/* 세로로 크게(08): 화면 높이에 맞춰 */
+.my-const.vertical { width: auto; max-width: 100%; height: min(58vh, 460px); margin: 8px auto 4px; }
+.my-const.vertical .mc-spot { font-size: 17px; }
+.mc-line { stroke: var(--line-2); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.mc-line.on { stroke: var(--star); stroke-width: 2.5; stroke-dasharray: none; }
+.mc-star path { fill: rgba(255, 255, 255, .04); stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 3 2; }
+.mc-star.on path { fill: var(--star); stroke: var(--star); stroke-dasharray: none; }
+.mc-star.fresh path { animation: mcPop 1.4s cubic-bezier(.3, 1.6, .5, 1) both; transform-box: fill-box; transform-origin: center; }
+/* 별 반짝임: 받은 별은 빛이 커졌다 작아짐 · 안 받은 별은 은은하게 깜빡 */
+.mc-tw { transform-box: fill-box; transform-origin: center; animation: mcTwOff 2.8s ease-in-out infinite; }
+.mc-star.on .mc-tw { animation-name: mcTwOn; }
+@keyframes mcTwOn { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.12); filter: brightness(1.35); } }
+@keyframes mcTwOff { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes mcPop { 0% { transform: scale(2.2); opacity: 0; } 60% { opacity: 1; } 100% { transform: scale(1); } }
+.mc-spot { fill: var(--sub, #c9cbe0); font-size: 14px; font-weight: 800; letter-spacing: .5px; }
+@media (prefers-reduced-motion: reduce) { .mc-star.fresh path, .mc-tw { animation: none; } }
+.key-visual > rect:first-child { fill: transparent; }
+/* 01 왼쪽 위: 기와 처마 + 등불(src/ui/Eave.jsx) */
+.key-wrap { position: relative; max-width: 600px; margin: 0 auto; }
+.eave { position: absolute; left: 0; top: 0; width: 46%; max-width: 230px; pointer-events: none; overflow: visible; }
+.lantern { transform-box: view-box; animation: sway 3.4s ease-in-out infinite alternate; }
+.lantern-glow { animation: flicker 2.2s ease-in-out infinite; }
+@keyframes sway { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+@keyframes flicker { 0%, 100% { opacity: .75; } 30% { opacity: 1; } 55% { opacity: .6; } 75% { opacity: .95; } }
+@media (prefers-reduced-motion: reduce) {
+  .lantern, .lantern-glow { animation: none; }
+}

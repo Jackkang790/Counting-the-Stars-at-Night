@@ -1,0 +1,25 @@
+/* 04-A 빈 땅 작품 */
+/* 땅에 붙여 세움: 좌대 밑(rise-base)이 땅(목업 62% 아래) 바로 위 그림자 타원에 놓임 */
+/* 아래 버튼 묶음(.art-foot, 바닥에서 약 210px)과 겹치지 않게: 밑변은 최소 224px 위, 높이는 남은 공간만큼 */
+.rise-wrap { position: absolute; left: 50%; bottom: max(33vh, 224px); width: 220px; margin-left: -110px; height: clamp(120px, calc(100dvh - max(33vh, 224px) - 110px), 330px); z-index: 1; }
+/* 땅 밑에서 솟아오름: rise-clip 아래 끝 = 땅선, 그 밑은 잘려 안 보임 */
+.rise-clip { position: absolute; left: -20px; right: -20px; top: -20px; bottom: 14px; overflow: hidden; }
+.rise2d { position: absolute; left: 20px; right: 20px; top: 20px; bottom: 0; display: flex; justify-content: center; animation: rise 3.6s cubic-bezier(.3, .1, .2, 1) both; }
+.rise2d .sculpture { position: relative; height: 100%; width: auto; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .5)); }
+/* 회전무대: 작품 여러 개가 원 위에 놓여 돎(앞 = 크고 밝게, 뒤 = 작고 어둡게). 밑변은 모두 땅선 */
+.rise-wrap.ring { width: min(94vw, 560px); margin-left: calc(min(94vw, 560px) / -2); }
+.ring-item { position: absolute; bottom: 0; height: 100%; transform-origin: 50% 100%; }
+.ring-item .sculpture { height: 100%; width: auto; display: block; }
+.rise-glow { position: absolute; left: 0; right: 0; top: 0; height: 80%; border-radius: 50%; background: radial-gradient(closest-side, rgba(244, 197, 74, .22), transparent); pointer-events: none; }
+.rise-base { position: absolute; left: 30px; right: 30px; bottom: 0; height: 28px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, .55), transparent); }
+/* 한 번 솟아오른 뒤(still): 다른 작품으로 넘겨도 다시 솟지 않고 그 자리에 가만히 */
+.rise-wrap.still .rise2d, .rise-wrap.still .rise-dust { animation: none; }
+.rise-wrap.still .rise-dust { opacity: 0; }
+@keyframes rise { 0%, 8% { transform: translateY(100%); } 80% { transform: translateY(-3%); } 100% { transform: none; } }
+.rise-dust { position: absolute; left: 0; right: 0; bottom: 4px; height: 40px; border-radius: 50%; background: radial-gradient(closest-side, rgba(220, 210, 190, .45), transparent); animation: dust 3.8s ease-out both; pointer-events: none; }
+@keyframes dust { 0% { opacity: 0; transform: scale(.6); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.6, 1.2); } }
+.art-foot { position: absolute; left: 16px; right: 16px; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 12px; bottom: calc(100px + env(safe-area-inset-bottom)); }
+.overlay.aligning, .rise-wrap.aligning { outline: 2px dashed rgba(255, 255, 255, .7); outline-offset: 6px; }
+.art-foot .dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .4); }
+.art-foot .dots button.on { background: #fff; }
+.art-back { width: auto; height: 44px; margin: 0; padding: 0 22px; line-height: 41px; font-size: 1.0625rem; border-radius: 999px; background: rgba(0, 0, 0, .35); }

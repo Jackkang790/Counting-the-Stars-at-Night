@@ -1,0 +1,15 @@
+/* 04-B 작가의 무대 */
+.overlay { position: absolute; left: 50%; top: 20%; width: var(--bw); margin-left: calc(var(--bw) / -2); transform-origin: center; z-index: 1; }
+.oldhouse { display: block; width: 100%; height: auto; transition: opacity .2s; }
+.oldhouse .restore { animation: restoreIn 1.2s var(--e-decel) both; }
+@keyframes restoreIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.glass-tag { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border-radius: 4px; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .06)); border: 1px solid rgba(255, 255, 255, .45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  color: rgba(255, 255, 255, .92); text-shadow: 0 0 6px rgba(255, 230, 160, .6); animation: restoreIn .6s .5s var(--e-decel) both, tutorialOut .8s 4.5s ease forwards; }
+@keyframes tutorialOut { to { opacity: 0; visibility: hidden; } } /* 튜토리얼처럼 잠깐 보였다가 사라짐 → 기능 설명을 가리지 않게 */
+.glass-tag b { font-size: 10px; letter-spacing: 2px; }
+.glass-tag span { font-size: 8px; letter-spacing: 1px; opacity: .8; }
+.stage-cap { position: absolute; left: 0; right: 0; bottom: calc(196px + env(safe-area-inset-bottom)); text-align: center; display: flex; flex-direction: column; gap: 10px; padding: 0 20px; }
+.credit { font-size: 0.9375rem; color: #eee; text-shadow: 0 1px 3px #000; }
+.mix { position: absolute; left: 24px; right: 24px; bottom: calc(136px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 6px; font-size: 0.875rem; color: #ddd; }
+.mix input { width: 100%; accent-color: #fff; }

@@ -1,0 +1,8 @@
+/* 08 나의 별자리 배너: 별 6개 별자리(모양은 home.css 의 .my-const) */
+.const-banner { margin: 4px 0 8px; padding: 14px 16px 12px; border-radius: 18px; border: 1px solid var(--line-2); background: radial-gradient(120% 90% at 50% 0%, rgba(244, 197, 74, .14), rgba(12, 18, 52, .7) 60%); }
+.const-banner .const-count { font-weight: 800; color: var(--star); }
+/* 08 나의 별자리 · 스토리보드 */
+.reward { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 12px 16px; border-radius: 10px; font-size: 0.9375rem; line-height: 1.2667; background: var(--star); color: var(--night); }
+.reward b { font-size: 1.0625rem; }
+.got { display: flex; gap: 16px; align-items: center; margin: 12px 0 4px; }
+.got b { font-size: 1.125rem; }

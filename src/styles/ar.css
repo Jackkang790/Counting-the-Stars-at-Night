@@ -1,0 +1,85 @@
+/* 카메라(AR) 화면 공통: 상단 · 인식 모서리 · 목업 배경 · 하단 시트(Peek) · 건너뛰기 */
+.ar { position: fixed; inset: 0; overflow: hidden; background: #2b2b2b; color: #fff; touch-action: none; }
+/* 실제 AR(WebXR) 중엔 이 화면이 카메라 위 오버레이 → 바탕을 비워야 카메라·작품이 보임 */
+.ar.xr { background: transparent; }
+.cam { position: absolute; inset: 0; z-index: 0; background: linear-gradient(#0b1026 60%, #1c1c1e 60%); }
+.cam video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.cam.dim::after { content: ''; position: absolute; inset: 0; background: rgba(0, 0, 0, .55); }
+.cam-err { position: absolute; left: 16px; top: calc(100px + env(safe-area-inset-top)); font-size: 0.875rem; color: #aaa; }
+.xr-canvas { position: fixed; inset: 0; }
+.ar-head { position: absolute; left: 0; right: 0; top: calc(16px + env(safe-area-inset-top)); padding: 0 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; z-index: 3; }
+.ar-head-side { min-width: max-content; display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
+.ar-head-side.start { justify-content: flex-start; }
+/* 가운데 알약(장면 칸): 양쪽 버튼 폭과 상관없이 항상 화면 정가운데 — 버튼 줄 바로 아래 줄에 */
+.ar-head > .pill { position: absolute; left: 50%; top: calc(100% + 8px); transform: translateX(-50%); max-width: calc(100% - 32px); }
+.round { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 0; background: rgba(0, 0, 0, .5); display: grid; place-items: center; }
+.ar-hint { position: absolute; left: 0; right: 0; top: calc(108px + env(safe-area-inset-top)); text-align: center; font-size: 0.875rem; color: #ddd; z-index: 2; text-shadow: 0 1px 3px #000; }
+.ar-foot { position: absolute; left: 0; right: 0; bottom: calc(40px + env(safe-area-inset-bottom)); padding: 0 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 3; text-align: center; }
+.ar-title { font-size: 1.25rem; font-weight: 700; text-shadow: 0 1px 4px #000; }
+.ar-sub { font-size: 0.9375rem; color: #ddd; text-shadow: 0 1px 3px #000; }
+.found { display: flex; align-items: center; gap: 8px; font-size: 0.9375rem; color: #fff; margin-top: 6px; }
+.found i { width: 8px; height: 8px; border-radius: 50%; background: var(--star); }
+.peek-row { display: flex; gap: 12px; align-items: center; text-align: left; }
+.peek-row b { display: block; font-size: 1.0625rem; }
+/* 03 인식 모서리 */
+.brackets { position: absolute; left: 50%; top: 44%; width: 72vw; max-width: 320px; aspect-ratio: 280 / 300; transform: translate(-50%, -50%); transition: transform .3s var(--e-decel); }
+.brackets.locked { transform: translate(-50%, -50%) scale(.96); }
+.brackets i { position: absolute; width: 40px; height: 40px; border: 0 solid #fff; }
+.brackets.locked i { border-color: var(--star); }
+.brackets i:nth-child(1) { left: 0; top: 0; border-width: 4px 0 0 4px; }
+.brackets i:nth-child(2) { right: 0; top: 0; border-width: 4px 4px 0 0; }
+.brackets i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 4px 4px; }
+.brackets i:nth-child(4) { right: 0; bottom: 0; border-width: 0 4px 4px 0; }
+.brackets-cap { position: absolute; left: 0; right: 0; top: 10px; text-align: center; font-size: 0.875rem; color: #ddd; text-shadow: 0 1px 3px #000; }
+button.found { background: none; border: 0; padding: 4px 8px; }
+button.found:disabled { cursor: default; color: #fff; opacity: 1; }
+.peek { position: absolute; left: 0; right: 0; bottom: 0; height: calc(110px + env(safe-area-inset-bottom)); border: 0; border-radius: 22px 22px 0 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 24px 0; color: var(--ink); z-index: 3; touch-action: none; transition: transform .2s var(--e-decel); background: var(--sheet); }
+.peek b { font-size: 1.125rem; }
+.peek span { font-size: 0.875rem; color: var(--muted); }
+/* AR 하단 시트 (04-A · 04-C) */
+.peek-sheet, .sheet { touch-action: none; transition: transform .2s var(--e-decel); }
+/* 제목 줄을 잡고 끌어 내려도 닫힘 */
+.peek-sheet { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; max-width: 600px; margin: 0 auto; z-index: 3; max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 24px calc(22px + env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; color: var(--ink); touch-action: pan-y; padding-top: 18px; background: var(--sheet); }
+.peek-head { font-size: 1.125rem; text-align: center; }
+.peek-sheet .peek-row { align-self: stretch; }
+.peek-sheet .peek-row b { display: block; font-size: 1.125rem; }
+.peek-body { align-self: stretch; font-size: 1rem; line-height: 1.375; color: var(--sub); }
+.peek-body p { margin: 4px 0 0; }
+/* 목업 배경 (ui/MockScene.jsx) — 데모 모드 · 후면 카메라 없는 기기 */
+.mock { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(#0b1026, #262b45 60%); animation: cam-sway 7s ease-in-out infinite; }
+/* 손에 든 카메라처럼 살짝 흔들림 — 옛 모습(.overlay) · 작품(.rise-wrap)도 같은 흔들림(개별 translate · rotate 라 위치 맞추기 transform 과 안 겹침) */
+.ar:has(.mock) .overlay { animation: cam-sway 7s ease-in-out infinite; }
+/* 빈 땅(전시 작품): 솟아오른 뒤 가만히 → 카메라 흔들림 없음 */
+.mock-ground { animation: none; }
+@keyframes cam-sway { 0%, 100% { translate: 0 0; rotate: 0deg; } 25% { translate: 3px -2px; rotate: .2deg; } 50% { translate: -2px 2px; rotate: -.15deg; } 75% { translate: -4px -1px; rotate: .1deg; } }
+.mock-star { position: absolute; border-radius: 50%; background: #fff6d6; animation: twinkle 3.2s ease-in-out infinite; }
+.mock-lit { animation: lit 5s ease-in-out infinite; }
+@keyframes lit { 0%, 100% { opacity: 1; } 45% { opacity: .82; } 50% { opacity: .55; } 55% { opacity: .9; } }
+/* 렌즈 비네트 + 필름 노이즈(카메라 화면 느낌) */
+.mock-fx { position: absolute; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0, 0, 0, .55)); }
+.mock-fx::after { content: ''; position: absolute; inset: -50%; opacity: .07; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"); animation: grain .5s steps(4) infinite; }
+@keyframes grain { 0% { transform: translate(0, 0); } 25% { transform: translate(-7%, 4%); } 50% { transform: translate(5%, -6%); } 75% { transform: translate(-3%, 7%); } 100% { transform: translate(0, 0); } }
+/* 땅: 건물이 없는 장면은 화면 아래 40% */
+.mock-street::after, .mock-wall::after { content: ''; position: absolute; left: 0; right: 0; top: 60%; bottom: 0; background: linear-gradient(#3a3a3c, #1c1c1e); }
+/* 빈 땅: 눈높이 앵글 — 지평선은 화면 가운데 조금 아래, 작품 밑변은 지평선 바로 아래 → 경사 · 치우침 없이 */
+.mock-ground::after { content: ''; position: absolute; left: 0; right: 0; top: 62%; bottom: 0; background: linear-gradient(#2e2e31, #1c1c1e); }
+.mock-ground::before { content: ''; position: absolute; left: 50%; bottom: calc(max(33vh, 224px) - 2vh); width: 60vw; max-width: 360px; height: 4vh; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(#5a5a5c, transparent 70%); z-index: 1; }
+/* 담장: 04-C 갤러리 띠(top 28% · 높이 32%)와 같은 자리 */
+.mock-wall-band { position: absolute; left: 0; right: 0; top: 26%; height: 36%; z-index: 1; background: #57534e; border-top: 10px solid #47433f; }
+/* 무늬 없이 단색: 눈부심 줄이기 */
+/* 건물: 04-B .overlay 와 같은 상자 → 옛 모습이 정확히 겹침. 땅은 건물 밑변(상자 93%)부터 */
+.mock-bld { position: absolute; left: 50%; top: 20%; width: var(--bw); margin-left: calc(var(--bw) / -2); }
+.mock-bld svg { position: relative; z-index: 1; display: block; width: 100%; height: auto; }
+.mock-bld::after { content: ''; position: absolute; left: calc(50% - 100vw); width: 200vw; top: 93%; height: 100vh; background: linear-gradient(#3a3a3c, #1c1c1e); }
+/* 04 화면 하단 버튼 → 누르면 시트가 밑에서 올라옴 */
+.peek-btn { position: absolute; left: 50%; bottom: calc(32px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 3; margin: 0; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+.peek-sheet.open { animation: up .25s var(--e-decel) both; }
+/* 시트 + 그 위 닫기 버튼을 한 묶음으로 화면 아래에 붙임 */
+.sheet-dock { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: up .25s var(--e-decel) both; transition: transform .2s var(--e-decel); }
+.sheet-dock .sheet, .sheet-dock .peek-sheet { position: relative; left: auto; right: auto; bottom: auto; width: 100%; animation: none; }
+/* 닫기 = 여는 버튼(.peek-btn)과 같은 흰 알약 버튼, 시트 바로 위 */
+.sheet-close { flex-shrink: 0; margin: 0; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+/* 작품 이야기 시트가 열려 있으면 그 뒤 안내(점·설명 칸)는 숨김 → 닫기 버튼과 안 겹치게 */
+.ar:has(.sheet-dock) .art-foot { visibility: hidden; }
+/* 데모 모드 건너뛰기(역할극 · 단서 얻기) */
+.head-right { display: flex; align-items: center; gap: 6px; }
