@@ -7,21 +7,25 @@ import type {
   AREngineOptions,
   StartRequest,
   ARSupportReport,
+  CalibrationDelta,
+  LayerVisibility,
 } from "./types";
 import { EventBus } from "./events";
 import { checkSupport } from "./core/support";
 import { collectDiagnostics, formatDiagnostics, describeSessionError } from "./core/diagnostics";
 import { Reticle } from "./core/reticle";
-import { PlacementGroup } from "./core/placement";
+import { PlacementGroup, type CalibrationState } from "./core/placement";
 import { loadGLB } from "./loaders/gltf";
 import {
   loadAssetManifest,
   loadCatalog,
+  loadStandaloneManifest,
   findAsset,
   resolveExperience,
   type AssetEntry,
 } from "./loaders/manifest";
 import { EmergingArtworkScene } from "./scenes/emergingArtwork";
+import { AlignmentScene } from "./scenes/alignmentScene";
 import { buildPlaceholderArtwork } from "./scenes/placeholder";
 
 const DEFAULT_MANIFEST_URL = "/models/asset-manifest.json";
@@ -41,6 +45,9 @@ export class AREngine implements ARExperience {
   private reticle = new Reticle();
   private placement = new PlacementGroup();
   private artwork?: EmergingArtworkScene;
+  private alignment?: AlignmentScene;
+  private calibKey = "";
+  private alignInitialCalib?: CalibrationState;
 
   private request?: StartRequest;
   private assetId = "";
@@ -182,6 +189,52 @@ export class AREngine implements ARExperience {
     });
   }
 
+  // ---- 건물 정합(alignment) 제어 ----
+  setLayerVisible(node: string, visible: boolean): void {
+    if (!this.alignment) return;
+    this.alignment.setLayerVisible(node, visible);
+  }
+  getLayers(): LayerVisibility[] {
+    return this.alignment?.getLayerStates() ?? [];
+  }
+  calibrate(d: CalibrationDelta): void {
+    if (!this.alignment || !this.placement.isPlaced) return;
+    if (d.dx || d.dy || d.dz) this.placement.translate(d.dx ?? 0, d.dy ?? 0, d.dz ?? 0);
+    if (d.dpitch || d.dyaw || d.droll)
+      this.placement.rotate(d.dpitch ?? 0, d.dyaw ?? 0, d.droll ?? 0);
+    if (d.dscale && d.dscale > 0) this.placement.scaleBy(d.dscale);
+  }
+  saveCalibration(): boolean {
+    if (!this.alignment || !this.placement.isPlaced || !this.calibKey) return false;
+    try {
+      localStorage.setItem(this.calibKey, JSON.stringify(this.placement.getCalibration()));
+      console.info(`[ar-engine] 보정값 저장: ${this.calibKey}`);
+      return true;
+    } catch (err) {
+      console.warn("[ar-engine] 보정값 저장 실패:", err);
+      return false;
+    }
+  }
+  loadCalibration(): boolean {
+    if (!this.alignment || !this.calibKey) return false;
+    try {
+      const raw = localStorage.getItem(this.calibKey);
+      if (!raw) return false;
+      const c = JSON.parse(raw) as CalibrationState;
+      this.placement.applyCalibration(c);
+      this.reticle.hide();
+      console.info(`[ar-engine] 보정값 불러오기 적용: ${this.calibKey}`);
+      return true;
+    } catch (err) {
+      console.warn("[ar-engine] 보정값 불러오기 실패:", err);
+      return false;
+    }
+  }
+  resetCalibration(): void {
+    if (!this.alignment || !this.alignInitialCalib) return;
+    this.placement.applyCalibration(this.alignInitialCalib);
+  }
+
   // ---------------------------------------------------------------
 
   private setupThree(root: HTMLElement): void {
@@ -216,6 +269,12 @@ export class AREngine implements ARExperience {
   }
 
   private async loadExperienceAsset(req: StartRequest): Promise<void> {
+    // 단일 에셋 전용 매니페스트(정합 시험물 등)를 명시한 경우 별도 경로로 처리.
+    if (req.overrides?.manifestUrl) {
+      await this.loadStandaloneExperience(req, req.overrides.manifestUrl);
+      return;
+    }
+
     let asset: AssetEntry | undefined;
     const manifestUrl = this.options.assetManifestUrl ?? DEFAULT_MANIFEST_URL;
 
@@ -280,6 +339,59 @@ export class AREngine implements ARExperience {
     }
   }
 
+  /** 정합 시험물 등 단일 에셋 전용 매니페스트 로드 경로. 별의 새싹 경로와 분리. */
+  private async loadStandaloneExperience(req: StartRequest, manifestUrl: string): Promise<void> {
+    let man;
+    try {
+      man = await loadStandaloneManifest(manifestUrl);
+    } catch (err) {
+      const msg = `정합 매니페스트 로드 실패: ${err instanceof Error ? err.message : String(err)}`;
+      console.error(`[ar-engine] ${msg}`);
+      this.emitError("manifest-load-failed", msg, false);
+      return;
+    }
+    this.assetId = man.id;
+
+    let model;
+    const t0 = performance.now();
+    try {
+      model = await loadGLB(man.url, (loaded, total) =>
+        this.bus.emit("assetProgress", { assetId: this.assetId, loaded, total })
+      );
+      console.info(`[ar-engine] GLB 로드 시간: ${Math.round(performance.now() - t0)}ms (${man.url})`);
+    } catch (err) {
+      const msg = `정합 GLB 로드 실패: ${man.url} — ${err instanceof Error ? err.message : String(err)}`;
+      console.error(`[ar-engine] ${msg}`);
+      this.emitError("asset-load-failed", msg, false);
+      return; // 정합은 임시 모델 폴백 없음(기준물이 핵심)
+    }
+
+    const scale = req.overrides?.scale ?? man.recommended_scale ?? 1;
+    this.alignment = new AlignmentScene(model, man);
+    this.placement.attach(this.alignment.object, scale);
+    this.calibKey = `ar-calib:${req.buildingId}:${req.spotId}:${man.id}`;
+    this.usedPlaceholder = false;
+
+    console.info(
+      `[ar-engine] ✓ 정합 GLB 로드: ${man.url} | id=${man.id} | category=${man.category} | ` +
+        `layers=[${this.alignment.getLayerStates().map((l) => l.node).join(", ")}] | ` +
+        `refPoints=${this.alignment.referencePoints.length}`
+    );
+
+    this.bus.emit("ready", {
+      assetId: this.assetId,
+      usedPlaceholder: false,
+      source: "glb",
+      url: man.url,
+      clips: [], // 정합 시험물은 애니메이션 없음(정적)
+    });
+
+    if (this.pendingPlaceMatrix) {
+      this.placeAlignment(this.pendingPlaceMatrix);
+      this.pendingPlaceMatrix = undefined;
+    }
+  }
+
   private async resolveAssetId(req: StartRequest): Promise<string> {
     if (req.overrides?.assetId) return req.overrides.assetId;
     if (this.options.catalogUrl) {
@@ -296,10 +408,11 @@ export class AREngine implements ARExperience {
       if (!this.reticle.visible) return; // 바닥 미인식 상태에서는 무시
       const matrix = Array.from(this.reticle.mesh.matrix.elements);
       if (this.artwork) this.placeAndEmerge(matrix);
+      else if (this.alignment) this.placeAlignment(matrix);
       else this.pendingPlaceMatrix = matrix; // 로드 완료 후 배치
       return;
     }
-    // 배치 후: 작품을 레이캐스트하여 상호작용.
+    // 배치 후: 작품을 레이캐스트하여 상호작용(별의 새싹). 정합은 UI로 보정.
     if (this.controller && this.artwork) {
       const raycaster = new THREE.Raycaster();
       const m = new THREE.Matrix4().extractRotation(this.controller.matrixWorld);
@@ -318,6 +431,15 @@ export class AREngine implements ARExperience {
     this.reticle.hide();
     this.bus.emit("placed", { assetId: this.assetId || "placeholder" });
     this.artwork?.emerge(() => this.emitCompleted());
+  }
+
+  private placeAlignment(matrix: number[]): void {
+    this.placement.placeAt(matrix, true);
+    this.reticle.hide();
+    this.alignInitialCalib = this.placement.getCalibration();
+    this.bus.emit("placed", { assetId: this.assetId });
+    // 저장된 보정값이 있으면 자동 적용(있을 때만).
+    this.loadCalibration();
   }
 
   private emitCompleted(): void {
@@ -413,6 +535,7 @@ export class AREngine implements ARExperience {
   private onSessionEnd = (): void => {
     this.renderer?.setAnimationLoop(null);
     this.artwork?.dispose();
+    this.alignment?.dispose();
     window.removeEventListener("resize", this.onResize);
     this.hitTestSource = undefined;
     this.refSpace = undefined;
@@ -422,6 +545,8 @@ export class AREngine implements ARExperience {
     }
     this.placement.reset();
     this.artwork = undefined;
+    this.alignment = undefined;
+    this.alignInitialCalib = undefined;
     this.session = undefined;
     this.bus.emit("sessionEnded", undefined);
   };

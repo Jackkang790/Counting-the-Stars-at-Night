@@ -18,10 +18,21 @@ WebXR 기반 AR 엔진. **AR 기능만** 담당합니다(지도·GPS·쿠폰·�
 - 외부 연동 API 골격 (`createARExperience`) + 이벤트
 - 독립 테스트 하네스(`index.html`)
 
+### 건물 정합 시험 (04-B, Codex `alignment_test_facade`)
+- 정합 시험용 외벽 GLB 동적 로드(단일 에셋 전용 매니페스트)
+- **레이어 개별 토글**: 기준외벽/격자/기준마커/반투명 오버레이/기준점 (`manifest.layers[]`)
+- **수동 보정**: 위치(±0.05 m)·회전(±1°)·크기(±2%)
+- **보정값 저장/불러오기/초기화**(localStorage, `buildingId:spotId:assetId` 키)
+- 별의 새싹(emergent-artwork) 기능과 **공존**(장면 타입별 분기)
+- ⚠️ **실제 관사 16호 정합은 현장 자료·실기기 검증 전까지 완료 아님**
+
 ### 헤드리스로 **검증된** 것 (실기기 불필요한 부분)
-- ✅ 실제 Codex GLB(`starseed_sculpture.glb`) 파싱 + `Emerge→Idle→Disappear` 믹서 구동
-  — `npm run verify:asset` (Emerge 스케일 0→1, Idle ±2° yaw, Disappear 1→0 측정)
-- ✅ `tsc` 타입검사 · `vite build` 번들 · HTTPS로 GLB/매니페스트 200 서빙
+- ✅ Codex `starseed_sculpture.glb` 파싱 + `Emerge→Idle→Disappear` 믹서 구동
+  — `npm run verify:asset` (Emerge 0→1, Idle ±2° yaw, Disappear 1→0)
+- ✅ Codex `alignment_test_facade.glb` 파싱 + 레이어 5종·기준점 11개·기준선 6m/3.6m 보존
+  — `npm run verify:alignment`
+- ✅ `tsc` 타입검사 · `vite build` 번들 · HTTPS로 두 에셋 모두 200 서빙
+  (정합 에셋은 Codex worktree에서 Vite 플러그인으로 읽기 전용 제공)
 
 ## 실행 방법
 

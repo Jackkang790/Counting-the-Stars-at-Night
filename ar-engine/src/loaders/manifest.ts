@@ -31,6 +31,39 @@ export interface AssetManifest {
   assets: AssetEntry[];
 }
 
+// --- 정합 시험물 등 단일 에셋 전용 매니페스트(Codex alignment_test_facade 스키마) ---
+export interface ReferencePoint {
+  node: string;
+  position_gltf_m: number[];
+  normal_gltf?: number[];
+}
+export interface LayerDef {
+  node: string;
+  meshes: string[];
+  default_visible: boolean;
+  /** 실제 카메라 위 합성 모드에서의 기본 노출(예: REFERENCE_Facade는 숨김). */
+  real_building_mode_visible: boolean;
+}
+export interface StandaloneAssetManifest {
+  schema_version?: string;
+  id: string;
+  category: string;
+  status?: string;
+  url: string;
+  recommended_scale?: number;
+  anchor?: { node?: string; type?: string; facade_plane?: string; contact_plane?: string; normal_gltf?: number[] };
+  bounds_gltf_m?: { min: number[]; max: number[]; size: number[] };
+  calibration?: { reference_points?: ReferencePoint[]; [k: string]: unknown };
+  layers?: LayerDef[];
+  animations?: AssetAnimation[];
+}
+
+export async function loadStandaloneManifest(url: string): Promise<StandaloneAssetManifest> {
+  const res = await fetch(url, { cache: "no-cache" });
+  if (!res.ok) throw new Error(`standalone manifest 로드 실패 (${res.status}) ${url}`);
+  return (await res.json()) as StandaloneAssetManifest;
+}
+
 export interface CatalogExperience {
   assetId: string;
   alignment?: "hit-test" | "image-marker" | "manual";

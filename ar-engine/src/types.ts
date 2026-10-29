@@ -48,10 +48,28 @@ export interface StartRequest {
   overrides?: {
     /** 카탈로그 대신 특정 에셋 id를 직접 지정(데모/디버그). */
     assetId?: string;
+    /** 단일 에셋 전용 매니페스트 URL(정합 시험물 등). 지정 시 이 경로로 로드. */
+    manifestUrl?: string;
     /** 에셋 로드 실패/미완성 시에도 임시 모델로 강제 진행. */
     forcePlaceholder?: boolean;
     scale?: number;
   };
+}
+
+/** 수동 보정 증분(건물 정합). 미지정 필드는 0. */
+export interface CalibrationDelta {
+  dx?: number;
+  dy?: number;
+  dz?: number;
+  dpitch?: number; // X축(rad)
+  dyaw?: number; // Y축(rad)
+  droll?: number; // Z축(rad)
+  dscale?: number; // 곱셈 계수(예: 1.01 = +1%)
+}
+
+export interface LayerVisibility {
+  node: string;
+  visible: boolean;
 }
 
 export interface AREngineOptions {
@@ -149,4 +167,18 @@ export interface ARExperience {
   recenter(): void;
   /** 작품 퇴장(Disappear) 재생 후 재배치 가능 상태로 되돌림. */
   dismiss(): void;
+
+  // --- 건물 정합(alignment) 제어. 정합 장면이 아닐 때는 no-op. ---
+  /** 레이어(기준벽/격자/마커/오버레이/기준점) 표시·숨김. */
+  setLayerVisible(node: string, visible: boolean): void;
+  /** 현재 레이어 가시 상태 목록. */
+  getLayers(): LayerVisibility[];
+  /** 위치·회전·크기 수동 보정(증분). */
+  calibrate(delta: CalibrationDelta): void;
+  /** 현재 보정값 저장(localStorage). 성공 여부 반환. */
+  saveCalibration(): boolean;
+  /** 저장된 보정값 불러오기·적용. 존재 여부 반환. */
+  loadCalibration(): boolean;
+  /** 보정값을 배치 직후 상태로 초기화. */
+  resetCalibration(): void;
 }

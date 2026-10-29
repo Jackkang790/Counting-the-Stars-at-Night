@@ -14,6 +14,17 @@ const overlayEl = $("ar-overlay");
 const hintEl = $("ar-hint");
 const telemetryEl = $("ar-telemetry");
 const loadStatusEl = $("loadStatus");
+const alignPanel = $("ar-align");
+const alignLayersEl = $("align-layers");
+
+const LAYER_LABELS: Record<string, string> = {
+  REFERENCE_Facade: "기준 외벽",
+  CALIBRATION_Grid: "격자",
+  CALIBRATION_Markers: "기준 마커",
+  OVERLAY_Architecture: "반투명 오버레이",
+  POINTS_Facade: "기준점",
+};
+let isAlignment = false;
 
 function log(msg: string): void {
   const time = new Date().toLocaleTimeString("ko-KR", { hour12: false });
@@ -25,6 +36,14 @@ function log(msg: string): void {
 const ASSET_BY_EXPERIENCE: Record<string, string> = {
   "emergent-artwork": "starseed_sculpture",
 };
+// 단일 에셋 전용 매니페스트 매핑(정합 시험물).
+const MANIFEST_BY_EXPERIENCE: Record<string, string> = {
+  "facade-alignment": "/models/alignment_test_facade.manifest.json",
+};
+const TRANSLATE_STEP = 0.05; // m
+const ROTATE_STEP = Math.PI / 180; // 1°
+const SCALE_UP = 1.02;
+const SCALE_DOWN = 1 / 1.02;
 
 const engine = createARExperience({
   // assetManifestUrl 기본값: /models/asset-manifest.json (Codex 산출물)
@@ -38,14 +57,35 @@ engine.on("assetProgress", (e) =>
 engine.on("ready", (e) => {
   if (e.source === "glb") {
     log(`✓ ready — Codex GLB 로드됨: ${e.url}`);
-    log(`   clips=[${e.clips.join(", ")}]`);
-    loadStatusEl.innerHTML = `에셋 로드 상태: <span class="ok">Codex GLB</span> · clips=[${e.clips.join(", ")}]`;
+    if (e.clips.length) log(`   clips=[${e.clips.join(", ")}]`);
+    loadStatusEl.innerHTML = `에셋 로드 상태: <span class="ok">Codex GLB</span>${e.clips.length ? " · clips=[" + e.clips.join(", ") + "]" : ""}`;
   } else {
     log(`✓ ready — ⚠ 임시 모델(Codex GLB 아님)`);
     loadStatusEl.innerHTML = `에셋 로드 상태: <span class="warn">임시 모델(폴백)</span>`;
   }
-  hintEl.textContent = "바닥을 비추고 화면을 탭하세요 (배치 → Emerge→Idle)";
+  if (isAlignment) {
+    populateLayers();
+    alignPanel.style.display = "block";
+    dismissBtn.style.display = "none";
+    hintEl.textContent = "바닥을 탭해 외벽 배치 → 아래 패널로 보정";
+  } else {
+    hintEl.textContent = "바닥을 비추고 화면을 탭하세요 (배치 → Emerge→Idle)";
+  }
 });
+
+function populateLayers(): void {
+  alignLayersEl.innerHTML = "";
+  for (const layer of engine.getLayers()) {
+    const label = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = layer.visible;
+    cb.addEventListener("change", () => engine.setLayerVisible(layer.node, cb.checked));
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(LAYER_LABELS[layer.node] ?? layer.node));
+    alignLayersEl.appendChild(label);
+  }
+}
 engine.on("placed", () => { log("📍 placed"); hintEl.textContent = "작품이 솟아오릅니다 · 작품을 탭해보세요"; });
 engine.on("trackingLost", (e) => log(`⚠ trackingLost: ${e.reason}`));
 engine.on("telemetry", (t) => {
@@ -59,7 +99,12 @@ engine.on("experienceCompleted", (e) =>
   log(`🏁 experienceCompleted (${Math.round(e.durationMs)}ms) — 외부 서비스가 보상 처리`)
 );
 engine.on("error", (e) => log(`✗ error[${e.code}] ${e.message}`));
-engine.on("sessionEnded", () => { log("■ sessionEnded"); showAR(false); });
+engine.on("sessionEnded", () => {
+  log("■ sessionEnded");
+  showAR(false);
+  alignPanel.style.display = "none";
+  dismissBtn.style.display = "";
+});
 
 function showAR(on: boolean): void {
   appEl.style.display = on ? "none" : "";
@@ -81,12 +126,14 @@ async function refreshSupport(): Promise<void> {
 
 startBtn.addEventListener("click", async () => {
   const experienceId = $<HTMLSelectElement>("experienceId").value;
+  isAlignment = experienceId === "facade-alignment";
   const req: StartRequest = {
     buildingId: $<HTMLSelectElement>("buildingId").value,
     spotId: $<HTMLSelectElement>("spotId").value,
     experienceId,
     overrides: {
       assetId: ASSET_BY_EXPERIENCE[experienceId],
+      manifestUrl: MANIFEST_BY_EXPERIENCE[experienceId],
       forcePlaceholder: $<HTMLSelectElement>("forcePlaceholder").value === "true",
     },
   };
@@ -106,6 +153,26 @@ dismissBtn.addEventListener("click", () => {
 });
 stopBtn.addEventListener("click", () => { void engine.stop(); });
 $("clear").addEventListener("click", () => { logEl.textContent = ""; });
+
+// 정합 수동 보정 버튼(data-cal)
+const CAL: Record<string, Parameters<typeof engine.calibrate>[0]> = {
+  "dx-": { dx: -TRANSLATE_STEP }, "dx+": { dx: TRANSLATE_STEP },
+  "dy-": { dy: -TRANSLATE_STEP }, "dy+": { dy: TRANSLATE_STEP },
+  "dz-": { dz: -TRANSLATE_STEP }, "dz+": { dz: TRANSLATE_STEP },
+  "yaw-": { dyaw: -ROTATE_STEP }, "yaw+": { dyaw: ROTATE_STEP },
+  "pitch-": { dpitch: -ROTATE_STEP }, "pitch+": { dpitch: ROTATE_STEP },
+  "roll-": { droll: -ROTATE_STEP }, "roll+": { droll: ROTATE_STEP },
+  "scale-": { dscale: SCALE_DOWN }, "scale+": { dscale: SCALE_UP },
+};
+alignPanel.querySelectorAll<HTMLButtonElement>("button[data-cal]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const delta = CAL[btn.dataset.cal ?? ""];
+    if (delta) engine.calibrate(delta);
+  });
+});
+$("cal-save").addEventListener("click", () => log(engine.saveCalibration() ? "보정값 저장됨" : "저장 실패"));
+$("cal-load").addEventListener("click", () => log(engine.loadCalibration() ? "보정값 불러옴" : "저장된 보정값 없음"));
+$("cal-reset").addEventListener("click", () => { engine.resetCalibration(); log("보정값 초기화"); });
 $("diag").addEventListener("click", async () => {
   log("환경 진단 실행 (상세는 콘솔)…");
   const d = (await engine.runDiagnostics()) as {

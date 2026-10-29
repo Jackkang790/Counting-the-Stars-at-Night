@@ -36,6 +36,17 @@
       #ar-telemetry { position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
         font-family: ui-monospace, Menlo, monospace; font-size: 0.72rem; color: #9ad;
         background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 8px; white-space: pre; text-align: center; }
+      #ar-align { position: absolute; left: 8px; right: 8px; bottom: 150px; display: none;
+        pointer-events: auto; background: rgba(0,0,0,0.6); border-radius: 10px; padding: 8px 10px;
+        max-height: 48vh; overflow: auto; }
+      #ar-align .align-sec { font-size: 0.7rem; color: #9a9aa8; margin: 6px 0 3px; }
+      #ar-align .align-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 2px; }
+      #ar-align button { flex: 1; min-width: 44px; padding: 8px 4px; font-size: 0.8rem;
+        background: #1f1f29; border: 1px solid #33333f; color: #eaeaf0; border-radius: 6px; }
+      #ar-align label { display: inline-flex; align-items: center; gap: 4px; min-width: 0;
+        font-size: 0.72rem; color: #cfcfe0; background: #1f1f29; border: 1px solid #33333f;
+        border-radius: 6px; padding: 5px 7px; margin: 2px 3px 2px 0; }
+      #cal-save { background: #2b5bd7 !important; } #cal-reset { background: #5a2b2b !important; }
     </style>
   </head>
   <body>
@@ -61,6 +72,7 @@
         <div class="row"><label>체험</label>
           <select id="experienceId">
             <option value="emergent-artwork">빈 땅 작품 (emergent-artwork)</option>
+            <option value="facade-alignment">외벽 정합 시험 (alignment)</option>
           </select>
         </div>
         <div class="row"><label>모드</label>
@@ -85,6 +97,32 @@
       <div id="ar-hint">바닥을 비추세요…</div>
       <div id="ar-telemetry">telemetry…</div>
       <button id="ar-dismiss">작품 퇴장(Disappear)</button>
+
+      <!-- 건물 정합 보정 패널 (alignment 체험에서만 표시) -->
+      <div id="ar-align">
+        <div class="align-sec">레이어</div>
+        <div id="align-layers"></div>
+        <div class="align-sec">위치 (±0.05m)</div>
+        <div class="align-row">
+          <button data-cal="dx-">X−</button><button data-cal="dx+">X+</button>
+          <button data-cal="dy-">Y−</button><button data-cal="dy+">Y+</button>
+          <button data-cal="dz-">Z−</button><button data-cal="dz+">Z+</button>
+        </div>
+        <div class="align-sec">회전 (±1°)</div>
+        <div class="align-row">
+          <button data-cal="yaw-">Yaw−</button><button data-cal="yaw+">Yaw+</button>
+          <button data-cal="pitch-">Pit−</button><button data-cal="pitch+">Pit+</button>
+          <button data-cal="roll-">Rol−</button><button data-cal="roll+">Rol+</button>
+        </div>
+        <div class="align-sec">크기 (±2%)</div>
+        <div class="align-row">
+          <button data-cal="scale-">작게</button><button data-cal="scale+">크게</button>
+        </div>
+        <div class="align-row">
+          <button id="cal-save">저장</button><button id="cal-load">불러오기</button><button id="cal-reset">초기화</button>
+        </div>
+      </div>
+
       <button id="ar-stop">AR 종료</button>
     </div>
 

@@ -100,7 +100,29 @@ roll/pitch는 중력 정렬로 안정적). 이 점이 정합 난이도를 크게
 - (D 채택 시) 정면 기준 이미지(촬영 조건별).
 - 복원 대상(사라진 부분) 고증 자료(사진·도면).
 
-## 7. 정합 검증용 임시 GLB 에셋 규격 (Codex 제작 요청)
+## 6-A. Codex 실제 산출물 (정합 시험물 — 규격 확정)
+
+> Codex가 **제작 완료**(`feature/blender-assets`, commit `5be74b1`). 아래 §7 제안 대비 실제값으로
+> **엔진은 아래 실제 스키마를 소비**합니다(명칭 차이는 엔진 측에서 흡수, Codex 에셋 미수정).
+
+- 에셋: `public/models/alignment_test_facade.glb` + `alignment_test_facade.manifest.json`
+  (**Codex 전용 worktree에만 존재** → dev 서버는 Vite 플러그인으로 worktree에서 읽기 전용 제공)
+- `id` `alignment_test_facade` · `category` **`alignment-test`** · `status` `synthetic_alignment_fixture`
+- 좌표 `-Z` 정면, 1:1 m, 앵커 노드 **`ANCHOR_Facade`**(정면 바닥 중앙 `(0,0,0)`, 기준면 `Z=0`, 법선 `-Z`)
+- 합성 외벽 6.00×3.60×0.20 m. 기준점 **11개**(`PT_P00_Origin`…`PT_P10_WindowRTR`, 모두 `Z=0` 동일 평면)
+- **레이어(개별 토글)** `manifest.layers[]`:
+  `REFERENCE_Facade`(기준 외벽, 실합성 시 숨김) · `CALIBRATION_Markers`(기준 마커) ·
+  `CALIBRATION_Grid`(0.5 m 격자) · `OVERLAY_Architecture`(반투명 cyan, alpha 0.28) · `POINTS_Facade`(기준점)
+- 애니메이션 없음(정적). 예산 1,812 tris / 108 KB.
+
+**§7 제안 대비 차이(엔진 측 흡수 완료):** 앵커명 `ANCHOR_Ground`→`ANCHOR_Facade`,
+category `building_stage`→`alignment-test`, 기준점 필드 `{name,local_m}`→`{node,position_gltf_m,normal_gltf}`,
+레이어 모델은 Codex의 `layers[]` 채택. 좌표(-Z)·스케일(1:1)·정적은 일치.
+
+**검증(헤드리스):** `npm run verify:alignment` — GLB 파싱, `ANCHOR_Facade`, 레이어 5종, 기준점 11개,
+배치 Group 변환 후 가로 6.000 m/세로 3.600 m 보존 확인. 실기기·실제 건물은 미검증.
+
+## 7. 정합 검증용 임시 GLB 에셋 규격 (최초 제안 — 참고용, 실제는 §6-A)
 
 실제 건물 자료 확보 전, **정합 파이프라인을 검증**하기 위한 **임시 캘리브레이션 에셋**.
 

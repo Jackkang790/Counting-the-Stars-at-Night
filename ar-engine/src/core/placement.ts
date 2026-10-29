@@ -46,8 +46,52 @@ export class PlacementGroup {
     return this.placed;
   }
 
+  // --- 수동 보정(건물 정합용) ---
+  translate(dx: number, dy: number, dz: number): void {
+    this.group.position.x += dx;
+    this.group.position.y += dy;
+    this.group.position.z += dz;
+  }
+  rotate(dPitch: number, dYaw: number, dRoll: number): void {
+    this.group.rotation.x += dPitch;
+    this.group.rotation.y += dYaw;
+    this.group.rotation.z += dRoll;
+  }
+  scaleBy(factor: number): void {
+    this.group.scale.multiplyScalar(factor);
+  }
+  setUniformScale(s: number): void {
+    this.group.scale.setScalar(s);
+  }
+
+  /** 현재 보정 상태를 직렬화(저장용). */
+  getCalibration(): CalibrationState {
+    return {
+      position: [this.group.position.x, this.group.position.y, this.group.position.z],
+      rotation: [this.group.rotation.x, this.group.rotation.y, this.group.rotation.z],
+      scale: this.group.scale.x,
+    };
+  }
+  /** 저장된 보정 상태를 적용(불러오기용). 적용 시 배치된 것으로 간주. */
+  applyCalibration(c: CalibrationState): void {
+    this.group.position.set(c.position[0], c.position[1], c.position[2]);
+    this.group.rotation.set(c.rotation[0], c.rotation[1], c.rotation[2]);
+    this.group.scale.setScalar(c.scale);
+    this.group.visible = true;
+    this.placed = true;
+  }
+
   reset(): void {
     this.group.visible = false;
     this.placed = false;
+    this.group.position.set(0, 0, 0);
+    this.group.rotation.set(0, 0, 0);
+    this.group.scale.setScalar(1);
   }
+}
+
+export interface CalibrationState {
+  position: [number, number, number];
+  rotation: [number, number, number]; // Euler XYZ (rad)
+  scale: number;
 }

@@ -9,12 +9,14 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "verify:asset": "node scripts/verify-asset.mjs"
+    "verify:asset": "node scripts/verify-asset.mjs",
+    "verify:alignment": "node scripts/verify-alignment.mjs"
   },
   "dependencies": {
     "three": "^0.169.0"
   },
   "devDependencies": {
+    "@types/node": "^20.19.43",
     "@types/three": "^0.169.0",
     "@types/webxr": "^0.5.20",
     "@vitejs/plugin-basic-ssl": "^1.2.0",
