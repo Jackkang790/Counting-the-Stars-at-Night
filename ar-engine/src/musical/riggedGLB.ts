@@ -12,7 +12,7 @@ export class RiggedGLBPerformer implements PerformerRenderer {
   private readonly mixer: THREE.AnimationMixer;
   private readonly materials: {material: THREE.Material; opacity: number}[] = [];
   private constructor(readonly config: ActorConfig, readonly model: THREE.Group, readonly clip: THREE.AnimationClip,
-    readonly contentKind: "generated-human" | "synthetic-calibration") {
+    readonly contentKind: "generated-human" | "synthetic-calibration" | "licensed-human") {
     this.group.add(model);
     const box = new THREE.Box3().setFromObject(model), size = box.getSize(new THREE.Vector3());
     if (!Number.isFinite(size.y) || size.y < .01 || size.x < .005 || size.z < .005) throw new Error("입체 인물의 유효한 크기가 필요합니다");
@@ -21,10 +21,11 @@ export class RiggedGLBPerformer implements PerformerRenderer {
     model.position.add(new THREE.Vector3(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2).multiplyScalar(scale));
     model.traverse(node => { if (node instanceof THREE.Mesh) for (const m of Array.isArray(node.material) ? node.material : [node.material]) {
       this.materials.push({material:m, opacity:m.opacity}); m.transparent = true;
+      if(contentKind==="licensed-human")m.forceSinglePass=true;
     }});
     this.mixer = new THREE.AnimationMixer(model); this.mixer.clipAction(clip).play();
   }
-  static async load(config: ActorConfig, bytes: ArrayBuffer, kind: "generated-human" | "synthetic-calibration" = "generated-human"): Promise<RiggedGLBPerformer> {
+  static async load(config: ActorConfig, bytes: ArrayBuffer, kind: "generated-human" | "synthetic-calibration" | "licensed-human" = "generated-human", clipName=config.clipName): Promise<RiggedGLBPerformer> {
     if (bytes.byteLength < 20 || bytes.byteLength > 64 * 1024 * 1024) throw new Error("GLB는 64MiB 이하이어야 합니다");
     const view = new DataView(bytes);
     if (view.getUint32(0,true)!==0x46546c67 || view.getUint32(4,true)!==2 || view.getUint32(8,true)!==bytes.byteLength || view.getUint32(16,true)!==0x4e4f534a) throw new Error("GLB 2.0 파일이 필요합니다");
@@ -35,7 +36,7 @@ export class RiggedGLBPerformer implements PerformerRenderer {
     const gltf=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(bytes, "");
     const joints=new Set<string>(); let skins=0;
     gltf.scene.traverse(n=>{ if (n instanceof THREE.SkinnedMesh) { skins++; n.skeleton.bones.forEach(b=>{joints.add(b.name);joints.add(b.uuid);}); }});
-    const clip=gltf.animations.find(c=>c.duration>0 && c.tracks.every(t=>t.values.every(Number.isFinite)) && c.tracks.some(t=>{
+    const clip=gltf.animations.find(c=>(!clipName||c.name===clipName) && c.duration>0 && c.tracks.every(t=>t.values.every(Number.isFinite)) && c.tracks.some(t=>{
       if(!joints.has(t.name.split(".")[0]))return false;const size=t.getValueSize();
       return t.values.some((v,i)=>i>=size&&Math.abs(v-t.values[i%size])>1e-5);
     }));

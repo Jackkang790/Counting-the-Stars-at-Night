@@ -7,6 +7,19 @@ import actorASampleUrl from "../../musical-assets/actor-a-demo.mp4?url";
 import actorBSampleUrl from "../../musical-assets/actor-b-demo.mp4?url";
 import mediaCreditsUrl from "../../musical-assets/MEDIA-CREDITS.md?url";
 import testActorUrl from "../../musical-assets/test-actor-animated.glb?url";
+import quartetShowUrl from "../../musical-assets/quartet/show.json?url";
+import quartetAudioUrl from "../../musical-assets/quartet/performance.m4a?url";
+import facadeUrl from "../../musical-assets/quartet/facade.jpg?url";
+import facadeData from "../../musical-assets/quartet/facade.json";
+import quartetCreditsUrl from "../../musical-assets/quartet/CREDITS.md?url";
+import facadeModelUrl from "../../musical-assets/quartet/facade.glb?url";
+import facadeDepthUrl from "../../musical-assets/quartet/facade-depth.glb?url";
+import actor01 from "../../musical-assets/quartet/performer-01.glb?url";
+import actor02 from "../../musical-assets/quartet/performer-02.glb?url";
+import actor03 from "../../musical-assets/quartet/performer-03.glb?url";
+import actor04 from "../../musical-assets/quartet/performer-04.glb?url";
+import { installPhotoFacade } from "./photoFacade";
+import { quartetPlacementPolicy } from "./placementPolicy";
 import { PlacementGroup, type CalibrationState } from "../core/placement";
 import { validateShow, cueAt } from "./timeline";
 import { makePanelReference, loadImage, roomPhoto, panelPhoto } from "./reference";
@@ -30,11 +43,12 @@ function validCalibration(v: unknown): v is CalibrationState {
 }
 
 export async function mountMusical(): Promise<void> {
-  const response = await fetch(showUrl); if (!response.ok) throw new Error("공연 데이터를 읽지 못했습니다.");
+  const quartet=new URLSearchParams(location.search).get("show")==="quartet";
+  const response = await fetch(quartet?quartetShowUrl:showUrl); if (!response.ok) throw new Error("공연 데이터를 읽지 못했습니다.");
   const show = validateShow(await response.json());
   const panel = await makePanelReference();
   document.body.classList.add("musical-body");
-  document.title = "목재 무대 · 실사 AR 뮤지컬 MVP";
+  document.title = quartet?"검정 교복 · 4인 3D AR 뮤지컬":"목재 무대 · 실사 AR 뮤지컬 MVP";
   const root = document.createElement("main"); root.id = "musical-app";
   root.innerHTML = `
     <div id="musical-view"></div>
@@ -90,6 +104,9 @@ export async function mountMusical(): Promise<void> {
       </div></details>
     </section>`;
   document.body.appendChild(root);
+  root.dataset.show=show.id;
+  root.querySelector("h1")!.textContent=quartet?"검정 교복, 네 배우의 10초": "목재 무대, 30초의 공연";
+  const switchShow=document.createElement("a");switchShow.href=quartet?"?musical=1":"?musical=1&show=quartet";switchShow.textContent=quartet?"기존 30초 공연":"검정 교복 4인 3D 공연";root.querySelector(".musical-settings")!.prepend(switchShow);
   const $ = <T extends HTMLElement>(id: string) => root.querySelector<T>(`#musical-${id}`)!;
   if (new URLSearchParams(location.search).get("tracking") === "image") $<HTMLSelectElement>("backend").value = "image";
   $("target-preview").appendChild(panel);
@@ -101,14 +118,18 @@ export async function mountMusical(): Promise<void> {
   let epoch = 0, lastUi = 0, lastFps = performance.now(), frames = 0, fps = 0, decoderFailures = 0, mediaBusy = false;
   let worldReady = false;
   const actorSources: string[] = show.actors.map(() => "none");
-  const stage = new MusicalStage(show.building, panel), placement = new PlacementGroup();
+  const stage = new MusicalStage(show.building, panel,show.duration), placement = new PlacementGroup();
+  if(quartet){
+    stage.root.name="BuildingAnchor";stage.building.name="BuildingGroup";stage.effects.name="EffectsGroup";
+    installPhotoFacade(stage,await loadImage(facadeUrl),facadeData.segments.map(s=>({...s,u:s.u as [number,number],v:s.v as [number,number]})));
+  }
   placement.attach(stage.root); placement.placeAt(new THREE.Matrix4().elements, true);
   const actors = show.actors.map(a => new PerformerSlot(a, message => fail(message)));
   for (const actor of actors) {
     actor.video.dataset.actorId = actor.config.id; actor.video.setAttribute("aria-hidden", "true");
     actor.video.style.cssText = "position:absolute;width:1px;height:1px;opacity:0;pointer-events:none";
     root.appendChild(actor.video);
-    mountSpatialPerformer(stage.root, stage.anchors, actor);
+    mountSpatialPerformer(quartet?stage.performers:stage.root, stage.anchors, actor);
   }
   const director = new ShowDirector(show, actors, (time, state) => {
     const cue = cueAt(show, time); stage.sample(time, cue.light, cue.particles);
@@ -127,19 +148,21 @@ export async function mountMusical(): Promise<void> {
     if (root.dataset.mode === "world" && active && !host?.tracked && $("error").hidden) status(root.dataset.placementHint || (root.dataset.worldTracking === "normal" ? "공간 추적 준비 완료 · 무대가 설 바닥을 탭하세요." : "바닥을 천천히 비춰 공간을 파악합니다. 사진 표적은 필요 없습니다."));
     $<HTMLButtonElement>("confirm").disabled = !host?.tracked || confirmed;
     const missingMedia = actors.some(a => !a.loaded), synthetic = actors.some(a => a.contentKind === "synthetic-calibration");
-    $<HTMLButtonElement>("play").disabled = !ready || mediaBusy || synthetic || (missingMedia && !director.testMode) || director.state === "playing";
+    $<HTMLButtonElement>("play").disabled = !ready || mediaBusy || synthetic || (quartet&&root.dataset.mediaSource!=="quartet") || (missingMedia && !director.testMode) || director.state === "playing";
     $("play").textContent = director.testMode && missingMedia ? "테스트 재개" : director.state === "paused" ? "공연 재개" : "3. 공연 시작";
     $<HTMLButtonElement>("test").disabled = !ready || mediaBusy || director.state === "playing";
     $<HTMLButtonElement>("pause").disabled = director.state !== "playing";
-    $<HTMLButtonElement>("replay").disabled = !ready || mediaBusy || director.state === "playing";
+    $<HTMLButtonElement>("replay").disabled = !ready || mediaBusy || (quartet&&root.dataset.mediaSource!=="quartet") || director.state === "playing";
     $<HTMLButtonElement>("photo").disabled = !host?.tracked || preview || $<HTMLSelectElement>("backend").value === "webxr";
     $<HTMLButtonElement>("preview").disabled = active || compiling;
     $<HTMLButtonElement>("samples").disabled = mediaBusy || director.state === "playing";
     $<HTMLButtonElement>("volume-test").disabled = mediaBusy || director.state === "playing";
+    const reposition=root.querySelector<HTMLButtonElement>("#musical-reposition");if(reposition)reposition.disabled=!active||preview||!host?.reposition;
     root.querySelectorAll<HTMLButtonElement>("[data-view]").forEach(button => { button.disabled = !preview; });
     for (const id of ["target-image", "target-file", "target-width", "backend", "compile"]) $<HTMLInputElement>(id).disabled = active || compiling;
     $("media-status").textContent = `${actors.filter(a => a.loaded).length}/${actors.length} 공연 객체 로드${actorSources.includes("sample") ? " · 라이선스 샘플 포함" : ""} · ${director.audioLabel}${director.testMode ? " · 카드 테스트 모드" : ""}`;
-    $("representation").textContent = actors.map(a => `${a.config.label}: ${a.representation === "spatial-video-plane" ? "공간 고정 영상 평면(입체 인물 아님)" : a.contentKind === "synthetic-calibration" ? "3D 합성 테스트 배우·도형(실사 인물 아님)" : a.representation === "rigged-glb" ? "생성형 3D 인물·본 애니메이션(볼류메트릭 촬영 아님)" : "3D 캡처 시퀀스(제공자 메타데이터)"}`).join(" · ");
+    $("representation").textContent = actors.map(a => `${a.config.label}: ${a.representation === "spatial-video-plane" ? "공간 고정 영상 평면(입체 인물 아님)" : a.contentKind === "synthetic-calibration" ? "3D 합성 테스트 배우·도형(실사 인물 아님)" : a.contentKind === "licensed-human" ? "CC0 인체·영상 추정 동작(원본 얼굴 복원 아님)" : a.representation === "rigged-glb" ? "생성형 3D 인물·본 애니메이션(볼류메트릭 촬영 아님)" : "3D 캡처 시퀀스(제공자 메타데이터)"}`).join(" · ");
+    if(quartet&&actors.every(a=>a.contentKind==="licensed-human"))$("representation").textContent="독립 3D 배우 4명 · CC0 인체 + 영상 추정 동작 · 원본 얼굴 복원 아님";
     $("test").textContent = synthetic ? "3D 도형 기술 테스트(실사 아님)" : "카드·조명 테스트";
     const spatial = spatialSnapshot(stage.root, actors, host?.camera);
     root.dataset.spatialAnchored = String(spatial.every(a => a.belongsToStage && !a.attachedToCamera));
@@ -179,7 +202,7 @@ export async function mountMusical(): Promise<void> {
     $(`rigged-${i}`).addEventListener("change",()=>void (async()=>{
       const file=$<HTMLInputElement>(`rigged-${i}`).files?.[0];if(!file||mediaBusy)return;
       director.pause();mediaBusy=true;updateButtons();
-      try{await actor.loadRigged(await file.arrayBuffer());actorSources[i]="local-rigged";status("3D 배우 준비 완료 · 외형과 동작을 확인하세요.");}catch(e){fail(errorText(e));}finally{mediaBusy=false;updateButtons();}
+      try{await actor.loadRigged(await file.arrayBuffer(),"generated-human","");actorSources[i]="local-rigged";status("3D 배우 준비 완료 · 외형과 동작을 확인하세요.");}catch(e){fail(errorText(e));}finally{mediaBusy=false;updateButtons();}
     })());
     const load = async () => {
       const file = $<HTMLInputElement>(`video-${i}`).files?.[0]; if (!file) return;
@@ -205,7 +228,7 @@ export async function mountMusical(): Promise<void> {
     const record=registry.find(a=>a.id===id);if(!record||mediaBusy)return;
     if(!/^\/api\/studio\/published\/[a-f0-9-]{36}\.glb$/.test(record.url))throw new Error("등록 모델 경로 오류");
     director.pause();mediaBusy=true;updateButtons();
-    try{const response=await fetch(record.url);if(!response.ok)throw new Error("등록 모델 로드 실패");await actors[i].loadRigged(await response.arrayBuffer(),record.contentKind);actorSources[i]=record.id;status("검수 완료 공연자를 건물 앵커에 배치했습니다.");}finally{mediaBusy=false;updateButtons();}
+    try{const response=await fetch(record.url);if(!response.ok)throw new Error("등록 모델 로드 실패");await actors[i].loadRigged(await response.arrayBuffer(),record.contentKind,"");actorSources[i]=record.id;status("검수 완료 공연자를 건물 앵커에 배치했습니다.");}finally{mediaBusy=false;updateButtons();}
   }
   async function refreshRegistry():Promise<void>{
     const r=await fetch("/api/studio/registry");if(!r.ok||!r.headers.get("content-type")?.includes("application/json"))throw new Error("제작 서버에 연결하세요. 로컬 GLB 입력은 서버 없이 가능합니다.");
@@ -216,7 +239,7 @@ export async function mountMusical(): Promise<void> {
   actors.forEach((_,i)=>$(`registry-${i}`).addEventListener("change",()=>void registered(i,$<HTMLSelectElement>(`registry-${i}`).value).catch(e=>fail(errorText(e)))));
   $("rigged-test").addEventListener("click",()=>void(async()=>{
     if(mediaBusy)return;director.restart();mediaBusy=true;updateButtons();
-    try{const r=await fetch(testActorUrl);if(!r.ok)throw new Error("테스트 GLB 로드 실패");const bytes=await r.arrayBuffer();for(const a of actors)await a.loadRigged(bytes.slice(0),"synthetic-calibration");actorSources.fill("synthetic-calibration");status("합성 3D 배우 2명 준비 · 개발 미리보기와 기술 테스트를 사용하세요.");}catch(e){fail(errorText(e));}finally{mediaBusy=false;updateButtons();}
+    try{const r=await fetch(testActorUrl);if(!r.ok)throw new Error("테스트 GLB 로드 실패");const bytes=await r.arrayBuffer();for(const a of actors)await a.loadRigged(bytes.slice(0),"synthetic-calibration","");actorSources.fill("synthetic-calibration");status(`합성 3D 배우 ${actors.length}명 준비 · 개발 미리보기와 기술 테스트를 사용하세요.`);}catch(e){fail(errorText(e));}finally{mediaBusy=false;updateButtons();}
   })());
   $("volume-test").addEventListener("click", () => void (async () => {
     if (mediaBusy) return; director.restart(); mediaBusy = true; updateButtons(); status("인물이 아닌 3D 검증 도형을 로드합니다…");
@@ -225,6 +248,7 @@ export async function mountMusical(): Promise<void> {
   })());
   $("samples").addEventListener("click", () => void (async () => {
     if (mediaBusy) return;
+    if(quartet){await loadQuartet();return;}
     director.pause(); mediaBusy = true; root.dataset.mediaSource = "loading-samples"; updateButtons(); status("라이선스 확인된 실사 샘플 2개 로드 중…");
     try {
       await Promise.all([actorASampleUrl, actorBSampleUrl].map(async (url, i) => {
@@ -238,6 +262,17 @@ export async function mountMusical(): Promise<void> {
     } catch (e) { root.dataset.mediaSource = "sample-error"; fail(errorText(e)); }
     finally { mediaBusy = false; updateButtons(); }
   })());
+  async function loadQuartet():Promise<void>{
+    if(mediaBusy)return;director.pause();mediaBusy=true;root.dataset.mediaSource="loading-quartet";updateButtons();status("교복 3D 배우 4명과 원본 오디오를 불러옵니다…");
+    try{
+      for(let i=0;i<4;i++){
+        const r=await fetch([actor01,actor02,actor03,actor04][i]);if(!r.ok)throw new Error(`배우 ${i+1} GLB 로드 실패`);
+        await actors[i].loadRigged(await r.arrayBuffer(),"licensed-human");actorSources[i]="licensed-CC0-video-pose";
+      }
+      const audio=await fetch(quartetAudioUrl);if(!audio.ok)throw new Error("공연 오디오 로드 실패");await director.loadAudio(new File([await audio.blob()],"Higgsfield 원본 공연 오디오.m4a",{type:"audio/mp4"}));
+      root.dataset.mediaSource="quartet";status("4인 3D 공연 준비 완료 · 바닥을 탭해 건물 앞에 정합하세요. 2m보다 가까운 바닥 배치는 차단합니다.");
+    }catch(e){root.dataset.mediaSource="quartet-error";fail(errorText(e));}finally{mediaBusy=false;updateButtons();}
+  }
   $("audio").addEventListener("change", () => void (async () => {
     const file = $<HTMLInputElement>("audio").files?.[0]; if (!file) return;
     try { await director.loadAudio(file); status("공연 음악 준비 완료"); } catch (e) { fail(errorText(e)); } updateButtons();
@@ -260,14 +295,14 @@ export async function mountMusical(): Promise<void> {
     const width = Number($<HTMLInputElement>("target-width").value);
     if (!Number.isFinite(width) || width < 0.1 || width > 10) { fail("표적 너비는 0.1~10m 안에서 입력하세요."); return; }
     show.building.target.widthMeters = width; active = true; preview = false; confirmed = false; const generation = ++epoch;
-    stage.building.visible = true; $<HTMLInputElement>("building").checked = true;
+    stage.building.visible = !quartet; $<HTMLInputElement>("building").checked = !quartet;
     $("error").hidden = true; updateButtons();
     const mode = $<HTMLSelectElement>("backend").value;
     host = mode === "world" ? new WorldTrackingHost(root,$("view"),placement.group,{...callbacks,tracking: tracked => {
       callbacks.tracking(tracked);
       $("track").textContent = tracked ? "SLAM 공간 추적 · 무대 배치됨" : "공간 파악 중 · 바닥을 비추세요";
       if (tracked && !confirmed) { confirmed = true; stage.building.visible = false; $<HTMLInputElement>("building").checked = false; $<HTMLDetailsElement>("setup").open = false; status("무대 배치 완료 · 공연 시작을 누르세요."); updateButtons(); }
-    }}) : mode === "webxr" ? new WebXRTrackingHost(root, $("view"), placement.group, { ...callbacks, tracking: tracked => { callbacks.tracking(tracked); $("track").textContent = tracked ? "WebXR 월드 좌표 배치" : "바닥을 비추고 링을 탭하세요"; } }) : new ImageTrackingHost($("view"), placement.group, target!, show.building, callbacks);
+    }},quartet?quartetPlacementPolicy:undefined) : mode === "webxr" ? new WebXRTrackingHost(root, $("view"), placement.group, { ...callbacks, tracking: tracked => { callbacks.tracking(tracked); $("track").textContent = tracked ? "WebXR 월드 좌표 배치" : "바닥을 비추고 링을 탭하세요"; } },quartet?quartetPlacementPolicy:undefined) : new ImageTrackingHost($("view"), placement.group, target!, show.building, callbacks);
     root.dataset.mode = mode; status(mode === "world" ? "카메라·동작 센서 권한을 허용하고 바닥을 천천히 비추세요." : mode === "webxr" ? "바닥 링을 탭해 무대를 배치한 뒤 개발자 정합으로 벽에 맞추세요." : "카메라 준비 중… 산수화 패널 전체를 비추세요.");
     try { await host.start(); if (generation !== epoch) return; $("track").textContent = mode === "world" ? "바닥을 비추고 무대 중심을 탭하세요" : mode === "webxr" ? "바닥을 비추고 링을 탭하세요" : "산수화 패널 표적 찾는 중"; }
     catch (e) { host.dispose(); host = undefined; active = false; fail(errorText(e)); updateButtons(); }
@@ -337,7 +372,22 @@ export async function mountMusical(): Promise<void> {
   if ($<HTMLSelectElement>("backend").value === "world") {
     status("공간 추적 엔진 준비 중… 처음에는 다운로드에 시간이 걸릴 수 있습니다.");
     void loadWorldSDK().then(() => { if (disposed) return; worldReady = true; status("준비 완료 · 카메라를 시작한 뒤 바닥을 탭해 무대를 배치하세요."); updateButtons(); }).catch(e => fail(errorText(e)));
-    $("samples").click();
+    if(!quartet)$("samples").click();
+  }
+  if(quartet){
+    const reposition=document.createElement("button");reposition.id="musical-reposition";reposition.textContent="바닥 다시 선택";reposition.onclick=()=>{if(!host?.reposition||preview)return;director.pause();confirmed=false;host.reposition();status("공연을 멈췄습니다. 건물 앞 바닥 기준점을 다시 탭하세요.");updateButtons();};$("photo").parentElement!.append(reposition);
+    $("samples").textContent="교복 3D 배우 4명 다시 불러오기";
+    if($("samples").nextElementSibling instanceof HTMLElement)($("samples").nextElementSibling as HTMLElement).hidden=true;
+    actors.forEach((_,i)=>{for(const id of [`video-${i}`,`video-mode-${i}`])$(id).closest("label")!.hidden=true;});
+    const audioLabel=$("audio").closest("label")!;audioLabel.firstChild!.textContent="공연 음악(10초 이상, 선택)";
+    if(audioLabel.nextElementSibling)audioLabel.nextElementSibling.textContent="기본 음악은 사용자 제공 영상의 10초 오디오입니다. 교체 파일은 이 기기에서만 재생합니다. 3D 모델과 오디오 로드가 모두 끝나야 공연을 시작할 수 있습니다.";
+    $("rigged-test").textContent="테스트 3D 배우 4명 — 합성 검증용";$("setup").querySelector("summary")!.textContent="공연 준비 · 3D 배우와 추적";
+    $("progress").setAttribute("max",String(show.duration));
+    const note=document.createElement("p");note.className="musical-note";note.textContent="원본 영상에서 배우별 동작을 추정해 CC0 인체에 연결했습니다. 원본 인물의 얼굴·신체 복원이나 정확한 립싱크가 아닙니다. 치마 가림 관절은 보간했고 마지막 0.5초는 포즈를 유지합니다. 사진 외벽은 개발 미리보기/정합 확인용이며 AR에서는 기본 숨김입니다.";$("setup").prepend(note);
+    const credits=document.createElement("a");credits.href=quartetCreditsUrl;credits.textContent="출처·사용 조건·추정 한계";credits.target="_blank";credits.rel="noopener";note.append(" ",credits);
+    const assets=document.createElement("p");assets.className="musical-note";
+    for(const [label,url] of [["사진 외벽 GLB",facadeModelUrl],["별도 깊이 프록시 GLB",facadeDepthUrl]]){const a=document.createElement("a");a.href=url;a.download="";a.textContent=label;assets.append(a," · ");}$("developer").append(assets);
+    void loadQuartet();
   }
   $("backend").addEventListener("change",() => { if ($<HTMLSelectElement>("backend").value === "world" && !worldReady) void loadWorldSDK().then(() => { worldReady = true; updateButtons(); }).catch(e => fail(errorText(e))); });
 }

@@ -55,7 +55,7 @@ export class ShowDirector {
   }
   pause(): void {
     this.generation++; this.offset = this.time; this.source?.stop(); this.source?.disconnect(); this.source = undefined;
-    if (this.state === "playing") this.state = "paused";
+    if (this.state === "playing") this.state = this.offset>=this.config.duration ? "completed" : "paused";
     this.actors.forEach(a => a.pause()); this.tick();
   }
   restart(): void { this.pause(); this.offset = 0; this.state = "ready"; this.tick(); }

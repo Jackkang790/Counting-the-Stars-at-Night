@@ -7,6 +7,7 @@ export class MusicalStage {
   readonly building = new THREE.Group();
   readonly occlusion = new THREE.Group();
   readonly effects = new THREE.Group();
+  readonly performers = new THREE.Group();
   readonly anchors = new Map<string, THREE.Vector3>();
   private glow: THREE.MeshBasicMaterial;
   private doorGlow: THREE.MeshBasicMaterial;
@@ -15,10 +16,10 @@ export class MusicalStage {
   private particleMaterial: THREE.PointsMaterial;
   private particles: THREE.Points;
 
-  constructor(readonly config: BuildingConfig, panel: HTMLCanvasElement) {
+  constructor(readonly config: BuildingConfig, panel: HTMLCanvasElement, private readonly duration=30) {
     this.building.name = "PERFORMANCE_Facade"; this.occlusion.name = "OCCLUSION_Facade";
     this.effects.name = "FX_Facade";
-    this.root.add(this.occlusion, this.building, this.effects);
+    this.root.add(this.occlusion, this.building, this.performers, this.effects); this.performers.name="PerformerGroup";
     const wood = this.wood = new THREE.MeshStandardMaterial({ color: 0x553c2c, roughness: 0.9, emissive: 0xc98d42, emissiveIntensity: 0 });
     const paper = new THREE.MeshStandardMaterial({ color: 0xe5ddc9, roughness: 1, side: THREE.DoubleSide });
     const panelTexture = new THREE.CanvasTexture(panel); panelTexture.colorSpace = THREE.SRGBColorSpace;
@@ -37,7 +38,8 @@ export class MusicalStage {
     box("DOOR_Paper", door.width, door.height, 0.035, door.x, door.y, -0.02, paper);
     for (let i = 0; i < 19; i++) box(`LATTICE_V_${i}`, 0.023, door.height, 0.035, door.x - door.width / 2 + i * door.width / 18, door.y, -0.06, wood);
     for (let i = 0; i < 13; i++) box(`LATTICE_H_${i}`, door.width, 0.023, 0.035, door.x, door.y - door.height / 2 + i * door.height / 12, -0.06, wood);
-    for (const [i, x] of [-config.width / 2, -0.65, 1.9, config.width / 2].entries()) {
+    const columns=config.columns??[-config.width / 2, -0.65, 1.9, config.width / 2];
+    for (const [i, x] of columns.entries()) {
       box(`COLUMN_${i}`, 0.13, config.height, config.depth, x, config.height / 2, -0.06, wood);
       const mask = box(`MASK_Column_${i}`, 0.13, config.height, config.depth, x, config.height / 2, -0.06, depth, this.occlusion); mask.renderOrder = -10;
     }
@@ -49,7 +51,7 @@ export class MusicalStage {
     const wash = new THREE.Mesh(new THREE.PlaneGeometry(p.width, p.height), this.panelGlow);
     wash.name = "LIGHT_Landscape"; wash.position.set(p.x, p.y, -0.035); this.effects.add(wash);
     for (const [i, y] of [0.28, config.height].entries()) box(`LIGHT_H_${i}`, config.width, 0.016, 0.01, 0, y, -0.14, this.glow, this.effects);
-    for (const [i, x] of [-config.width / 2, -0.65, 1.9, config.width / 2].entries()) box(`LIGHT_V_${i}`, 0.013, config.height, 0.01, x, config.height / 2, -0.14, this.glow, this.effects);
+    for (const [i, x] of columns.entries()) box(`LIGHT_V_${i}`, 0.013, config.height, 0.01, x, config.height / 2, -0.14, this.glow, this.effects);
     const positions = new Float32Array(80 * 3);
     for (let i = 0; i < 80; i++) { positions[i * 3] = Math.sin(i * 23.7) * config.width / 2; positions[i * 3 + 1] = (i / 80) * config.height; positions[i * 3 + 2] = -0.2; }
     const geometry = new THREE.BufferGeometry(); geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
@@ -57,10 +59,11 @@ export class MusicalStage {
     this.particles = new THREE.Points(geometry, this.particleMaterial); this.effects.add(this.particles);
     this.anchors.set("door", new THREE.Vector3(door.x, door.y - door.height / 2, 0));
     this.anchors.set("panel", new THREE.Vector3(p.x, p.y - p.height / 2, 0));
+    this.anchors.set("stage",new THREE.Vector3(0,0,0));
     this.building.visible = false; this.occlusion.visible = false;
   }
   sample(time: number, light: number, particles: number): void {
-    const end = time >= 30 ? 0 : Math.min(1, (30 - time) / 1.1);
+    const end = time >= this.duration ? 0 : Math.min(1, (this.duration - time) / Math.min(1.1,this.duration*.1));
     this.glow.opacity = end * light * (0.75 + Math.sin(time * 3.5) * 0.2);
     this.doorGlow.opacity = end * light * (0.11 + Math.sin(time * 2.4) * 0.025);
     this.panelGlow.opacity = end * light * 0.07;

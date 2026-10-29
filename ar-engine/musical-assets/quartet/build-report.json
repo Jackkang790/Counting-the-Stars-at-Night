@@ -1,0 +1,76 @@
+{
+  "actors": [
+    {
+      "id": "performer-01",
+      "file": "performer-01.glb",
+      "sha256": "413315841a57065932f8723310200971019db46812e263c25f1f2733869f50d0",
+      "bytes": 1681800,
+      "bones": 17,
+      "frames": 241,
+      "duration": 10,
+      "repairedJointSamples": 23,
+      "groundCorrectionRange": [
+        0.05936095863580704,
+        0.19306382536888123
+      ],
+      "modelSource": "MakeHuman CC0 base + young Asian female skin; authored black uniform",
+      "motionSource": "MediaPipe monocular estimates, 5-frame smoothing, low-confidence interpolation, authored 9.5s hold",
+      "notOriginalActorIdentity": true
+    },
+    {
+      "id": "performer-02",
+      "file": "performer-02.glb",
+      "sha256": "d8de8cadff5a79214f613340322441c9fee3b8997dad6953e4bab1367ad0d40d",
+      "bytes": 1840120,
+      "bones": 17,
+      "frames": 241,
+      "duration": 10,
+      "repairedJointSamples": 80,
+      "groundCorrectionRange": [
+        0.06687575578689575,
+        0.20437410473823547
+      ],
+      "modelSource": "MakeHuman CC0 base + young Asian female skin; authored black uniform",
+      "motionSource": "MediaPipe monocular estimates, 5-frame smoothing, low-confidence interpolation, authored 9.5s hold",
+      "notOriginalActorIdentity": true
+    },
+    {
+      "id": "performer-03",
+      "file": "performer-03.glb",
+      "sha256": "0049a282912cad60d3fee9a5941fbb7795ad93ffea39294e4ee9b6dab98cd480",
+      "bytes": 1840408,
+      "bones": 17,
+      "frames": 241,
+      "duration": 10,
+      "repairedJointSamples": 30,
+      "groundCorrectionRange": [
+        0.05817189812660217,
+        0.1895909309387207
+      ],
+      "modelSource": "MakeHuman CC0 base + young Asian female skin; authored black uniform",
+      "motionSource": "MediaPipe monocular estimates, 5-frame smoothing, low-confidence interpolation, authored 9.5s hold",
+      "notOriginalActorIdentity": true
+    },
+    {
+      "id": "performer-04",
+      "file": "performer-04.glb",
+      "sha256": "f801e9c39cebd66f6bbf6172f557dc3b1b47a0b7148dfe61abd991dae6b990b1",
+      "bytes": 1840120,
+      "bones": 17,
+      "frames": 241,
+      "duration": 10,
+      "repairedJointSamples": 24,
+      "groundCorrectionRange": [
+        0.048384957015514374,
+        0.18672272562980652
+      ],
+      "modelSource": "MakeHuman CC0 base + young Asian female skin; authored black uniform",
+      "motionSource": "MediaPipe monocular estimates, 5-frame smoothing, low-confidence interpolation, authored 9.5s hold",
+      "notOriginalActorIdentity": true
+    }
+  ],
+  "sourceVideoSha256": "e18f5e9eb4ec841357f3c2ec682245aeb2957a2a5b26c5bf2686a1aa2cab9c51",
+  "measuredVolumetricCapture": false,
+  "faceReconstruction": false,
+  "wardrobe": "black skirt uniform/cap, white collar/socks, black shoe material; historical accuracy unverified"
+}

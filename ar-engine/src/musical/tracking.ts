@@ -3,6 +3,7 @@ import { PlacementGroup } from "../core/placement";
 import { Reticle } from "../core/reticle";
 import type { BuildingConfig } from "./types";
 import type { Controller } from "./vendor/mindar-image.prod.js";
+import { placementIssue,type PlacementPolicy } from "./placementPolicy";
 
 export interface TrackingHost {
   readonly renderer: THREE.WebGLRenderer;
@@ -12,6 +13,7 @@ export interface TrackingHost {
   start(): Promise<void>;
   dispose(): void;
   capture(): Promise<Blob>;
+  reposition?():void;
 }
 export type TrackingCallbacks = { frame: () => void; tracking: (tracked: boolean) => void; error: (message: string) => void; ended: () => void };
 
@@ -137,7 +139,7 @@ export class WebXRTrackingHost implements TrackingHost {
   private found = false;
   private alive = true;
   get tracked(): boolean { return this.found; }
-  constructor(private readonly overlay: HTMLElement, container: HTMLElement, content: THREE.Object3D, private readonly callbacks: TrackingCallbacks) {
+  constructor(private readonly overlay: HTMLElement, container: HTMLElement, content: THREE.Object3D, private readonly callbacks: TrackingCallbacks, private readonly policy?:PlacementPolicy) {
     this.placement.attach(content); ({ renderer: this.renderer, scene: this.scene, camera: this.camera } = setup(container, this.placement.group));
     this.renderer.xr.enabled = true; this.scene.add(this.reticle.mesh);
     const controller = this.renderer.xr.getController(0); this.scene.add(controller);
@@ -164,14 +166,19 @@ export class WebXRTrackingHost implements TrackingHost {
         this.placement.group.visible = tracked;
         if (tracked !== this.found) { this.found = tracked; this.callbacks.tracking(tracked); }
         if (!this.placement.isPlaced && this.hit) {
-          const pose = frame.getHitTestResults(this.hit)[0]?.getPose(this.reference);
-          if (pose) this.reticle.updateFromMatrix(pose.transform.matrix); else this.reticle.hide();
+          const viewer=frame.getViewerPose(this.reference)?.transform.position;
+          const pose = frame.getHitTestResults(this.hit).map(hit=>hit.getPose(this.reference!)).find(p=>p&&(!this.policy||viewer&&!placementIssue(viewer,p.transform.position,this.policy)));
+          if (pose) {
+            if(this.policy&&viewer){const point=pose.transform.position,yaw=Math.atan2(-(viewer.x-point.x),-(viewer.z-point.z));this.reticle.updateFromMatrix(new THREE.Matrix4().compose(new THREE.Vector3(point.x,point.y,point.z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),yaw),new THREE.Vector3(1,1,1)).elements);}
+            else this.reticle.updateFromMatrix(pose.transform.matrix);
+          } else this.reticle.hide();
         }
       }
       this.callbacks.frame(); this.renderer.render(this.scene, this.camera);
     });
   }
   async capture(): Promise<Blob> { throw new Error("WebXR 경로는 OS 스크린샷을 사용하세요. 실경 없는 캔버스를 사진으로 저장하지 않습니다."); }
+  reposition():void{this.placement.reset();this.found=false;this.callbacks.tracking(false);}
   dispose(): void {
     this.alive = false; this.renderer.setAnimationLoop(null); this.hit?.cancel();
     void this.session?.end().catch(() => {}); this.renderer.dispose(); this.renderer.domElement.remove();

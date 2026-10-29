@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { PlacementGroup } from "../core/placement";
 import { Reticle } from "../core/reticle";
 import type { TrackingHost, TrackingCallbacks } from "./tracking";
+import { placementIssue,type PlacementPolicy } from "./placementPolicy";
 
 type Hit = { type: string; position: { x: number; y: number; z: number }; distance: number };
 type Reality = { trackingStatus: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number; w: number }; intrinsics: number[] };
@@ -51,7 +52,7 @@ export class WorldTrackingHost implements TrackingHost {
   private startReject?: (reason: Error) => void;
   private readonly watchdog: number;
   get tracked(): boolean { return this.found; }
-  constructor(private readonly root: HTMLElement, private readonly container: HTMLElement, content: THREE.Object3D, private readonly callbacks: TrackingCallbacks) {
+  constructor(private readonly root: HTMLElement, private readonly container: HTMLElement, content: THREE.Object3D, private readonly callbacks: TrackingCallbacks, private readonly policy?:PlacementPolicy) {
     this.placement.attach(content); this.placement.reset(); this.canvas.id = "musical-world-camera"; container.appendChild(this.canvas);
     this.resizeObserver = new ResizeObserver(() => this.resize()); this.resizeObserver.observe(container);
     this.canvas.addEventListener("pointerup",this.place);
@@ -109,8 +110,13 @@ export class WorldTrackingHost implements TrackingHost {
   }
   private hit(x: number,y: number): Hit | undefined {
     const hits = this.sdk?.XrController.hitTest(x,y,["FEATURE_POINT"]) ?? [];
-    return hits.filter(h => [h.position.x,h.position.y,h.position.z,h.distance].every(Number.isFinite) && h.distance > .15 && h.distance < 15)
-      .sort((a,b) => Number(a.type === "FEATURE_POINT")-Number(b.type === "FEATURE_POINT") || a.distance-b.distance)[0];
+    let issue:string|null=null;
+    const valid=hits.filter(h=>{
+      if(![h.position.x,h.position.y,h.position.z,h.distance].every(Number.isFinite)||h.distance<=.15||h.distance>=15)return false;
+      if(this.policy){const error=placementIssue(this.camera.position,h.position,this.policy);if(error){issue=error;return false;}}return true;
+    }).sort((a,b)=>a.distance-b.distance);
+    if(this.policy)this.root.dataset.placementHint=valid.length?"바닥 기준점 준비 · 무대 중심을 탭하세요.":issue??"바닥 특징점을 찾는 중입니다. 건물 앞 바닥을 천천히 비추세요.";
+    return valid[0];
   }
   private matrix(hit: Hit): THREE.Matrix4 {
     const p = new THREE.Vector3(hit.position.x,hit.position.y,hit.position.z), toward = this.camera.position.clone().sub(p);
@@ -120,13 +126,14 @@ export class WorldTrackingHost implements TrackingHost {
   private place = (event: PointerEvent): void => {
     if (!this.alive || !this.normal || this.placement.isPlaced || performance.now()-this.lastPose > 700) return;
     const rect = this.canvas.getBoundingClientRect(), hit = this.hit((event.clientX-rect.left)/rect.width,(event.clientY-rect.top)/rect.height);
-    if (!hit) { this.root.dataset.placementHint = "바닥 특징점을 아직 찾지 못했습니다. 바닥을 천천히 비추고 다시 탭하세요."; return; }
+    if (!hit) { if(!this.policy)this.root.dataset.placementHint = "바닥 특징점을 아직 찾지 못했습니다. 바닥을 천천히 비추고 다시 탭하세요."; return; }
     this.placement.placeAt(this.matrix(hit).elements,true); this.reticle.hide(); this.setFound(true);
   };
   private setFound(value: boolean): void {
     this.placement.group.visible = value;
     if (this.found !== value) { this.found = value; this.callbacks.tracking(value); }
   }
+  reposition():void{this.setFound(false);this.placement.reset();this.root.dataset.placementHint="새 바닥 기준점을 탭하세요. 공연은 자동으로 재개하지 않습니다.";}
   private visibility = (): void => {
     if (!this.sdk || !this.alive) return;
     this.normal = false; this.setFound(false);

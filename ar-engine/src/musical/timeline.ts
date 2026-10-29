@@ -8,7 +8,7 @@ export function validateShow(value: unknown): ShowConfig {
   if (!b || ![b.width, b.height, b.depth, b.target?.widthMeters, b.door?.width, b.door?.height, b.panel?.width, b.panel?.height].every(v => finite(v) && v > 0) || ![b.door.x, b.door.y, b.panel.x, b.panel.y].every(finite) || !Array.isArray(b.target.center) || b.target.center.length !== 3 || !b.target.center.every(finite)) throw new Error("건물 치수가 올바르지 않습니다.");
   const ids = new Set<string>();
   for (const a of show.actors) {
-    if (!a.id || ids.has(a.id) || ![a.start, a.end, a.height, a.width, a.fadeIn, a.fadeOut, a.mediaOffset].every(finite) || a.start < 0 || a.end <= a.start || a.end > show.duration || a.width <= 0 || a.height <= 0 || a.fadeIn < 0 || a.fadeOut < 0 || a.mediaOffset < 0 || ![a.position, a.rotation].every(v => Array.isArray(v) && v.length === 3 && v.every(finite)) || !["door", "panel"].includes(a.anchor) || !["packed", "alpha", "chroma"].includes(a.mode)) throw new Error(`배우 데이터 오류: ${a.id}`);
+    if (!a.id || ids.has(a.id) || ![a.start, a.end, a.height, a.width, a.fadeIn, a.fadeOut, a.mediaOffset].every(finite) || a.start < 0 || a.end <= a.start || a.end > show.duration || a.width <= 0 || a.height <= 0 || a.fadeIn < 0 || a.fadeOut < 0 || a.mediaOffset < 0 || ![a.position, a.rotation].every(v => Array.isArray(v) && v.length === 3 && v.every(finite)) || !["door", "panel", "stage"].includes(a.anchor) || !["packed", "alpha", "chroma"].includes(a.mode)) throw new Error(`배우 데이터 오류: ${a.id}`);
     ids.add(a.id);
   }
   let next = 0;

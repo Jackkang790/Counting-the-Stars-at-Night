@@ -56,10 +56,10 @@ export class PerformerSlot implements PerformerRenderer {
       const file = map.get(path); if (!file) throw new Error(`3D 프레임 누락: ${path}`); return file.arrayBuffer();
     });
   }
-  async loadRigged(bytes: ArrayBuffer, kind: "generated-human" | "synthetic-calibration" = "generated-human"): Promise<void> {
+  async loadRigged(bytes: ArrayBuffer, kind: "generated-human" | "synthetic-calibration" | "licensed-human" = "generated-human",clipName=this.config.clipName): Promise<void> {
     const generation=++this.generation; this.busy=true; this.pause();
     try {
-      const next=await RiggedGLBPerformer.load(this.config,bytes,kind);
+      const next=await RiggedGLBPerformer.load(this.config,bytes,kind,clipName);
       if(this.disposed || generation!==this.generation){next.dispose();return;}
       this.volume?.group.removeFromParent();this.volume?.dispose();this.volume=undefined;
       this.rigged?.group.removeFromParent();this.rigged?.dispose();this.rigged=next;

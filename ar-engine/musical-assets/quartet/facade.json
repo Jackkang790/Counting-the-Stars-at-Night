@@ -1,0 +1,86 @@
+{
+  "widthMeters": 5.6,
+  "heightMeters": 2.5,
+  "provisional": true,
+  "photoCornersNormalized": [
+    [
+      0.4231770932674408,
+      0.3559027910232544
+    ],
+    [
+      0.9993489384651184,
+      0.0434027761220932
+    ],
+    [
+      0.9993489384651184,
+      0.8506944179534912
+    ],
+    [
+      0.4049479067325592,
+      0.7291666865348816
+    ]
+  ],
+  "segments": [
+    {
+      "id": "LandscapeWall",
+      "u": [
+        0,
+        0.23
+      ],
+      "v": [
+        0,
+        1
+      ],
+      "kind": "panel"
+    },
+    {
+      "id": "ColumnLeft",
+      "u": [
+        0.23,
+        0.28
+      ],
+      "v": [
+        0,
+        1
+      ],
+      "kind": "column"
+    },
+    {
+      "id": "LatticeDoor",
+      "u": [
+        0.28,
+        0.86
+      ],
+      "v": [
+        0,
+        1
+      ],
+      "kind": "door"
+    },
+    {
+      "id": "ColumnRight",
+      "u": [
+        0.86,
+        0.94
+      ],
+      "v": [
+        0,
+        1
+      ],
+      "kind": "column"
+    },
+    {
+      "id": "RightPanel",
+      "u": [
+        0.94,
+        1
+      ],
+      "v": [
+        0,
+        1
+      ],
+      "kind": "panel"
+    }
+  ],
+  "note": "Manual perspective rectification and provisional ratios, not measured reconstruction. Opaque facade is preview/calibration only; AR default off."
+}

@@ -1,0 +1,13 @@
+{
+  "baseCommit": "a8bc2d54ff0ac92e78ff71431b1023eda42bf482",
+  "baseURL": "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/3dobjs/base.obj",
+  "skinArchive": "https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+  "skinEntry": "skins/young_asian_female/young_lightskinned_female_diffuse3.png",
+  "license": "CC0 graphical assets; no MakeHuman program code reused",
+  "sha256": {
+    "base.obj": "8e761e6624b8f54536409135d1636da63b32486a90d4897f84e121d144f6fb4c",
+    "LICENSE.ASSETS.md": "f6089cba01cb570a24712b41ab8a586ccd3cc5ef53dc266ca50b95c288956d2c",
+    "LICENSE.md": "edd99571ca62698f78c943fd4fffb159a413c315fa0d4819d3cec5cadaf8b4f1",
+    "young-asian-female.png": "1d82f782b7d2da732229633bd2d14754d873fff53cdb1d088977bcf67ae19dde"
+  }
+}

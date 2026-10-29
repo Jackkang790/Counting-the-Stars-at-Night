@@ -1,0 +1,23 @@
+{
+  "id": "black-uniform-quartet-v1", "version": 1, "duration": 10,
+  "building": {
+    "id": "photo-room-quartet-provisional", "provisional": true,
+    "width": 5.6, "height": 2.5, "depth": 0.12,
+    "door": { "x": -0.392, "y": 1.25, "width": 3.248, "height": 2.15 },
+    "panel": { "x": 2.156, "y": 1.15, "width": 1.15, "height": 1.25 },
+    "columns": [-2.464,-2.016,1.232,1.512],
+    "target": { "widthMeters": 1.15, "center": [2.156, 1.15, 0] }
+  },
+  "actors": [
+    {"id":"performer-01","label":"교복 배우 01","anchor":"stage","position":[1.5,0,-0.65],"rotation":[0,3.141592653589793,0],"height":1.65,"width":0.7,"start":0,"end":10,"fadeIn":0.3,"fadeOut":0.3,"mediaOffset":0,"loop":false,"mode":"packed","model":"performer-01.glb","clipName":"UniformQuartet01"},
+    {"id":"performer-02","label":"교복 배우 02","anchor":"stage","position":[0.5,0,-0.65],"rotation":[0,3.141592653589793,0],"height":1.67,"width":0.7,"start":3,"end":10,"fadeIn":0.4,"fadeOut":0.3,"mediaOffset":3,"loop":false,"mode":"packed","model":"performer-02.glb","clipName":"UniformQuartet02"},
+    {"id":"performer-03","label":"교복 배우 03","anchor":"stage","position":[-0.5,0,-0.65],"rotation":[0,3.141592653589793,0],"height":1.63,"width":0.7,"start":3.2,"end":10,"fadeIn":0.4,"fadeOut":0.3,"mediaOffset":3.2,"loop":false,"mode":"packed","model":"performer-03.glb","clipName":"UniformQuartet03"},
+    {"id":"performer-04","label":"교복 배우 04","anchor":"stage","position":[-1.5,0,-0.65],"rotation":[0,3.141592653589793,0],"height":1.66,"width":0.7,"start":3.4,"end":10,"fadeIn":0.4,"fadeOut":0.3,"mediaOffset":3.4,"loop":false,"mode":"packed","model":"performer-04.glb","clipName":"UniformQuartet04"}
+  ],
+  "cues": [
+    {"id":"solo","start":0,"end":3,"label":"첫 배우 등장 · 창문 조명","light":0.35,"particles":0},
+    {"id":"entrances","start":3,"end":6,"label":"네 배우 등장 · 응답하는 몸짓","light":0.6,"particles":0.1},
+    {"id":"ensemble","start":6,"end":9,"label":"4인 군무","light":0.85,"particles":0.22},
+    {"id":"finale","start":9,"end":10,"label":"피날레 · 9.5초 포즈 홀드","light":1,"particles":0.3}
+  ]
+}
