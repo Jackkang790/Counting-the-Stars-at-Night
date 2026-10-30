@@ -20,3 +20,9 @@
 `npm run build`, `npm run lint`, `node tests/stage-fit.mjs`, `node tests/floor-placement-browser.mjs http://localhost:8193`, `node tests/integration-browser.mjs http://localhost:8193`을 사용한다. 0.35m/0.8m 후보, 표시 밖 터치 차단, 크기 변경과 카메라 이동 시 앵커 유지, 프론트 테마 전달, 완료 전 보상 차단/잘못된 메시지 차단을 확인한다.
 
 브라우저 AR 입력은 모의 추적이다. 실제 iPhone/Android의 바닥 인식·드리프트·성능을 검증했다고 표시하지 않는다. 배포는 기존 `deploy/activate.sh`를 사용하며 제작 서비스·DB를 보존한다.
+
+## 배포 결과
+
+코드 `185c3fe`를 `unified-185c3fe-da2fb8938815`로 반영했다. [공개 앱](https://ar.lobodoc.com/?v=185c3fe#roleplay/h1)에서 공연 버튼으로 진입한다. 공개 파일 해시, 단일 상단바, 프론트 테마 전달, 닫기, REST/제작 API 상태와 근거리 모의 추적 검사가 통과했다. 상세 기록은 `docs/ar-ui/deployment.json`, `public-floor.json`, `validation.json`이다. 스크린샷 파일의 `mock` 표시는 실제 카메라 촬영 사진이 아니라는 뜻이다.
+
+최초 배포는 디스크 여유 사전 검사에서 멈췄다. 로컬 보관본과 SHA256이 같은 이전 임시 업로드 ZIP 세 개만 정리한 뒤 정상 배포했다. 현재 릴리스/이전 릴리스/DB 백업/제작 서비스는 삭제하지 않았다. 백엔드는 변경되지 않은 이미지를 재사용했고 기존 데이터는 유지했다.

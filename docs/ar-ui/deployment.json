@@ -1,0 +1,14 @@
+{
+  "result": "PASS",
+  "release": "unified-185c3fe-da2fb8938815",
+  "commit": "185c3feab6bbba0e466dedc11386602165fc0ba5",
+  "archiveSha256": "c3f1fe231a24ed4fd7e85dd51b3e75013b8b244cba5086b92338217f2f020153",
+  "url": "https://ar.lobodoc.com/",
+  "publicBytesVerified": true,
+  "frontendThemeAndSingleHeader": true,
+  "restHealth": "ok",
+  "studioHealth": "performer-studio",
+  "apiImageReused": true,
+  "backup": "/home/ubuntu/ar-docker/backups/unified-185c3fe-da2fb8938815-20261030T015233Z",
+  "physicalPhoneARVerified": false
+}

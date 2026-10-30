@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "testedUrl": "https://ar.lobodoc.com",
+  "checks": [
+    "no tracking or no measured hit never produces a false clickable floor",
+    "searches visible floor samples beyond the center; a nearby 0.8m floor shows a large tap target and stage footprint",
+    "tapping unhighlighted scenery cannot place a different invisible point",
+    "tapping the highlighted floor area uses its displayed real hit, fits the nearby stage, and starts real 4-actor audio playback without another Play tap",
+    "manual stage size and camera movement retain the world position; automatic fit is frozen after placement",
+    "tracking recovery preserves an explicit pause and does not start playback by itself",
+    "choosing a new nearby floor target resumes the performance in one tap"
+  ],
+  "tracking": "MOCK ONLY",
+  "physicalPhoneARVerified": false
+}
