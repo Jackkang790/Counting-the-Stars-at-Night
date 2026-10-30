@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { PlacementGroup } from "../core/placement";
-import { Reticle } from "../core/reticle";
+import { FloorPlacementGuide } from "./floorGuide";
 import type { TrackingHost, TrackingCallbacks } from "./tracking";
-import { placementIssue,type PlacementPolicy } from "./placementPolicy";
+import { floorStageScale,placementIssue,type PlacementPolicy } from "./placementPolicy";
 
 type Hit = { type: string; position: { x: number; y: number; z: number }; distance: number };
 type Reality = { trackingStatus: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number; w: number }; intrinsics: number[] };
@@ -41,7 +41,9 @@ export class WorldTrackingHost implements TrackingHost {
   scene!: THREE.Scene;
   camera!: THREE.PerspectiveCamera;
   private readonly placement = new PlacementGroup();
-  private readonly reticle = new Reticle();
+  private readonly guide:FloorPlacementGuide;
+  private candidate?:Hit;
+  private lastProbe=0;
   private readonly canvas = document.createElement("canvas");
   private sdk?: XR8SDK;
   private alive = true;
@@ -53,12 +55,13 @@ export class WorldTrackingHost implements TrackingHost {
   private readonly watchdog: number;
   get tracked(): boolean { return this.found; }
   constructor(private readonly root: HTMLElement, private readonly container: HTMLElement, content: THREE.Object3D, private readonly callbacks: TrackingCallbacks, private readonly policy?:PlacementPolicy) {
+    this.guide=new FloorPlacementGuide(container,(matrix,time)=>this.placeCandidate(matrix,time),policy?.stageWidthMeters);
     this.placement.attach(content); this.placement.reset(); this.canvas.id = "musical-world-camera"; container.appendChild(this.canvas);
     this.resizeObserver = new ResizeObserver(() => this.resize()); this.resizeObserver.observe(container);
     this.canvas.addEventListener("pointerup",this.place);
     document.addEventListener("visibilitychange",this.visibility);
     this.watchdog = window.setInterval(() => {
-      if (this.found && performance.now()-this.lastPose > 700) { this.normal = false; this.setFound(false); this.canvas.style.visibility = "hidden"; }
+      if (performance.now()-this.lastPose > 700) { this.normal = false; this.setFound(false); this.canvas.style.visibility = "hidden"; this.guide.hide();this.root.dataset.placementReady='false'; }
     },250);
   }
   private resize(): void {
@@ -82,7 +85,7 @@ export class WorldTrackingHost implements TrackingHost {
           onStart: () => {
             if (!this.alive) return;
             ({renderer:this.renderer,scene:this.scene,camera:this.camera} = sdk.Threejs.xrScene());
-            this.scene.add(this.placement.group,this.reticle.mesh,new THREE.HemisphereLight(0xfff4e2,0x39485a,2.3));
+            this.scene.add(this.placement.group,this.guide.mesh,new THREE.HemisphereLight(0xfff4e2,0x39485a,2.3));
             const light = new THREE.DirectionalLight(0xffffff,1.3); light.position.set(0,4,-5); this.scene.add(light);
             this.camera.position.set(0,1.5,0);
             sdk.XrController.updateCameraProjectionMatrix({origin:this.camera.position,facing:this.camera.quaternion});
@@ -97,8 +100,24 @@ export class WorldTrackingHost implements TrackingHost {
             this.normal = valid && !document.hidden && performance.now()-this.lastPose < 700;
             this.root.dataset.worldTracking = this.normal ? "normal" : "limited";
             this.setFound(this.normal && this.placement.isPlaced);
-            if (!this.placement.isPlaced && this.normal) { const hit = this.hit(.5,.65); if (hit) this.reticle.updateFromMatrix(this.matrix(hit).elements); else this.reticle.hide(); }
-            else this.reticle.hide();
+            if (!this.placement.isPlaced && this.normal) {
+              const now=performance.now();
+              if(now-this.lastProbe>120){
+                this.lastProbe=now;this.candidate=undefined;
+                for(const [x,y] of [[.5,.65],[.35,.65],[.65,.65],[.5,.8],[.5,.5]]){
+                  const hit=this.hit(x,y);if(hit){this.candidate={...hit,position:{...hit.position}};break;}
+                }
+              }
+              const hit=this.candidate;
+              if(hit){
+                const ready=this.guide.show(this.matrix(hit),this.camera,now,this.stageScale(hit.position),this.callbacks.canPlace?.()??true);
+                this.root.dataset.placementReady=String(ready);
+                this.root.dataset.placementHint=ready?'노란 무대 표시를 누르면 공연이 시작돼요':'바닥 쪽으로 조금 더 비춰 주세요';
+              }else{this.guide.searching();this.root.dataset.placementReady='false';}
+            }else{
+              this.guide.hide();this.root.dataset.placementReady='false';
+              if(!this.placement.isPlaced)this.guide.searching();
+            }
             this.callbacks.frame();
           },
           onException: (error: unknown) => { clearTimeout(timer); const e = new Error(String(error)); this.startReject?.(e); this.setFound(false); this.callbacks.error(e.message); },
@@ -115,7 +134,7 @@ export class WorldTrackingHost implements TrackingHost {
       if(![h.position.x,h.position.y,h.position.z,h.distance].every(Number.isFinite)||h.distance<=.15||h.distance>=15)return false;
       if(this.policy){const error=placementIssue(this.camera.position,h.position,this.policy);if(error){issue=error;return false;}}return true;
     }).sort((a,b)=>a.distance-b.distance);
-    if(this.policy)this.root.dataset.placementHint=valid.length?"바닥 기준점 준비 · 무대 중심을 탭하세요.":issue??"바닥 특징점을 찾는 중입니다. 건물 앞 바닥을 천천히 비추세요.";
+    if(this.policy)this.root.dataset.placementHint=valid.length?"노란 무대 표시를 눌러 주세요":issue??"바닥을 천천히 비추면 놓을 곳이 나타나요";
     return valid[0];
   }
   private matrix(hit: Hit): THREE.Matrix4 {
@@ -125,18 +144,33 @@ export class WorldTrackingHost implements TrackingHost {
   }
   private place = (event: PointerEvent): void => {
     if (!this.alive || !this.normal || this.placement.isPlaced || performance.now()-this.lastPose > 700) return;
+    if(this.guide.selectAt(event.clientX,event.clientY,this.camera))return;
     const rect = this.canvas.getBoundingClientRect(), hit = this.hit((event.clientX-rect.left)/rect.width,(event.clientY-rect.top)/rect.height);
     if (!hit) { if(!this.policy)this.root.dataset.placementHint = "바닥 특징점을 아직 찾지 못했습니다. 바닥을 천천히 비추고 다시 탭하세요."; return; }
-    this.placement.placeAt(this.matrix(hit).elements,true); this.reticle.hide(); this.setFound(true);
+    this.placeCandidate(this.matrix(hit),performance.now());
   };
+  private stageScale(point:{x:number;y:number;z:number}):number{
+    return floorStageScale(Math.hypot(point.x-this.camera.position.x,point.z-this.camera.position.z),this.camera.projectionMatrix.elements[0],this.policy?.stageWidthMeters);
+  }
+  private placeCandidate(matrix:THREE.Matrix4,time:number):void{
+    if(!this.alive||!this.normal||this.placement.isPlaced||performance.now()-this.lastPose>700||performance.now()-time>700)return;
+    if(this.callbacks.canPlace&&!this.callbacks.canPlace())return;
+    const point=new THREE.Vector3().setFromMatrixPosition(matrix);
+    if(this.policy&&placementIssue(this.camera.position,point,this.policy))return;
+    const scale=this.stageScale(point);
+    this.placement.setUniformScale(scale);this.placement.placeAt(matrix.elements,true);
+    this.root.dataset.stageScale=scale.toFixed(3);this.root.dataset.placementReady='false';
+    this.guide.hide();this.setFound(true);this.callbacks.placed?.();
+  }
   private setFound(value: boolean): void {
     this.placement.group.visible = value;
     if (this.found !== value) { this.found = value; this.callbacks.tracking(value); }
   }
-  reposition():void{this.setFound(false);this.placement.reset();this.root.dataset.placementHint="새 바닥 기준점을 탭하세요. 공연은 자동으로 재개하지 않습니다.";}
+  reposition():void{this.setFound(false);this.placement.reset();this.candidate=undefined;this.lastProbe=0;this.guide.searching();this.root.dataset.placementHint="새 무대 표시를 누르면 공연을 이어 볼 수 있어요";}
   private visibility = (): void => {
     if (!this.sdk || !this.alive) return;
     this.normal = false; this.setFound(false);
+    this.guide.hide();this.root.dataset.placementReady='false';
     if (document.hidden) this.sdk.pause(); else this.sdk.resume();
   };
   async capture(): Promise<Blob> {
@@ -149,6 +183,6 @@ export class WorldTrackingHost implements TrackingHost {
     clearInterval(this.watchdog);
     this.resizeObserver.disconnect(); this.canvas.removeEventListener("pointerup",this.place); document.removeEventListener("visibilitychange",this.visibility);
     this.sdk?.stop(); this.sdk?.removeCameraPipelineModules(["musical-world-stage"]); this.renderer?.dispose(); this.canvas.remove();
-    this.reticle.mesh.geometry.dispose(); (this.reticle.mesh.material as THREE.Material).dispose();
+    this.guide.dispose();
   }
 }

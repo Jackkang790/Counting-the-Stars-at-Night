@@ -90,9 +90,8 @@ try {
   await expect(frame.locator('#musical-camera')).toBeEnabled();
   await frame.locator('#musical-camera').click();
   await expect(frame.locator('#musical-app')).toHaveAttribute('data-world-tracking', 'normal');
-  await frame.locator('#musical-world-camera').click({ position: { x: 170, y: 190 } });
-  await expect(frame.locator('#musical-play')).toBeEnabled();
-  await frame.locator('#musical-play').click();
+  await frame.locator('#musical-place-here').click();
+  await expect(frame.locator('#musical-app')).toHaveAttribute('data-playback', 'playing');
   await expect.poll(async () => Number(await frame.locator('#musical-app').getAttribute('data-time')), { timeout: 15000 }).toBeGreaterThan(5);
   await page.screenshot({ path: resolve(out, 'ar-performance.png') });
   await expect(page.getByRole('button', { name: '공연 감상 완료 · 별 받기' })).toBeEnabled({ timeout: 25000 });

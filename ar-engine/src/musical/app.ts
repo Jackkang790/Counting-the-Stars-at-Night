@@ -156,7 +156,8 @@ export async function mountMusical(): Promise<void> {
     $<HTMLButtonElement>("confirm").disabled = !host?.tracked || confirmed;
     const missingMedia = actors.some(a => !a.loaded), synthetic = actors.some(a => a.contentKind === "synthetic-calibration");
     $<HTMLButtonElement>("play").disabled = !ready || mediaBusy || synthetic || (quartet&&root.dataset.mediaSource!=="quartet") || (missingMedia && !director.testMode) || director.state === "playing";
-    $("play").textContent = director.testMode && missingMedia ? "테스트 재개" : director.state === "paused" ? "공연 재개" : "3. 공연 시작";
+    $("play").textContent = director.testMode && missingMedia ? "테스트 재개" : director.state === "paused" ? "공연 재개" : "공연 시작";
+    if(quartet){$("camera").hidden=active;$("confirm").hidden=true;$("play").hidden=!ready;$("camera").textContent='카메라 켜기';}
     $<HTMLButtonElement>("test").disabled = !ready || mediaBusy || director.state === "playing";
     $<HTMLButtonElement>("pause").disabled = director.state !== "playing";
     $<HTMLButtonElement>("replay").disabled = !ready || mediaBusy || (quartet&&root.dataset.mediaSource!=="quartet") || director.state === "playing";
@@ -279,7 +280,7 @@ export async function mountMusical(): Promise<void> {
         await actors[i].loadRigged(await r.arrayBuffer(),"licensed-human");actorSources[i]="licensed-CC0-video-pose";
       }
       const audio=await fetch(quartetAudioUrl);if(!audio.ok)throw new Error("공연 오디오 로드 실패");await director.loadAudio(new File([await audio.blob()],"Higgsfield 원본 공연 오디오.m4a",{type:"audio/mp4"}));
-      root.dataset.mediaSource="quartet";status("4인 3D 공연 준비 완료 · 바닥을 탭해 건물 앞에 정합하세요. 2m보다 가까운 바닥 배치는 차단합니다.");
+      root.dataset.mediaSource="quartet";status("공연 준비 완료 · 카메라를 켜고 노란 무대 표시를 눌러 주세요.");
     }catch(e){root.dataset.mediaSource="quartet-error";fail(errorText(e));}finally{mediaBusy=false;updateButtons();}
   }
   $("audio").addEventListener("change", () => void (async () => {
@@ -287,6 +288,13 @@ export async function mountMusical(): Promise<void> {
     try { await director.loadAudio(file); status("공연 음악 준비 완료"); } catch (e) { fail(errorText(e)); } updateButtons();
   })());
   const callbacks: TrackingCallbacks = {
+    canPlace:()=>!quartet||(!mediaBusy&&root.dataset.mediaSource==='quartet'&&actors.every(actor=>actor.loaded)),
+    placed:()=>{
+      if(!quartet)return;
+      confirmed=true;stage.building.visible=false;$<HTMLInputElement>('building').checked=false;$<HTMLDetailsElement>('setup').open=false;
+      if(director.state==='completed')director.restart();
+      status('무대 배치 완료 · 공연을 시작해요');void play(false);
+    },
     frame: () => {
       director.tick(); const now = performance.now(); frames++;
       if (now - lastFps >= 1000) { fps = Math.round(frames * 1000 / (now - lastFps)); frames = 0; lastFps = now; }
@@ -310,7 +318,7 @@ export async function mountMusical(): Promise<void> {
     host = mode === "world" ? new WorldTrackingHost(root,$("view"),placement.group,{...callbacks,tracking: tracked => {
       callbacks.tracking(tracked);
       $("track").textContent = tracked ? (tourHost ? "무대 배치 완료" : "SLAM 공간 추적 · 무대 배치됨") : "공간 파악 중 · 바닥을 비추세요";
-      if (tracked && !confirmed) { confirmed = true; stage.building.visible = false; $<HTMLInputElement>("building").checked = false; $<HTMLDetailsElement>("setup").open = false; status("무대 배치 완료 · 공연 시작을 누르세요."); updateButtons(); }
+      if (tracked && !confirmed) { confirmed = true; stage.building.visible = false; $<HTMLInputElement>("building").checked = false; $<HTMLDetailsElement>("setup").open = false; status(quartet?"무대 배치 완료 · 공연을 시작해요":"무대 배치 완료 · 공연 시작을 누르세요."); updateButtons(); }
     }},quartet?quartetPlacementPolicy:undefined) : mode === "webxr" ? new WebXRTrackingHost(root, $("view"), placement.group, { ...callbacks, tracking: tracked => { callbacks.tracking(tracked); $("track").textContent = tracked ? "WebXR 월드 좌표 배치" : "바닥을 비추고 링을 탭하세요"; } },quartet?quartetPlacementPolicy:undefined) : new ImageTrackingHost($("view"), placement.group, target!, show.building, callbacks);
     root.dataset.mode = mode; status(mode === "world" ? "카메라·동작 센서 권한을 허용하고 바닥을 천천히 비추세요." : mode === "webxr" ? "바닥 링을 탭해 무대를 배치한 뒤 개발자 정합으로 벽에 맞추세요." : "카메라 준비 중… 산수화 패널 전체를 비추세요.");
     try { await host.start(); if (generation !== epoch) return; $("track").textContent = mode === "world" ? "바닥을 비추고 무대 중심을 탭하세요" : mode === "webxr" ? "바닥을 비추고 링을 탭하세요" : "산수화 패널 표적 찾는 중"; }

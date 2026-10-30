@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { PlacementGroup } from "../core/placement";
-import { Reticle } from "../core/reticle";
+import { FloorPlacementGuide } from "./floorGuide";
 import type { BuildingConfig } from "./types";
 import type { Controller } from "./vendor/mindar-image.prod.js";
-import { placementIssue,type PlacementPolicy } from "./placementPolicy";
+import { floorStageScale,placementIssue,type PlacementPolicy } from "./placementPolicy";
 
 export interface TrackingHost {
   readonly renderer: THREE.WebGLRenderer;
@@ -15,7 +15,7 @@ export interface TrackingHost {
   capture(): Promise<Blob>;
   reposition?():void;
 }
-export type TrackingCallbacks = { frame: () => void; tracking: (tracked: boolean) => void; error: (message: string) => void; ended: () => void };
+export type TrackingCallbacks = { frame: () => void; tracking: (tracked: boolean) => void; error: (message: string) => void; ended: () => void; canPlace?:()=>boolean; placed?:()=>void };
 
 function setup(container: HTMLElement, content: THREE.Object3D) {
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -132,7 +132,11 @@ export class WebXRTrackingHost implements TrackingHost {
   readonly scene: THREE.Scene;
   readonly camera: THREE.PerspectiveCamera;
   private readonly placement = new PlacementGroup();
-  private readonly reticle = new Reticle();
+  private readonly guide:FloorPlacementGuide;
+  private candidate?:THREE.Matrix4;
+  private candidateTime=0;
+  private poseTracked=false;
+  private readonly viewerPosition=new THREE.Vector3();
   private session?: XRSession;
   private reference?: XRReferenceSpace;
   private hit?: XRHitTestSource;
@@ -140,11 +144,12 @@ export class WebXRTrackingHost implements TrackingHost {
   private alive = true;
   get tracked(): boolean { return this.found; }
   constructor(private readonly overlay: HTMLElement, container: HTMLElement, content: THREE.Object3D, private readonly callbacks: TrackingCallbacks, private readonly policy?:PlacementPolicy) {
+    this.guide=new FloorPlacementGuide(container,(matrix,time)=>this.selectFloor(matrix,time),policy?.stageWidthMeters);
     this.placement.attach(content); ({ renderer: this.renderer, scene: this.scene, camera: this.camera } = setup(container, this.placement.group));
-    this.renderer.xr.enabled = true; this.scene.add(this.reticle.mesh);
+    this.renderer.xr.enabled = true; this.scene.add(this.guide.mesh);
     const controller = this.renderer.xr.getController(0); this.scene.add(controller);
     controller.addEventListener("select", () => {
-      if (!this.placement.isPlaced && this.reticle.visible) { this.placement.placeAt(this.reticle.mesh.matrix.elements, true); this.reticle.hide(); }
+      if(this.candidate)this.selectFloor(this.candidate,this.candidateTime);
     });
   }
   async start(): Promise<void> {
@@ -153,7 +158,7 @@ export class WebXRTrackingHost implements TrackingHost {
     const session = await navigator.xr.requestSession("immersive-ar", { requiredFeatures: ["hit-test", "dom-overlay"], optionalFeatures: ["local-floor"], domOverlay: { root: this.overlay } });
     this.session = session;
     if (!this.alive) { await session.end(); return; }
-    session.addEventListener("end", () => { this.found = false; this.placement.group.visible = false; this.callbacks.tracking(false); this.callbacks.ended(); }, { once: true });
+    session.addEventListener("end", () => { this.found = false;this.poseTracked=false;this.candidate=undefined;this.guide.hide();this.overlay.dataset.placementReady='false';this.placement.group.visible = false; this.callbacks.tracking(false); this.callbacks.ended(); }, { once: true });
     let type: XRReferenceSpaceType = "local";
     try { await session.requestReferenceSpace("local-floor"); type = "local-floor"; } catch { /* local is the existing engine's fallback */ }
     this.renderer.xr.setReferenceSpaceType(type); await this.renderer.xr.setSession(session);
@@ -162,26 +167,43 @@ export class WebXRTrackingHost implements TrackingHost {
     if (!this.reference || !this.hit) throw new Error("공간 참조 또는 hit-test를 사용할 수 없습니다.");
     this.renderer.setAnimationLoop((_time, frame?: XRFrame) => {
       if (frame && this.reference) {
-        const tracked = !!frame.getViewerPose(this.reference) && this.placement.isPlaced;
+        const viewerPose=frame.getViewerPose(this.reference);
+        this.poseTracked=!!viewerPose;
+        if(viewerPose)this.viewerPosition.copy(viewerPose.transform.position);
+        const tracked = this.poseTracked && this.placement.isPlaced;
         this.placement.group.visible = tracked;
         if (tracked !== this.found) { this.found = tracked; this.callbacks.tracking(tracked); }
         if (!this.placement.isPlaced && this.hit) {
-          const viewer=frame.getViewerPose(this.reference)?.transform.position;
+          const viewer=viewerPose?.transform.position;
           const pose = frame.getHitTestResults(this.hit).map(hit=>hit.getPose(this.reference!)).find(p=>p&&(!this.policy||viewer&&!placementIssue(viewer,p.transform.position,this.policy)));
           if (pose) {
-            if(this.policy&&viewer){const point=pose.transform.position,yaw=Math.atan2(-(viewer.x-point.x),-(viewer.z-point.z));this.reticle.updateFromMatrix(new THREE.Matrix4().compose(new THREE.Vector3(point.x,point.y,point.z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),yaw),new THREE.Vector3(1,1,1)).elements);}
-            else this.reticle.updateFromMatrix(pose.transform.matrix);
-          } else this.reticle.hide();
-        }
-      }
+            const point=pose.transform.position;
+            this.candidate=this.policy&&viewer?new THREE.Matrix4().compose(new THREE.Vector3(point.x,point.y,point.z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.atan2(-(viewer.x-point.x),-(viewer.z-point.z))),new THREE.Vector3(1,1,1)):new THREE.Matrix4().fromArray(pose.transform.matrix);
+            this.candidateTime=performance.now();
+            const camera=this.renderer.xr.getCamera();
+            const scale=floorStageScale(Math.hypot(point.x-this.viewerPosition.x,point.z-this.viewerPosition.z),camera.projectionMatrix.elements[0],this.policy?.stageWidthMeters);
+            this.overlay.dataset.placementReady=String(this.guide.show(this.candidate,camera,this.candidateTime,scale,this.callbacks.canPlace?.()??true));
+          } else {this.candidate=undefined;this.guide.searching();this.overlay.dataset.placementReady='false';}
+        }else if(this.placement.isPlaced){this.guide.hide();this.overlay.dataset.placementReady='false';}
+      }else{this.poseTracked=false;this.candidate=undefined;this.guide.hide();this.overlay.dataset.placementReady='false';}
       this.callbacks.frame(); this.renderer.render(this.scene, this.camera);
     });
   }
   async capture(): Promise<Blob> { throw new Error("WebXR 경로는 OS 스크린샷을 사용하세요. 실경 없는 캔버스를 사진으로 저장하지 않습니다."); }
-  reposition():void{this.placement.reset();this.found=false;this.callbacks.tracking(false);}
+  private selectFloor(matrix:THREE.Matrix4,time:number):void{
+    if(!this.alive||!this.poseTracked||this.placement.isPlaced||performance.now()-time>700)return;
+    if(this.callbacks.canPlace&&!this.callbacks.canPlace())return;
+    const point=new THREE.Vector3().setFromMatrixPosition(matrix);
+    if(this.policy&&placementIssue(this.viewerPosition,point,this.policy))return;
+    const scale=floorStageScale(Math.hypot(point.x-this.viewerPosition.x,point.z-this.viewerPosition.z),this.renderer.xr.getCamera().projectionMatrix.elements[0],this.policy?.stageWidthMeters);
+    this.placement.setUniformScale(scale);this.placement.placeAt(matrix.elements,true);this.guide.hide();
+    this.overlay.dataset.stageScale=scale.toFixed(3);this.overlay.dataset.placementReady='false';
+    this.found=true;this.callbacks.tracking(true);this.callbacks.placed?.();
+  }
+  reposition():void{this.placement.reset();this.found=false;this.candidate=undefined;this.guide.searching();this.callbacks.tracking(false);}
   dispose(): void {
     this.alive = false; this.renderer.setAnimationLoop(null); this.hit?.cancel();
     void this.session?.end().catch(() => {}); this.renderer.dispose(); this.renderer.domElement.remove();
-    this.reticle.mesh.geometry.dispose(); (this.reticle.mesh.material as THREE.Material).dispose();
+    this.guide.dispose();
   }
 }
