@@ -12,6 +12,7 @@
     "lint": "oxlint src vite.config.js scripts tests",
     "test:backend": "node scripts/python.mjs test",
     "test:integration": "node tests/integration-browser.mjs",
+    "package:release": "node scripts/package-release.mjs",
     "preview": "node scripts/server.mjs"
   },
   "dependencies": {

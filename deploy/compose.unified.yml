@@ -1,0 +1,22 @@
+# Overlay the existing AR and studio compose files, under project ar-docker.
+services:
+  tour-api:
+    image: stars-tour-api:${TOUR_RELEASE:?release required}
+    container_name: stars-tour-api
+    restart: unless-stopped
+    environment:
+      DATABASE_PATH: /data/starry-night.sqlite3
+      CORS_ORIGINS: https://ar.lobodoc.com
+    ports:
+      - "127.0.0.1:8001:8000"
+    volumes:
+      - /home/ubuntu/ar-docker/tour-data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+  ar:
+    volumes:
+      - ${TOUR_RELEASE_DIR:?release directory required}/www:/usr/share/nginx/html:ro
+      - ${TOUR_RELEASE_DIR:?release directory required}/deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro

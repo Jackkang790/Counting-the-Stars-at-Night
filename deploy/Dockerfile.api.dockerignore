@@ -1,0 +1,8 @@
+*
+!requirements.txt
+!constraints.txt
+!backend/
+!backend/app/
+!backend/app/**
+!shared/
+!shared/tour.json
