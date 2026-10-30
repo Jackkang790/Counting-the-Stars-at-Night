@@ -1,5 +1,5 @@
 # 별 헤는 밤 — 프론트 · AR · REST 통합 앱
-
+최우수상 받음!
 `Frontend_V1`의 모바일 UI, `AR-Backend`의 별의 새싹·검정 교복 AR,
 `Rest-Backend`의 FastAPI·SQLite를 연결한 앱입니다.
 
