@@ -9,7 +9,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use
 const page=await browser.newPage({viewport:{width:412,height:915}}),errors=[],checks=[];
 page.on('pageerror',error=>errors.push(error.message));
 await page.addInitScript(()=>{
-  window.__normal=false;window.__floor=false;window.__distance=.8;window.__floorY=0;window.__cameraX=0;window.__probes=[];
+  window.__normal=false;window.__floor=false;window.__distance=.8;window.__floorY=0;window.__cameraX=0;window.__lookAtHit=false;window.__probes=[];
   let modules=[],world,timer;
   window.XR8={loadChunk:async()=>{},XrConfig:{device:()=>({MOBILE:'mobile'}),camera:()=>({BACK:'back'})},
     XrController:{configure(){},pipelineModule:()=>({name:'controller'}),updateCameraProjectionMatrix(){},
@@ -21,7 +21,7 @@ await page.addInitScript(()=>{
       world.scene.background=new T.Color('#243333');world.renderer.setSize(canvas.width,canvas.height,false);
       modules.forEach(module=>module.onStart?.({}));
       timer=setInterval(()=>{
-        world.camera.position.set(window.__cameraX,1.5,0);world.camera.lookAt(0,0,-window.__distance);world.camera.updateMatrixWorld(true);
+        world.camera.position.set(window.__cameraX,1.5,0);world.camera.lookAt(0,window.__lookAtHit?window.__floorY:0,-window.__distance);world.camera.updateMatrixWorld(true);
         modules.forEach(module=>module.onUpdate?.({processCpuResult:{reality:{trackingStatus:window.__normal?'NORMAL':'LIMITED',position:{x:0,y:1.5,z:0},rotation:{x:0,y:0,z:0,w:1},intrinsics:world.camera.projectionMatrix.elements}}}));
         world.renderer.render(world.scene,world.camera);
       },40);
@@ -37,9 +37,13 @@ try{
   await expect(page.locator('.musical-floor-hint')).toBeVisible();
   await expect(page.locator('#musical-place-here')).toBeHidden();
   checks.push('no tracking or no measured hit never produces a false clickable floor');
-  await page.evaluate(()=>{window.__floor=true;window.__floorY=1.49;});
-  await expect(page.locator('#musical-place-here')).toBeHidden();
-  await page.evaluate(()=>{window.__floorY=0;});
+  await expect(page.locator('#musical-manual-place')).toBeEnabled();
+  await page.evaluate(()=>{window.__floor=true;window.__floorY=1.49;window.__lookAtHit=true;});
+  await expect(page.locator('#musical-place-here')).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>window.__world.scene.getObjectByName('FloorPlacementGuide').matrix.elements[13])).toBe(1.49);
+  checks.push('eye-level wall/table points are accepted without requiring a ground-height drop');
+  await page.evaluate(()=>{window.__floorY=0;window.__lookAtHit=false;});
+  await expect.poll(()=>page.evaluate(()=>window.__world.scene.getObjectByName('FloorPlacementGuide').matrix.elements[13])).toBe(0);
   await expect(page.getByRole('button',{name:'여기에 공연 보기',exact:true})).toBeVisible();
   assert.ok(await page.evaluate(()=>window.__probes.includes(.35)));
   await page.screenshot({path:resolve(out,'floor-ready-mobile.png')});
@@ -87,6 +91,24 @@ try{
   const position=await page.evaluate(()=>window.__world.scene.getObjectByName('BuildingAnchor').parent.parent.position.toArray());
   assert.deepEqual(position,[0,0,-.35]);
   checks.push('choosing a new nearby floor target resumes the performance in one tap');
+  await page.locator('#musical-pause').click();await page.locator('#musical-reposition').click();
+  await page.evaluate(()=>{window.__floor=false;window.__normal=false;window.__lookAtHit=true;window.__floorY=1.5;});
+  await expect(page.locator('#musical-manual-place')).toBeDisabled();await expect(page.locator('#musical-place-here')).toBeHidden();
+  await page.evaluate(()=>{window.__normal=true;});await expect(page.locator('#musical-manual-place')).toBeEnabled();
+  await page.locator('#musical-manual-place').click();
+  await expect(page.locator('#musical-app')).toHaveAttribute('data-placement-method','manual');
+  await expect(page.locator('#musical-app')).toHaveAttribute('data-playback','playing');
+  const manual=await page.evaluate(()=>window.__world.scene.getObjectByName('BuildingAnchor').parent.parent.position.toArray());
+  assert.ok(manual[1]>.8,'Explicit manual placement does not assume a floor');
+  await page.locator('#musical-pause').click();
+  await page.locator('#musical-options').click();await page.getByRole('slider',{name:'공연 높이',exact:true}).fill('0.3');await page.getByRole('slider',{name:'공연 높이',exact:true}).dispatchEvent('input');
+  const shifted=await page.evaluate(()=>{const stage=window.__world.scene.getObjectByName('BuildingAnchor');stage.updateWorldMatrix(true,false);return{y:stage.matrixWorld.elements[13],anchor:stage.parent.parent.position.toArray()};});
+  assert.ok(Math.abs(shifted.y-manual[1]-.3)<1e-6);assert.deepEqual(shifted.anchor,manual);
+  await page.evaluate(()=>{window.__cameraX=.4;window.__floor=true;window.__floorY=0;});await page.waitForTimeout(250);
+  assert.deepEqual(await page.evaluate(()=>window.__world.scene.getObjectByName('BuildingAnchor').parent.parent.position.toArray()),manual);
+  await expect(page.locator('#musical-track')).toHaveText('직접 배치 · 공간 고정');
+  await page.screenshot({path:resolve(out,'manual-space-mock.png')});
+  checks.push('no-hit manual placement requires valid 6DoF pose, is labelled as manual, supports height adjustment and never follows the camera or snaps to later hits');
   assert.deepEqual(errors,[]);
   const report={result:'PASS',testedUrl:base,checks,tracking:'MOCK ONLY',physicalPhoneARVerified:false};
   await writeFile(resolve(out,'report.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));

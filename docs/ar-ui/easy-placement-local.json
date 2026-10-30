@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "testedUrl": "http://localhost:8193",
+  "checks": [
+    "no tracking or no measured hit never produces a false clickable floor",
+    "eye-level wall/table points are accepted without requiring a ground-height drop",
+    "searches visible floor samples beyond the center; a nearby 0.8m floor shows a large tap target and stage footprint",
+    "tapping unhighlighted scenery cannot place a different invisible point",
+    "tapping the highlighted floor area uses its displayed real hit, fits the nearby stage, and starts real 4-actor audio playback without another Play tap",
+    "manual stage size and camera movement retain the world position; automatic fit is frozen after placement",
+    "tracking recovery preserves an explicit pause and does not start playback by itself",
+    "choosing a new nearby floor target resumes the performance in one tap",
+    "no-hit manual placement requires valid 6DoF pose, is labelled as manual, supports height adjustment and never follows the camera or snaps to later hits"
+  ],
+  "tracking": "MOCK ONLY",
+  "physicalPhoneARVerified": false
+}

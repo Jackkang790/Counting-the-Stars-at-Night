@@ -1,12 +1,12 @@
-export interface PlacementPolicy { minHorizontalMeters:number; maxDistanceMeters:number; minDropMeters:number; stageWidthMeters?:number }
+export interface PlacementPolicy { minHorizontalMeters:number; maxDistanceMeters:number; minDropMeters:number; stageWidthMeters?:number; requireGround?:boolean }
 export type Point3={x:number;y:number;z:number};
-export const quartetPlacementPolicy:PlacementPolicy={minHorizontalMeters:0,maxDistanceMeters:12,minDropMeters:.1,stageWidthMeters:3.8};
+export const quartetPlacementPolicy:PlacementPolicy={minHorizontalMeters:0,maxDistanceMeters:12,minDropMeters:.1,stageWidthMeters:3.8,requireGround:false};
 export function placementIssue(camera:Point3,point:Point3,policy:PlacementPolicy):string|null{
   if(![camera.x,camera.y,camera.z,point.x,point.y,point.z].every(Number.isFinite))return "유효한 공간 좌표가 아닙니다.";
   const horizontal=Math.hypot(point.x-camera.x,point.z-camera.z),distance=Math.hypot(horizontal,point.y-camera.y);
   if(horizontal<policy.minHorizontalMeters)return "발 바로 아래보다 조금 앞의 바닥을 비춰 주세요.";
-  if(distance>policy.maxDistanceMeters)return "기준점이 너무 멉니다. 건물 앞 바닥을 선택하세요.";
-  if(camera.y-point.y<policy.minDropMeters)return "배우 발이 설 바닥 기준점을 선택하세요. 벽·눈높이 점은 피하세요.";
+  if(distance>policy.maxDistanceMeters)return "기준점이 너무 멉니다. 가까운 공간을 선택하세요.";
+  if(policy.requireGround!==false&&camera.y-point.y<policy.minDropMeters)return "배우 발이 설 바닥 기준점을 선택하세요. 벽·눈높이 점은 피하세요.";
   return null;
 }
 

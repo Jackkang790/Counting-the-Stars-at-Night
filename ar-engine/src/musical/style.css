@@ -89,3 +89,5 @@
 .musical-audience-scale input,.musical-audience-scale span { grid-column:1/-1; }
 .musical-audience-scale input { accent-color:var(--tour-star,#f4c54a); }
 .musical-audience-scale span { font-size:12px; }
+.musical-manual-placement button { width:100%; }
+.musical-manual-placement p { margin:5px 0;font-size:12px;line-height:1.5;color:var(--tour-sub,#c9cee4); }

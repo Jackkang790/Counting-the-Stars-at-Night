@@ -12,7 +12,7 @@ export class FloorPlacementGuide {
   private readonly pad:THREE.Mesh;
   private readonly raycaster=new THREE.Raycaster();
 
-  constructor(private readonly container:HTMLElement,private readonly select:(matrix:THREE.Matrix4,time:number)=>void,width=1.4){
+  constructor(private readonly container:HTMLElement,private readonly select:(matrix:THREE.Matrix4,time:number)=>void,width=1.4,private readonly groundRequired=true){
     this.mesh.name='FloorPlacementGuide';this.mesh.matrixAutoUpdate=false;this.mesh.visible=false;
     const depth=Math.min(1.4,width*.5);
     const pad=this.pad=new THREE.Mesh(new THREE.PlaneGeometry(width,depth).rotateX(-Math.PI/2),
@@ -55,11 +55,11 @@ export class FloorPlacementGuide {
       this.button.style.top=`${Math.max(64,Math.min(this.container.clientHeight-12,y))}px`;
     }
     this.hint.hidden=false;
-    const hint=visible?(ready?(scale<.75?'표시를 누르세요 · 가까운 곳은 작은 무대로 보여요':'노란 무대 표시를 누르면 공연이 시작돼요'):'무대는 찾았어요 · 공연을 준비하고 있어요'):'휴대폰을 바닥 쪽으로 조금 더 기울여 주세요';
+    const hint=visible?(ready?(scale<.75?'표시를 누르세요 · 가까운 곳은 작은 무대로 보여요':'노란 무대 표시를 누르면 공연이 시작돼요'):'지점은 찾았어요 · 공연을 준비하고 있어요'):(this.groundRequired?'휴대폰을 바닥 쪽으로 조금 더 기울여 주세요':'벽이나 주변 공간을 비추거나 직접 놓기를 선택하세요');
     if(this.hint.textContent!==hint)this.hint.textContent=hint;
     return visible&&ready;
   }
-  searching(message='바닥을 천천히 비추면 누를 수 있는 무대가 나타나요'):void{
+  searching(message=this.groundRequired?'바닥을 천천히 비추면 누를 수 있는 무대가 나타나요':'벽·탁자·주변 공간을 비춰 주세요. 표면을 못 찾아도 직접 놓을 수 있어요.'):void{
     this.pressed=false;this.candidate=undefined;this.mesh.visible=false;this.button.hidden=true;this.button.disabled=true;
     this.hint.hidden=false;if(this.hint.textContent!==message)this.hint.textContent=message;
   }

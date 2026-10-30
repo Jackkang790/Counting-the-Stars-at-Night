@@ -60,7 +60,7 @@ export async function mountMusical(): Promise<void> {
     <div class="musical-badges"><span id="musical-track">카메라 시작 전</span><span id="musical-fps">실기기 미검증</span></div>
     <section class="musical-console" aria-label="공연 제어">
       <div id="musical-target-guide" hidden><img alt="인식할 산수화 패널 표적" /><span>이 산수화 패널 전체를 정면에서 비추세요. 격자문·배경 전체가 아닌 패널 한 장입니다. 가까이 다가가 선명하게 담아 주세요.</span></div>
-      <p id="musical-status" role="status" aria-live="polite">공간 추적 엔진을 준비합니다. 사진 표적 없이 바닥을 탭해 무대를 배치합니다.</p>
+      <p id="musical-status" role="status" aria-live="polite">${quartet?'공간 추적 엔진을 준비합니다. 원하는 지점을 선택하거나 직접 놓을 수 있어요.':'공간 추적 엔진을 준비합니다. 사진 표적 없이 바닥을 탭해 무대를 배치합니다.'}</p>
       <p id="musical-error" role="alert" hidden></p>
       <div class="musical-progress"><progress id="musical-progress" max="30" value="0"></progress><output id="musical-time">0.0 / 30초</output></div>
       <div class="musical-actions musical-primary"><button id="musical-camera" class="gold">1. AR 카메라 시작</button><button id="musical-confirm" disabled>2. 정합 확정</button><button id="musical-play" class="gold" disabled>3. 공연 시작</button></div>
@@ -118,9 +118,17 @@ export async function mountMusical(): Promise<void> {
     root.querySelector('.musical-kicker')!.textContent='별 헤는 밤';
     const options=document.createElement('button');options.id='musical-options';options.textContent='무대 조절';options.setAttribute('aria-expanded','false');
     options.onclick=()=>{const open=root.dataset.options!=='open';root.dataset.options=open?'open':'closed';options.setAttribute('aria-expanded',String(open));options.textContent=open?'조절 닫기':'무대 조절';};
-    const scale=document.createElement('label');scale.className='musical-audience-scale';scale.innerHTML='무대 크기 <output id="musical-scale-value">100%</output><input id="musical-stage-size" aria-label="무대 크기" type="range" min="50" max="150" step="5" value="100" disabled><span>바닥 위치는 유지하고 크기만 조절해요.</span>';
-    $('pause').parentElement!.appendChild(options);$('status').parentElement!.appendChild(scale);
+    const scale=document.createElement('label');scale.className='musical-audience-scale';scale.innerHTML='무대 크기 <output id="musical-scale-value">100%</output><input id="musical-stage-size" aria-label="무대 크기" type="range" min="50" max="150" step="5" value="100" disabled><span>선택한 위치는 유지하고 크기만 조절해요.</span>';
+    const manual=document.createElement('div');manual.id='musical-manual-row';manual.className='musical-manual-placement';manual.hidden=true;
+    manual.innerHTML='<button id="musical-manual-place" class="gold" disabled>공간 파악 중…</button><p>표면을 못 찾아도 직접 놓을 수 있어요. 표면 위치를 측정하는 기능은 아니에요.</p>';
+    root.querySelector('.musical-primary')!.insertAdjacentElement('afterend',manual);
+    const distance=document.createElement('label');distance.className='musical-audience-scale';distance.innerHTML='직접 놓을 거리(추정) <output id="musical-distance-value">2.0m</output><input id="musical-manual-distance" aria-label="직접 놓을 거리" type="range" min="0.5" max="6" step="0.1" value="2"><span>직접 놓기를 누를 때 적용해요.</span>';
+    const height=document.createElement('label');height.className='musical-audience-scale';height.innerHTML='공연 높이 조절 <output id="musical-height-value">0.00m</output><input id="musical-stage-height" aria-label="공연 높이" type="range" min="-1" max="1" step="0.05" value="0" disabled><span>놓은 뒤 위·아래로 맞춰 보세요.</span>';
+    $('pause').parentElement!.appendChild(options);$('status').parentElement!.append(scale,distance,height);
     $<HTMLInputElement>('stage-size').oninput=()=>{placement.setUniformScale(Number($<HTMLInputElement>('stage-size').value)/100);$('scale-value').textContent=$<HTMLInputElement>('stage-size').value+'%';};
+    $<HTMLInputElement>('manual-distance').oninput=()=>{$('distance-value').textContent=Number($<HTMLInputElement>('manual-distance').value).toFixed(1)+'m';};
+    $<HTMLInputElement>('stage-height').oninput=()=>{const offset=Number($<HTMLInputElement>('stage-height').value);placement.group.position.y=offset/(Number(root.dataset.stageScaleExact??root.dataset.stageScale)||1);$('height-value').textContent=offset.toFixed(2)+'m';};
+    $('manual-place').onclick=()=>{try{if(!host?.placeManually?.(Number($<HTMLInputElement>('manual-distance').value)))status('공간 위치를 확인하고 있어요. 휴대폰을 천천히 움직인 뒤 다시 눌러 주세요.');}catch(e){fail(errorText(e));}};
   }
   if (new URLSearchParams(location.search).get("tracking") === "image") $<HTMLSelectElement>("backend").value = "image";
   $("target-preview").appendChild(panel);
@@ -163,9 +171,15 @@ export async function mountMusical(): Promise<void> {
     root.dataset.backend = $<HTMLSelectElement>("backend").value;
     $("target-guide").hidden = !active || preview || root.dataset.mode !== "image" || !!host?.tracked;
     const ready = !!host?.tracked && confirmed;
-    if(quartet)$<HTMLInputElement>('stage-size').disabled=!ready;
+    if(quartet){
+      $<HTMLInputElement>('stage-size').disabled=!ready;$<HTMLInputElement>('stage-height').disabled=!ready;$<HTMLInputElement>('manual-distance').disabled=confirmed;
+      $('manual-row').hidden=!active||preview||confirmed||!host?.placeManually;
+      const canManual=!!host?.canPlaceManually&&!mediaBusy&&root.dataset.mediaSource==='quartet'&&actors.every(a=>a.loaded);
+      $<HTMLButtonElement>('manual-place').disabled=!canManual;$('manual-place').textContent=canManual?'여기에 직접 놓기':'공간·공연 준비 중…';
+      if(ready)$('track').textContent=root.dataset.placementMethod==='manual'?'직접 배치 · 공간 고정':'선택 지점 · 공간 고정';
+    }
     $<HTMLButtonElement>("camera").disabled = active || compiling || ($<HTMLSelectElement>("backend").value === "image" && !target) || ($<HTMLSelectElement>("backend").value === "world" && !worldReady);
-    if (root.dataset.mode === "world" && active && !host?.tracked && $("error").hidden) status(root.dataset.placementHint || (root.dataset.worldTracking === "normal" ? "공간 추적 준비 완료 · 무대가 설 바닥을 탭하세요." : "바닥을 천천히 비춰 공간을 파악합니다. 사진 표적은 필요 없습니다."));
+    if (root.dataset.mode === "world" && active && !host?.tracked && $("error").hidden) status(root.dataset.worldTracking === "normal" ? root.dataset.placementHint || "표시를 누르거나 직접 놓기를 선택하세요." : "주변을 천천히 비춰 공간 위치를 파악하고 있어요.");
     $<HTMLButtonElement>("confirm").disabled = !host?.tracked || confirmed;
     const missingMedia = actors.some(a => !a.loaded), synthetic = actors.some(a => a.contentKind === "synthetic-calibration");
     $<HTMLButtonElement>("play").disabled = !ready || mediaBusy || synthetic || (quartet&&root.dataset.mediaSource!=="quartet") || (missingMedia && !director.testMode) || director.state === "playing";
@@ -330,11 +344,11 @@ export async function mountMusical(): Promise<void> {
     const mode = $<HTMLSelectElement>("backend").value;
     host = mode === "world" ? new WorldTrackingHost(root,$("view"),placement.group,{...callbacks,tracking: tracked => {
       callbacks.tracking(tracked);
-      $("track").textContent = tracked ? (tourHost ? "무대 배치 완료" : "SLAM 공간 추적 · 무대 배치됨") : "공간 파악 중 · 바닥을 비추세요";
+      $("track").textContent = tracked ? (tourHost ? "무대 배치 완료" : "SLAM 공간 추적 · 무대 배치됨") : "공간 파악 중 · 주변을 비추세요";
       if (tracked && !confirmed) { confirmed = true; stage.building.visible = false; $<HTMLInputElement>("building").checked = false; $<HTMLDetailsElement>("setup").open = false; status(quartet?"무대 배치 완료 · 공연을 시작해요":"무대 배치 완료 · 공연 시작을 누르세요."); updateButtons(); }
     }},quartet?quartetPlacementPolicy:undefined) : mode === "webxr" ? new WebXRTrackingHost(root, $("view"), placement.group, { ...callbacks, tracking: tracked => { callbacks.tracking(tracked); $("track").textContent = tracked ? "WebXR 월드 좌표 배치" : "바닥을 비추고 링을 탭하세요"; } },quartet?quartetPlacementPolicy:undefined) : new ImageTrackingHost($("view"), placement.group, target!, show.building, callbacks);
-    root.dataset.mode = mode; status(mode === "world" ? "카메라·동작 센서 권한을 허용하고 바닥을 천천히 비추세요." : mode === "webxr" ? "바닥 링을 탭해 무대를 배치한 뒤 개발자 정합으로 벽에 맞추세요." : "카메라 준비 중… 산수화 패널 전체를 비추세요.");
-    try { await host.start(); if (generation !== epoch) return; $("track").textContent = mode === "world" ? "바닥을 비추고 무대 중심을 탭하세요" : mode === "webxr" ? "바닥을 비추고 링을 탭하세요" : "산수화 패널 표적 찾는 중"; }
+    root.dataset.mode = mode; status(mode === "world"||mode==='webxr' ? "카메라·동작 센서 권한을 허용하고 주변 공간을 비춰 주세요." : "카메라 준비 중… 산수화 패널 전체를 비추세요.");
+    try { await host.start(); if (generation !== epoch) return; $("track").textContent = mode === "world"||mode==='webxr' ? "주변 공간을 비추거나 직접 놓기를 선택하세요" : "산수화 패널 표적 찾는 중"; }
     catch (e) { host.dispose(); host = undefined; active = false; fail(errorText(e)); updateButtons(); }
   }
   $("camera").addEventListener("click", () => void startCamera());
@@ -408,11 +422,11 @@ export async function mountMusical(): Promise<void> {
   try { const r = await fetch(bundled); if (r.ok && !r.headers.get("content-type")?.includes("text/html")) await useTarget(new Uint8Array(await r.arrayBuffer())); } catch { /* Offer explicit compiler/upload controls. */ }
   if ($<HTMLSelectElement>("backend").value === "world") {
     status("공간 추적 엔진 준비 중… 처음에는 다운로드에 시간이 걸릴 수 있습니다.");
-    void loadWorldSDK().then(() => { if (disposed) return; worldReady = true; status("준비 완료 · 카메라를 시작한 뒤 바닥을 탭해 무대를 배치하세요."); updateButtons(); }).catch(e => fail(errorText(e)));
+    void loadWorldSDK().then(() => { if (disposed) return; worldReady = true; status(quartet?"카메라를 켜고 원하는 공간을 비춰 주세요. 바닥일 필요는 없어요.":"준비 완료 · 카메라를 시작한 뒤 바닥을 탭해 무대를 배치하세요."); updateButtons(); }).catch(e => fail(errorText(e)));
     if(!quartet)$("samples").click();
   }
   if(quartet){
-    const reposition=document.createElement("button");reposition.id="musical-reposition";reposition.textContent="바닥 다시 선택";reposition.onclick=()=>{if(!host?.reposition||preview)return;director.pause();confirmed=false;placement.setUniformScale(1);$<HTMLInputElement>('stage-size').value='100';$('scale-value').textContent='100%';host.reposition();status("공연을 멈췄습니다. 건물 앞 바닥 기준점을 다시 탭하세요.");updateButtons();};$("photo").parentElement!.append(reposition);
+    const reposition=document.createElement("button");reposition.id="musical-reposition";reposition.textContent="다시 놓기";reposition.onclick=()=>{if(!host?.reposition||preview)return;director.pause();confirmed=false;placement.setUniformScale(1);placement.group.position.y=0;$<HTMLInputElement>('stage-height').value='0';$('height-value').textContent='0.00m';$<HTMLInputElement>('stage-size').value='100';$('scale-value').textContent='100%';host.reposition();status("다른 지점을 고르거나 직접 놓기를 눌러 주세요.");updateButtons();};$("photo").parentElement!.append(reposition);
     $("samples").textContent="교복 3D 배우 4명 다시 불러오기";
     if($("samples").nextElementSibling instanceof HTMLElement)($("samples").nextElementSibling as HTMLElement).hidden=true;
     actors.forEach((_,i)=>{for(const id of [`video-${i}`,`video-mode-${i}`])$(id).closest("label")!.hidden=true;});

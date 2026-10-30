@@ -5,6 +5,7 @@ import type { BuildingConfig } from "./types";
 import type { Controller } from "./vendor/mindar-image.prod.js";
 import { placementIssue,type PlacementPolicy } from "./placementPolicy";
 import { fitFloorStage } from "./stageFit";
+import { manualStagePose } from "./manualPlacement";
 
 export interface TrackingHost {
   readonly renderer: THREE.WebGLRenderer;
@@ -15,6 +16,8 @@ export interface TrackingHost {
   dispose(): void;
   capture(): Promise<Blob>;
   reposition?():void;
+  readonly canPlaceManually?:boolean;
+  placeManually?(distanceMeters:number):boolean;
 }
 export type TrackingCallbacks = { frame: () => void; tracking: (tracked: boolean) => void; error: (message: string) => void; ended: () => void; canPlace?:()=>boolean; placed?:()=>void };
 
@@ -137,6 +140,7 @@ export class WebXRTrackingHost implements TrackingHost {
   private candidate?:THREE.Matrix4;
   private candidateTime=0;
   private poseTracked=false;
+  private lastViewerPose=0;
   private readonly viewerPosition=new THREE.Vector3();
   private session?: XRSession;
   private reference?: XRReferenceSpace;
@@ -144,8 +148,10 @@ export class WebXRTrackingHost implements TrackingHost {
   private found = false;
   private alive = true;
   get tracked(): boolean { return this.found; }
+  get canPlaceManually():boolean{return this.alive&&this.poseTracked&&!document.hidden&&!this.placement.isPlaced&&performance.now()-this.lastViewerPose<700;}
+  placeManually(distance:number):boolean{if(!this.canPlaceManually)return false;return this.selectFloor(manualStagePose(this.renderer.xr.getCamera(),distance),performance.now(),'manual');}
   constructor(private readonly overlay: HTMLElement, container: HTMLElement, content: THREE.Object3D, private readonly callbacks: TrackingCallbacks, private readonly policy?:PlacementPolicy) {
-    this.guide=new FloorPlacementGuide(container,(matrix,time)=>this.selectFloor(matrix,time),policy?.stageWidthMeters);
+    this.guide=new FloorPlacementGuide(container,(matrix,time)=>{this.selectFloor(matrix,time);},policy?.stageWidthMeters,policy?.requireGround!==false);
     this.placement.attach(content); ({ renderer: this.renderer, scene: this.scene, camera: this.camera } = setup(container, this.placement.group));
     this.renderer.xr.enabled = true; this.scene.add(this.guide.mesh);
     const controller = this.renderer.xr.getController(0); this.scene.add(controller);
@@ -170,7 +176,7 @@ export class WebXRTrackingHost implements TrackingHost {
       if (frame && this.reference) {
         const viewerPose=frame.getViewerPose(this.reference);
         this.poseTracked=!!viewerPose;
-        if(viewerPose)this.viewerPosition.copy(viewerPose.transform.position);
+        if(viewerPose){this.viewerPosition.copy(viewerPose.transform.position);this.lastViewerPose=performance.now();}
         const tracked = this.poseTracked && this.placement.isPlaced;
         this.placement.group.visible = tracked;
         if (tracked !== this.found) { this.found = tracked; this.callbacks.tracking(tracked); }
@@ -191,17 +197,19 @@ export class WebXRTrackingHost implements TrackingHost {
     });
   }
   async capture(): Promise<Blob> { throw new Error("WebXR 경로는 OS 스크린샷을 사용하세요. 실경 없는 캔버스를 사진으로 저장하지 않습니다."); }
-  private selectFloor(matrix:THREE.Matrix4,time:number):void{
-    if(!this.alive||!this.poseTracked||this.placement.isPlaced||performance.now()-time>700)return;
-    if(this.callbacks.canPlace&&!this.callbacks.canPlace())return;
+  private selectFloor(matrix:THREE.Matrix4,time:number,method='point'):boolean{
+    if(!this.alive||!this.poseTracked||this.placement.isPlaced||performance.now()-time>700)return false;
+    if(this.callbacks.canPlace&&!this.callbacks.canPlace())return false;
     const point=new THREE.Vector3().setFromMatrixPosition(matrix);
-    if(this.policy&&placementIssue(this.viewerPosition,point,this.policy))return;
+    if(this.policy&&placementIssue(this.viewerPosition,point,this.policy))return false;
     const scale=fitFloorStage(matrix,this.renderer.xr.getCamera(),this.policy?.stageWidthMeters);
     this.placement.setUniformScale(scale);this.placement.placeAt(matrix.elements,true);this.guide.hide();
     this.overlay.dataset.stageScale=scale.toFixed(3);this.overlay.dataset.placementReady='false';
-    this.found=true;this.callbacks.tracking(true);this.callbacks.placed?.();
+    this.overlay.dataset.stageScaleExact=String(scale);
+    this.overlay.dataset.placementMethod=method;
+    this.found=true;this.callbacks.tracking(true);this.callbacks.placed?.();return true;
   }
-  reposition():void{this.placement.reset();this.found=false;this.candidate=undefined;this.guide.searching();this.callbacks.tracking(false);}
+  reposition():void{this.placement.reset();this.found=false;this.candidate=undefined;delete this.overlay.dataset.placementMethod;this.guide.searching();this.callbacks.tracking(false);}
   dispose(): void {
     this.alive = false; this.renderer.setAnimationLoop(null); this.hit?.cancel();
     void this.session?.end().catch(() => {}); this.renderer.dispose(); this.renderer.domElement.remove();
