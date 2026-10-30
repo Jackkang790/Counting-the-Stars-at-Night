@@ -38,7 +38,7 @@
 - 폰 시연: `npm run build && npx vite preview --port 4173` → `adb reverse tcp:4173 tcp:4173` → 폰 크롬 `localhost:4173` (보안 컨텍스트라 카메라/WebXR 됨).
 
 ## 통합 실행
-- 사용자 요청으로 `Frontend_V1`, `AR-Backend`, `Rest-Backend`를 통합한다. 기존 멤버 브랜치 대신 별도 통합 브랜치에서 수정한다.
+- `Frontend_V1`, `AR-Backend`, `Rest-Backend`의 통합본은 사용자 요청으로 `main`에 병합했다. `main`이 서버 배포 코드의 기준이며, 이후 수정은 `main`에서 별도 작업 브랜치를 만든다.
 - 실행·현재 계약은 루트 README, `backend/API.md`, `ar-engine/contracts/app-integration.md`를 따른다.
 - `src/lib/api.js`는 기본으로 같은 origin의 실제 서버를 사용한다. 샘플 모드는 `VITE_SAMPLE_MODE=1`이다.
 - 스팟·미션·카페의 기준은 `shared/tour.json`이며 백엔드 통합 진입점은 `app.integrated:app`이다.
@@ -49,5 +49,5 @@
 - 백엔드 v0.2.0 연동: 각 미션별 kind를 전송한다. 헤레디움 view는 기존 c/role 슬롯과 호환된다. 별 6개로 쿠폰을 발급하며 재접속·오프라인 진행 복구를 지원한다.
 
 ## 규칙
-- 통합 작업은 별도 브랜치에 커밋하고 기존 멤버 브랜치와 미커밋 작업을 보존한다. 작성자는 현재 Git 설정을 사용한다.
+- 추가 작업은 별도 브랜치에 커밋하고 미병합 이력과 미커밋 작업을 보존한다. 사용자 요청으로 병합 완료된 임시 브랜치를 정리할 수 있다. 작성자는 현재 Git 설정을 사용한다.
 - 커밋에 Claude 공동작성자/서명 줄 넣지 말 것.

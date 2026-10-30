@@ -3,6 +3,8 @@
 `Frontend_V1`의 모바일 UI, `AR-Backend`의 별의 새싹·검정 교복 AR,
 `Rest-Backend`의 FastAPI·SQLite를 연결한 앱입니다.
 
+서버에 배포된 통합 실행 코드의 기준 브랜치는 **`main`**입니다. 병합된 임시 브랜치는 정리했으며, 미병합 프론트·Blender 이력과 진행 중인 작업 브랜치는 보존합니다. 이후 변경은 `main`에서 별도 작업 브랜치를 만들어 진행합니다.
+
 운영 주소: **https://ar.lobodoc.com/**. [배포 절차](deploy/README.md)와
 [현재 배포 기록](deploy/deployment.json)을 참고합니다.
 
