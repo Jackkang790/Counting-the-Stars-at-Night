@@ -7,8 +7,35 @@ root=/home/ubuntu/ar-docker
 test "$(realpath "$root")" = /home/ubuntu/ar-docker
 case "$archive" in /home/ubuntu/unified-*.zip) ;; *) exit 2 ;; esac
 test "$(sha256sum "$archive" | cut -d ' ' -f 1)" = "$expected"
-test "$(df --output=avail -k / | tail -1)" -gt 250000
 test -f "$root/performer-service/deploy/compose.override.yml"
+
+# Reuse the exact running API image when all Docker build inputs match.
+# This avoids building another Python image for a static-only UI release.
+reuse_api=false
+if test -f "$root/current-tour/release.json"; then
+    reuse_api=$(python3 - "$archive" "$root/current-tour/release.json" <<'PY'
+import json,sys,zipfile
+with zipfile.ZipFile(sys.argv[1]) as z:
+    new=json.loads(z.read('release.json'))
+old=json.load(open(sys.argv[2]))
+def inputs(manifest):
+    return {p:v['sha256'] for p,v in manifest['files'].items()
+            if p.startswith(('backend/', 'shared/')) or p in (
+                'requirements.txt','constraints.txt','.dockerignore','deploy/Dockerfile.api')}
+print('true' if inputs(new)==inputs(old) else 'false')
+PY
+)
+fi
+expanded_kib=$(python3 - "$archive" <<'PY'
+import sys,zipfile
+with zipfile.ZipFile(sys.argv[1]) as z:
+    print((sum(i.file_size for i in z.infolist())+1023)//1024)
+PY
+)
+reserve_kib=262144
+if test "$reuse_api" = true; then reserve_kib=131072; fi
+test "$(df --output=avail -k / | tail -1)" -gt "$((expanded_kib + reserve_kib))"
+web_image=$(sudo docker inspect ar-site --format '{{.Image}}')
 
 release_name=$(python3 - "$archive" <<'PY'
 import json,re,sys,zipfile
@@ -65,8 +92,14 @@ sudo chown -R 10001:10001 "$root/tour-data"
 sudo chmod 700 "$root/tour-data"
 
 image="stars-tour-api:$release_name"
-sudo docker build --pull=false -t "$image" -f "$release/deploy/Dockerfile.api" "$release"
-printf 'TOUR_RELEASE=%s\nTOUR_RELEASE_DIR=%s\n' "$release_name" "$release" > "$release/unified.env"
+if test "$reuse_api" = true; then
+    api_image=$(sudo docker inspect stars-tour-api --format '{{.Image}}')
+    sudo docker tag "$api_image" "$image"
+    echo 'API build inputs unchanged; reusing the exact running API image'
+else
+    sudo docker build --pull=false -t "$image" -f "$release/deploy/Dockerfile.api" "$release"
+fi
+printf 'TOUR_RELEASE=%s\nTOUR_RELEASE_DIR=%s\nTOUR_WEB_IMAGE=%s\n' "$release_name" "$release" "$web_image" > "$release/unified.env"
 compose=(sudo docker compose --project-directory "$root" -p ar-docker --env-file "$release/unified.env" -f "$root/docker-compose.yml" -f "$root/performer-service/deploy/compose.override.yml" -f "$release/deploy/compose.unified.yml")
 "${compose[@]}" config -q
 ar_changed=false
@@ -98,7 +131,7 @@ test "$healthy" = true
 sudo docker run --rm --network ar-docker_default \
     --mount "type=bind,src=$release/www,dst=/usr/share/nginx/html,readonly" \
     --mount "type=bind,src=$release/deploy/nginx.conf,dst=/etc/nginx/conf.d/default.conf,readonly" \
-    ar-site:latest nginx -t
+    "$web_image" nginx -t
 ar_changed=true
 "${compose[@]}" up -d --no-deps --no-build --force-recreate ar
 healthy=false

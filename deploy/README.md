@@ -16,6 +16,10 @@ API 준비와 nginx 설정 검증을 마친 뒤 웹 컨테이너만 교체한다
 DB 백업은 별도 비공개 경로에 유지한다. 제작 컨테이너와 원본 데이터는 재생성하지 않는다.
 기존 `/?musical=1`, `/?studio=1`, `/?trackingLab=1` 링크는 `/ar/`로 전달한다.
 
+웹 서버 이미지는 활성화 시점의 이미지 ID로 고정하여 `ar-site:latest`가 바뀌어도 영향을 받지 않는다.
+백엔드 빌드 입력이 같으면 실행 중인 API 이미지를 재사용한다. 압축 해제 용량 외에 재사용 시 128MiB,
+새 빌드 시 256MiB의 디스크 여유를 확인한다.
+
 현재 배포는 서버의 `current-tour/release.json`과 `unified.env`로 확인한다.
 이후 관리는 `/home/ubuntu/ar-docker/manage-tour.sh ps` 또는 `manage-tour.sh up -d`를 사용한다.
 각 릴리스의 `www`, 배포 설정과 기존 이미지가 복구 자료다. 자동 검사는 실제 휴대폰 AR 검증과 구분한다.

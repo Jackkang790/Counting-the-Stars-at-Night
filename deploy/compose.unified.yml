@@ -17,6 +17,8 @@ services:
         max-size: "5m"
         max-file: "2"
   ar:
+    image: ${TOUR_WEB_IMAGE:?web server image required}
+    pull_policy: never
     volumes:
       - ${TOUR_RELEASE_DIR:?release directory required}/www:/usr/share/nginx/html:ro
       - ${TOUR_RELEASE_DIR:?release directory required}/deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
