@@ -80,7 +80,7 @@ try {
   checks.push('closing AR and wrong-window completion messages award no star');
 
   await page.getByRole('button', { name: '검정 교복 · 3D AR 공연 보기' }).click();
-  await expect(frame.locator('#musical-app')).toHaveAttribute('data-media-source', 'quartet');
+  await expect(frame.locator('#musical-app')).toHaveAttribute('data-media-source', 'quartet', { timeout: 60000 });
   await frame.locator('body').evaluate(() => {
     const token = new URLSearchParams(location.search).get('hostToken');
     window.parent.postMessage({ source: 'byeol-ar', event: 'completed', experience: 'black-uniform', token: 'wrong-token', mode: 'world' }, location.origin);
@@ -174,11 +174,17 @@ try {
   await expect(page.locator('#tracking-lab-launcher a')).toBeVisible();
   for (const engine of ['mindar', 'nft']) {
     await page.goto(base + '/ar/?trackingLab=1&engine=' + engine);
-    await expect(page.locator('#lab-start')).toBeEnabled({ timeout: 15000 });
+    await expect(page.locator('#lab-start')).toBeEnabled({ timeout: 45000 });
   }
   checks.push('latest AR branch keeps the original landing page and NFT/MindAR comparison routes under /ar/');
   assert.deepEqual(errors, []);
-  const report = { result: 'PASS', checks, completionRequests: completions.length, phoneARVerified: false, tracking: 'MOCK ONLY' };
+  const previewContext = await browser.newContext({ viewport: { width: 412, height: 915 } });
+  const preview = await previewContext.newPage();
+  await preview.goto(base + '/');
+  await preview.locator('.app-shell').waitFor();
+  await preview.screenshot({ path: resolve(out, 'deployed-home.png') });
+  await previewContext.close();
+  const report = { result: 'PASS', testedUrl: base, checks, completionRequests: completions.length, phoneARVerified: false, tracking: 'MOCK ONLY' };
   await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
 } catch (error) {

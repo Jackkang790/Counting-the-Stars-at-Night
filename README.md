@@ -3,6 +3,9 @@
 `Frontend_V1`의 모바일 UI, `AR-Backend`의 별의 새싹·검정 교복 AR,
 `Rest-Backend`의 FastAPI·SQLite를 연결한 앱입니다.
 
+운영 주소: **https://ar.lobodoc.com/**. [배포 절차](deploy/README.md)와
+[현재 배포 기록](deploy/deployment.json)을 참고합니다.
+
 ## 설치와 실행
 
 Node.js 24 이상, Python 3.10 이상이 필요합니다. 저장소 루트에서 실행합니다.

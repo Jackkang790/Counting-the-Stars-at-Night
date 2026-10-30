@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-30",
+  "url": "https://ar.lobodoc.com/",
+  "release": "unified-a10b37d-0a9eafb358ca",
+  "releaseCommit": "a10b37d06b778b3722b12ccab6c3b74a4a4a8323",
+  "nginxPatchCommit": "c24435e30a60770e8b7161deb27bb9b05d3f1284",
+  "archiveSha256": "cb9398bd8be325f4fb4a5a55e0ce23c586b798b126e1608c2dc1f4d9a69c0014",
+  "apiImage": "stars-tour-api:unified-a10b37d-0a9eafb358ca",
+  "apiHealth": "healthy",
+  "apiRestartPolicy": "unless-stopped",
+  "persistentDatabase": true,
+  "originalDatabaseBackedUp": true,
+  "studioServiceHealthy": true,
+  "legacyARLinksPreserveHTTPS": true,
+  "publicBrowserScenariosPassed": 8,
+  "diskVolumeGiB": 8,
+  "diskFreeApproxMiB": 351,
+  "trackingTestInput": "MOCK ONLY",
+  "physicalPhoneARVerified": false
+}
