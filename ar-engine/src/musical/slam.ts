@@ -2,7 +2,8 @@ import * as THREE from "three";
 import { PlacementGroup } from "../core/placement";
 import { FloorPlacementGuide } from "./floorGuide";
 import type { TrackingHost, TrackingCallbacks } from "./tracking";
-import { floorStageScale,placementIssue,type PlacementPolicy } from "./placementPolicy";
+import { placementIssue,type PlacementPolicy } from "./placementPolicy";
+import { fitFloorStage } from "./stageFit";
 
 type Hit = { type: string; position: { x: number; y: number; z: number }; distance: number };
 type Reality = { trackingStatus: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number; w: number }; intrinsics: number[] };
@@ -110,7 +111,8 @@ export class WorldTrackingHost implements TrackingHost {
               }
               const hit=this.candidate;
               if(hit){
-                const ready=this.guide.show(this.matrix(hit),this.camera,now,this.stageScale(hit.position),this.callbacks.canPlace?.()??true);
+                const matrix=this.matrix(hit);
+                const ready=this.guide.show(matrix,this.camera,now,fitFloorStage(matrix,this.camera,this.policy?.stageWidthMeters),this.callbacks.canPlace?.()??true);
                 this.root.dataset.placementReady=String(ready);
                 this.root.dataset.placementHint=ready?'노란 무대 표시를 누르면 공연이 시작돼요':'바닥 쪽으로 조금 더 비춰 주세요';
               }else{this.guide.searching();this.root.dataset.placementReady='false';}
@@ -145,19 +147,19 @@ export class WorldTrackingHost implements TrackingHost {
   private place = (event: PointerEvent): void => {
     if (!this.alive || !this.normal || this.placement.isPlaced || performance.now()-this.lastPose > 700) return;
     if(this.guide.selectAt(event.clientX,event.clientY,this.camera))return;
+    // Quartet placement is limited to the highlighted pad/button. Tapping an
+    // unrelated wall or an invisible feature must not move the stage elsewhere.
+    if(this.policy)return;
     const rect = this.canvas.getBoundingClientRect(), hit = this.hit((event.clientX-rect.left)/rect.width,(event.clientY-rect.top)/rect.height);
     if (!hit) { if(!this.policy)this.root.dataset.placementHint = "바닥 특징점을 아직 찾지 못했습니다. 바닥을 천천히 비추고 다시 탭하세요."; return; }
     this.placeCandidate(this.matrix(hit),performance.now());
   };
-  private stageScale(point:{x:number;y:number;z:number}):number{
-    return floorStageScale(Math.hypot(point.x-this.camera.position.x,point.z-this.camera.position.z),this.camera.projectionMatrix.elements[0],this.policy?.stageWidthMeters);
-  }
   private placeCandidate(matrix:THREE.Matrix4,time:number):void{
     if(!this.alive||!this.normal||this.placement.isPlaced||performance.now()-this.lastPose>700||performance.now()-time>700)return;
     if(this.callbacks.canPlace&&!this.callbacks.canPlace())return;
     const point=new THREE.Vector3().setFromMatrixPosition(matrix);
     if(this.policy&&placementIssue(this.camera.position,point,this.policy))return;
-    const scale=this.stageScale(point);
+    const scale=fitFloorStage(matrix,this.camera,this.policy?.stageWidthMeters);
     this.placement.setUniformScale(scale);this.placement.placeAt(matrix.elements,true);
     this.root.dataset.stageScale=scale.toFixed(3);this.root.dataset.placementReady='false';
     this.guide.hide();this.setFound(true);this.callbacks.placed?.();

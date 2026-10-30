@@ -10,12 +10,12 @@
 #musical-app[data-backend=world] .musical-image-options { display: none; }
 #musical-app[data-backend=world] #musical-confirm { display: none; }
 @media (orientation: portrait) {
-  #musical-app[data-mode=world] #musical-view { top: 120px; bottom: 44dvh; }
-  #musical-app[data-mode=world] .musical-console { max-height: 44dvh; }
+  #musical-app[data-mode=world]:not([data-audience=true]) #musical-view { top: 120px; bottom: 44dvh; }
+  #musical-app[data-mode=world]:not([data-audience=true]) .musical-console { max-height: 44dvh; }
 }
 @media (orientation: portrait) {
-  #musical-app[data-mode=image] #musical-view { top: 120px; bottom: 44dvh; }
-  #musical-app[data-mode=image] .musical-console { max-height: 44dvh; }
+  #musical-app[data-mode=image]:not([data-audience=true]) #musical-view { top: 120px; bottom: 44dvh; }
+  #musical-app[data-mode=image]:not([data-audience=true]) .musical-console { max-height: 44dvh; }
 }
 .musical-header { position: absolute; inset: 0 0 auto; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: max(15px, env(safe-area-inset-top)) 20px 14px; background: linear-gradient(#101720ee, #10172044); }
 .musical-kicker { font-size: 10px; letter-spacing: .22em; color: #eccd99; }
@@ -57,3 +57,35 @@
 #musical-app[data-mode=preview] .musical-badges span { border-color: #e0bb76; color: #f5d293; }
 @media (min-width: 850px) { .musical-console { left: auto; right: 22px; bottom: 22px; transform: none; width: 410px; max-height: 82vh; border-radius: 16px; border-bottom: 1px solid #43515b; } }
 @media (max-height: 500px) { .musical-console { max-height: 58dvh; } .musical-badges { top: 72px; } }
+
+/* Audience profile: same tokens as the tour shell, a single header in an iframe,
+   and compact controls over the live camera. Debug tools remain at ?debug. */
+#musical-app[data-audience=true] { color:var(--tour-ink,#eef0f8);font-family:var(--tour-font,system-ui,-apple-system,sans-serif); }
+#musical-app[data-audience=true] #musical-view { inset:0;bottom:var(--audience-console-height,150px);background:var(--tour-bg,#0b1030); }
+#musical-app[data-audience=true] .musical-header { padding:16px;background:linear-gradient(var(--tour-bg,#0b1030),transparent); }
+#musical-app[data-audience=true] .musical-kicker { color:var(--tour-star,#f4c54a); }
+#musical-app[data-audience=true] .musical-badges { top:84px; }
+#musical-app[data-audience=true][data-embedded=true] .musical-header { display:none; }
+#musical-app[data-audience=true][data-embedded=true] .musical-badges { top:12px; }
+#musical-app[data-audience=true] .musical-console { left:50%;right:auto;bottom:0;transform:translateX(-50%);width:min(100%,600px);max-height:30dvh;padding:12px 16px max(12px,env(safe-area-inset-bottom));border-radius:var(--radius,12px) var(--radius,12px) 0 0;border-color:var(--tour-line-2,#ffffff3d);background:var(--tour-sheet,#121839); }
+#musical-app[data-audience=true][data-options=open] .musical-console { max-height:60dvh; }
+#musical-app[data-audience=true] button:not(.musical-floor-target) { border-color:var(--tour-line-2,#ffffff3d);background:var(--tour-bg,#0b1030);color:var(--tour-ink,#eef0f8);font:inherit;font-size:14px;min-height:48px;border-radius:12px; }
+#musical-app[data-audience=true] button.gold { background:var(--tour-star,#f4c54a);color:var(--tour-bg,#0b1030);border-color:var(--tour-star,#f4c54a); }
+#musical-app[data-audience=true] .musical-actions { margin:6px 0; }
+#musical-app[data-audience=true] .musical-actions>button:disabled:not(#musical-camera) { display:none; }
+#musical-app[data-audience=true] #musical-status { margin:0 0 6px;font-size:14px;color:var(--tour-sub,#c9cee4); }
+#musical-app[data-audience=true] .musical-progress { margin:6px 0; }
+#musical-app[data-audience=true]:not([data-tracking=true]) .musical-progress { display:none; }
+#musical-app[data-audience=true] progress { accent-color:var(--tour-star,#f4c54a); }
+#musical-app[data-audience=true] #musical-setup,#musical-app[data-audience=true] #musical-developer,#musical-app[data-audience=true] .musical-note { display:none; }
+#musical-app[data-audience=true][data-options=open] #musical-representation { display:block; }
+#musical-app[data-audience=true][data-options=open][data-developer=true] details { display:block; }
+#musical-app[data-audience=true][data-playback=completed] #musical-play { display:none; }
+#musical-app[data-audience=true] .musical-floor-hint { top:126px; }
+#musical-app[data-audience=true][data-embedded=true] .musical-floor-hint { top:52px; }
+#musical-app[data-audience=true]:not([data-developer=true]) #musical-fps { display:none; }
+.musical-audience-scale { display:none; }
+#musical-app[data-options=open] .musical-audience-scale { display:grid;grid-template-columns:1fr auto;gap:8px;padding:14px 0;color:var(--tour-sub,#c9cee4);font-size:14px; }
+.musical-audience-scale input,.musical-audience-scale span { grid-column:1/-1; }
+.musical-audience-scale input { accent-color:var(--tour-star,#f4c54a); }
+.musical-audience-scale span { font-size:12px; }

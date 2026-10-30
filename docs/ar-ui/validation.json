@@ -1,0 +1,47 @@
+{
+  "result": "PASS",
+  "build": true,
+  "protectedOriginalFiles": 38,
+  "stageFit": {
+    "views": 8,
+    "nearCandidatesMeters": [
+      0.35,
+      0.8
+    ],
+    "anchorPreserved": true
+  },
+  "floor": {
+    "result": "PASS",
+    "testedUrl": "http://localhost:8193",
+    "checks": [
+      "no tracking or no measured hit never produces a false clickable floor",
+      "searches visible floor samples beyond the center; a nearby 0.8m floor shows a large tap target and stage footprint",
+      "tapping unhighlighted scenery cannot place a different invisible point",
+      "tapping the highlighted floor area uses its displayed real hit, fits the nearby stage, and starts real 4-actor audio playback without another Play tap",
+      "manual stage size and camera movement retain the world position; automatic fit is frozen after placement",
+      "tracking recovery preserves an explicit pause and does not start playback by itself",
+      "choosing a new nearby floor target resumes the performance in one tap"
+    ],
+    "tracking": "MOCK ONLY",
+    "physicalPhoneARVerified": false
+  },
+  "integration": {
+    "result": "PASS",
+    "testedUrl": "http://localhost:8193",
+    "checks": [
+      "single-origin frontend, REST and /ar discovery serve real data",
+      "closing AR and wrong-window completion messages award no star",
+      "four real GLBs and 10-second audio timeline complete through checked iframe bridge (MOCK tracker)",
+      "six frontend missions including c/view issue exactly one coupon; repeats are idempotent",
+      "server progress restores after local progress loss; QR coupon reflects redemption by code",
+      "map and three cafe cards load server-backed matching IDs and demo status",
+      "next round uses a fresh session; offline star retries; lost session renews; past coupon survives",
+      "latest AR branch keeps the original landing page and NFT/MindAR comparison routes under /ar/"
+    ],
+    "completionRequests": 8,
+    "phoneARVerified": false,
+    "tracking": "MOCK ONLY"
+  },
+  "lint": "no errors; pre-existing warnings remain",
+  "physicalPhoneARVerified": false
+}

@@ -1,0 +1,10 @@
+/* Only the embedded starseed screen. The original test harness stays intact. */
+body.tour-host{background:var(--tour-bg,#0b1030);color:var(--tour-ink,#eef0f8);font-family:var(--tour-font,system-ui,sans-serif)}
+.tour-host #app{padding:20px;max-width:600px}
+.tour-host #app>h1,.tour-host #support,.tour-host #loadStatus,.tour-host #ar-telemetry,.tour-host #ar-glb{display:none}
+.tour-host .sub,.tour-host .hintline{color:var(--tour-sub,#c9cee4);font-size:14px;line-height:1.6}
+.tour-host .card{border-color:var(--tour-line-2,#ffffff3d);background:var(--tour-sheet,#121839);border-radius:12px}
+.tour-host button.primary,.tour-host a.iosar,.tour-host #ar-stop{min-height:52px;background:var(--tour-star,#f4c54a);color:var(--tour-bg,#0b1030);border-color:var(--tour-star,#f4c54a);border-radius:12px}
+.tour-host a.iosar::after{color:var(--tour-bg,#0b1030)}
+.tour-host #ar-dismiss{min-height:48px;background:var(--tour-sheet,#121839);border-color:var(--tour-line-2,#ffffff3d);color:var(--tour-ink,#eef0f8)}
+.tour-host [hidden]{display:none!important}

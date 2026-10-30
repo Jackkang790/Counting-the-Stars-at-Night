@@ -9,7 +9,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use
 const page=await browser.newPage({viewport:{width:412,height:915}}),errors=[],checks=[];
 page.on('pageerror',error=>errors.push(error.message));
 await page.addInitScript(()=>{
-  window.__normal=false;window.__floor=false;window.__distance=.8;window.__floorY=0;window.__probes=[];
+  window.__normal=false;window.__floor=false;window.__distance=.8;window.__floorY=0;window.__cameraX=0;window.__probes=[];
   let modules=[],world,timer;
   window.XR8={loadChunk:async()=>{},XrConfig:{device:()=>({MOBILE:'mobile'}),camera:()=>({BACK:'back'})},
     XrController:{configure(){},pipelineModule:()=>({name:'controller'}),updateCameraProjectionMatrix(){},
@@ -21,7 +21,7 @@ await page.addInitScript(()=>{
       world.scene.background=new T.Color('#243333');world.renderer.setSize(canvas.width,canvas.height,false);
       modules.forEach(module=>module.onStart?.({}));
       timer=setInterval(()=>{
-        world.camera.position.set(0,1.5,0);world.camera.lookAt(0,0,-.8);world.camera.updateMatrixWorld(true);
+        world.camera.position.set(window.__cameraX,1.5,0);world.camera.lookAt(0,0,-window.__distance);world.camera.updateMatrixWorld(true);
         modules.forEach(module=>module.onUpdate?.({processCpuResult:{reality:{trackingStatus:window.__normal?'NORMAL':'LIMITED',position:{x:0,y:1.5,z:0},rotation:{x:0,y:0,z:0,w:1},intrinsics:world.camera.projectionMatrix.elements}}}));
         world.renderer.render(world.scene,world.camera);
       },40);
@@ -44,6 +44,9 @@ try{
   assert.ok(await page.evaluate(()=>window.__probes.includes(.35)));
   await page.screenshot({path:resolve(out,'floor-ready-mobile.png')});
   checks.push('searches visible floor samples beyond the center; a nearby 0.8m floor shows a large tap target and stage footprint');
+  await page.locator('#musical-world-camera').click({position:{x:8,y:300}});
+  await expect(page.locator('#musical-app')).not.toHaveAttribute('data-tracking','true');
+  checks.push('tapping unhighlighted scenery cannot place a different invisible point');
   const floorPoint=await page.evaluate(()=>{
     const T=window.THREE,guide=window.__world.scene.getObjectByName('FloorPlacementGuide');guide.updateMatrixWorld(true);
     const pad=guide.children.find(object=>object.geometry?.type==='PlaneGeometry');
@@ -55,11 +58,19 @@ try{
   await expect(page.locator('#musical-app')).toHaveAttribute('data-playback','playing');
   await expect(page.locator('#musical-place-here')).toBeHidden();
   const first=await page.evaluate(()=>{const actor=window.__world.scene.getObjectByName('BuildingAnchor'),anchor=actor.parent.parent;return{position:anchor.position.toArray(),scale:anchor.scale.x};});
-  assert.deepEqual(first.position,[0,0,-.8]);assert.ok(first.scale>=.12&&first.scale<1);
+  assert.deepEqual(first.position,[0,0,-.8]);assert.ok(first.scale>=.03&&first.scale<1);
   await expect.poll(async()=>Number(await page.locator('#musical-app').getAttribute('data-time')),{timeout:15000}).toBeGreaterThan(4);
   await page.screenshot({path:resolve(out,'one-tap-playing-mobile.png')});
   checks.push('tapping the highlighted floor area uses its displayed real hit, fits the nearby stage, and starts real 4-actor audio playback without another Play tap');
   await page.locator('#musical-pause').click();
+  await page.locator('#musical-options').click();
+  await page.getByRole('slider',{name:'무대 크기'}).fill('150');
+  await page.getByRole('slider',{name:'무대 크기'}).dispatchEvent('input');
+  await page.evaluate(()=>{window.__cameraX=.2;});await page.waitForTimeout(200);
+  const adjusted=await page.evaluate(()=>{const stage=window.__world.scene.getObjectByName('BuildingAnchor'),anchor=stage.parent.parent;return{position:anchor.position.toArray(),scale:anchor.scale.x,manual:stage.parent.scale.x};});
+  assert.deepEqual(adjusted.position,first.position);assert.equal(adjusted.scale,first.scale);assert.equal(adjusted.manual,1.5);
+  await page.locator('#musical-options').click();
+  checks.push('manual stage size and camera movement retain the world position; automatic fit is frozen after placement');
   await page.evaluate(()=>{window.__normal=false;});
   await expect(page.locator('#musical-app')).toHaveAttribute('data-tracking','false');
   await expect(page.locator('#musical-place-here')).toBeHidden();
@@ -68,13 +79,13 @@ try{
   await expect(page.locator('#musical-app')).toHaveAttribute('data-playback','paused');
   checks.push('tracking recovery preserves an explicit pause and does not start playback by itself');
   await page.locator('#musical-reposition').click();
-  await page.evaluate(()=>{window.__distance=.55;});
+  await page.evaluate(()=>{window.__distance=.35;window.__cameraX=0;});
   await expect(page.getByRole('button',{name:'여기에 공연 보기',exact:true})).toBeVisible();
-  await expect.poll(()=>page.evaluate(()=>window.__world.scene.getObjectByName('FloorPlacementGuide').matrix.elements[14])).toBe(-.55);
+  await expect.poll(()=>page.evaluate(()=>window.__world.scene.getObjectByName('FloorPlacementGuide').matrix.elements[14])).toBe(-.35);
   await page.getByRole('button',{name:'여기에 공연 보기',exact:true}).click();
   await expect(page.locator('#musical-app')).toHaveAttribute('data-playback','playing');
   const position=await page.evaluate(()=>window.__world.scene.getObjectByName('BuildingAnchor').parent.parent.position.toArray());
-  assert.deepEqual(position,[0,0,-.55]);
+  assert.deepEqual(position,[0,0,-.35]);
   checks.push('choosing a new nearby floor target resumes the performance in one tap');
   assert.deepEqual(errors,[]);
   const report={result:'PASS',testedUrl:base,checks,tracking:'MOCK ONLY',physicalPhoneARVerified:false};

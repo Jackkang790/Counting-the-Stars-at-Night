@@ -3,7 +3,8 @@ import { PlacementGroup } from "../core/placement";
 import { FloorPlacementGuide } from "./floorGuide";
 import type { BuildingConfig } from "./types";
 import type { Controller } from "./vendor/mindar-image.prod.js";
-import { floorStageScale,placementIssue,type PlacementPolicy } from "./placementPolicy";
+import { placementIssue,type PlacementPolicy } from "./placementPolicy";
+import { fitFloorStage } from "./stageFit";
 
 export interface TrackingHost {
   readonly renderer: THREE.WebGLRenderer;
@@ -181,7 +182,7 @@ export class WebXRTrackingHost implements TrackingHost {
             this.candidate=this.policy&&viewer?new THREE.Matrix4().compose(new THREE.Vector3(point.x,point.y,point.z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.atan2(-(viewer.x-point.x),-(viewer.z-point.z))),new THREE.Vector3(1,1,1)):new THREE.Matrix4().fromArray(pose.transform.matrix);
             this.candidateTime=performance.now();
             const camera=this.renderer.xr.getCamera();
-            const scale=floorStageScale(Math.hypot(point.x-this.viewerPosition.x,point.z-this.viewerPosition.z),camera.projectionMatrix.elements[0],this.policy?.stageWidthMeters);
+            const scale=fitFloorStage(this.candidate,camera,this.policy?.stageWidthMeters);
             this.overlay.dataset.placementReady=String(this.guide.show(this.candidate,camera,this.candidateTime,scale,this.callbacks.canPlace?.()??true));
           } else {this.candidate=undefined;this.guide.searching();this.overlay.dataset.placementReady='false';}
         }else if(this.placement.isPlaced){this.guide.hide();this.overlay.dataset.placementReady='false';}
@@ -195,7 +196,7 @@ export class WebXRTrackingHost implements TrackingHost {
     if(this.callbacks.canPlace&&!this.callbacks.canPlace())return;
     const point=new THREE.Vector3().setFromMatrixPosition(matrix);
     if(this.policy&&placementIssue(this.viewerPosition,point,this.policy))return;
-    const scale=floorStageScale(Math.hypot(point.x-this.viewerPosition.x,point.z-this.viewerPosition.z),this.renderer.xr.getCamera().projectionMatrix.elements[0],this.policy?.stageWidthMeters);
+    const scale=fitFloorStage(matrix,this.renderer.xr.getCamera(),this.policy?.stageWidthMeters);
     this.placement.setUniformScale(scale);this.placement.placeAt(matrix.elements,true);this.guide.hide();
     this.overlay.dataset.stageScale=scale.toFixed(3);this.overlay.dataset.placementReady='false';
     this.found=true;this.callbacks.tracking(true);this.callbacks.placed?.();

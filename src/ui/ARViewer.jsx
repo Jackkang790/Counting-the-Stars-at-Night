@@ -15,6 +15,16 @@ export default function ARViewer({ experience, onClose, onComplete, confirmExhib
   url.searchParams.set('tourHost', '1');
   url.searchParams.set('hostToken', token);
   const title = experience === 'starseed' ? '별의 새싹 · 3D 작품' : '검정 교복 · 4인 AR 공연';
+  const applyTheme = () => {
+    const target = frame.current?.contentDocument?.documentElement;
+    if (!target) return;
+    const theme = getComputedStyle(document.documentElement);
+    for (const name of ['bg', 'sheet', 'star', 'ink', 'sub', 'muted', 'line', 'line-2']) {
+      const value = theme.getPropertyValue('--' + name).trim();
+      if (value) target.style.setProperty('--tour-' + name, value);
+    }
+    target.style.setProperty('--tour-font', theme.fontFamily);
+  };
 
   useEffect(() => {
     stopCamera();
@@ -34,12 +44,15 @@ export default function ARViewer({ experience, onClose, onComplete, confirmExhib
 
   return (
     <section className="tour-ar-viewer" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="tour-ar-toolbar"><b>{title}</b><button type="button" onClick={onClose}>닫기</button></div>
+      <header className="tour-ar-toolbar">
+        <button type="button" className="icon-btn" aria-label="닫기" onClick={onClose}>✕</button>
+        <h2 className="top-title">{experience === 'starseed' ? '별의 새싹' : '검정 교복'}</h2>
+        <a href={client.getLaunchUrl(experience)} target="_blank" rel="noopener noreferrer" aria-label="새 창에서 AR 열기">↗</a>
+      </header>
       {error ? <p role="alert">{error}</p> : !ready ? <p role="status">AR 콘텐츠 준비 중…</p> : (
-        <iframe ref={frame} title={title} src={url.href} allow="camera; microphone; accelerometer; gyroscope; xr-spatial-tracking; fullscreen" allowFullScreen />
+        <iframe ref={frame} title={title} src={url.href} onLoad={applyTheme} allow="camera; microphone; accelerometer; gyroscope; xr-spatial-tracking; fullscreen" allowFullScreen />
       )}
-      <div className="tour-ar-actions">
-        <a href={client.getLaunchUrl(experience)} target="_blank" rel="noopener noreferrer">전체 화면으로 열기</a>
+      <div className="tour-ar-actions" hidden={!confirmExhibit && !completed}>
         {onComplete && <button type="button" className="btn" disabled={!ready || (!confirmExhibit && !completed)} onClick={onComplete}>
           {confirmExhibit ? '전시 확인 · 별 받기' : completed ? '공연 감상 완료 · 별 받기' : '공연을 끝까지 감상해 주세요'}
         </button>}

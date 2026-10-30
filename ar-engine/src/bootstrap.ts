@@ -11,6 +11,8 @@ if (new URLSearchParams(location.search).get("trackingLab") === "1") {
 } else {
   void import("./main").then(async () => {
     if (new URLSearchParams(location.search).get('tourHost') === '1') {
+      document.body.classList.add('tour-host');
+      await import('./tour.css');
       document.querySelector('h1')!.textContent = '별의 새싹';
       document.querySelector('#app > .sub')!.textContent = '바닥에 작품을 놓고 가까이에서 감상해 보세요';
       document.getElementById('start-star')!.textContent = '작품 AR 시작';
@@ -21,6 +23,13 @@ if (new URLSearchParams(location.search).get("trackingLab") === "1") {
       const alignHint = document.getElementById('start-align')?.nextElementSibling as HTMLElement | null;
       if (alignHint) alignHint.style.display = 'none';
       document.querySelectorAll<HTMLElement>('#app > details').forEach(el => { el.hidden = true; });
+      document.getElementById('check')!.hidden=true;
+      document.getElementById('ar-stop')!.textContent='감상 마치기';
+      document.getElementById('ar-dismiss')!.textContent='작품 다시 놓기';
+      const hint=document.getElementById('start-star')!.nextElementSibling;
+      if(hint)hint.textContent='바닥의 표시를 눌러 작품을 놓아 주세요.';
+      const ios=document.getElementById('ios-ar')!;
+      if(ios.style.display!=='none')document.getElementById('start-star')!.closest<HTMLElement>('.card')!.hidden=true;
     } else (await import('./musical/launcher')).installMusicalLauncher();
   });
 }

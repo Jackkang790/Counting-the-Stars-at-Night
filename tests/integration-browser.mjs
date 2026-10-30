@@ -69,12 +69,13 @@ try {
   await page.getByRole('button', { name: '검정 교복 · 3D AR 공연 보기' }).click();
   const frame = page.frameLocator('iframe');
   await frame.locator('#musical-app').waitFor();
-  await expect(page.getByRole('button', { name: '공연을 끝까지 감상해 주세요' })).toBeDisabled();
+  await expect(page.locator('.tour-ar-actions button')).toBeDisabled();
+  await expect(page.locator('.tour-ar-actions')).toBeHidden();
   await page.evaluate(() => {
     const token = new URL(document.querySelector('iframe').src).searchParams.get('hostToken');
     window.postMessage({ source: 'byeol-ar', event: 'completed', experience: 'black-uniform', token, mode: 'world' }, location.origin);
   });
-  await expect(page.getByRole('button', { name: '공연을 끝까지 감상해 주세요' })).toBeDisabled();
+  await expect(page.locator('.tour-ar-actions button')).toBeDisabled();
   await page.getByRole('button', { name: '닫기', exact: true }).click();
   await expect.poll(stars).toBe(0);
   checks.push('closing AR and wrong-window completion messages award no star');
@@ -86,10 +87,16 @@ try {
     window.parent.postMessage({ source: 'byeol-ar', event: 'completed', experience: 'black-uniform', token: 'wrong-token', mode: 'world' }, location.origin);
     window.parent.postMessage({ source: 'byeol-ar', event: 'completed', experience: 'black-uniform', token, mode: 'preview' }, location.origin);
   });
-  await expect(page.getByRole('button', { name: '공연을 끝까지 감상해 주세요' })).toBeDisabled();
+  await expect(page.locator('.tour-ar-actions button')).toBeDisabled();
+  await expect(frame.locator('.musical-header')).toBeHidden();
+  const colors=await frame.locator('#musical-app').evaluate(el=>({ink:getComputedStyle(el).color,star:getComputedStyle(document.documentElement).getPropertyValue('--tour-star').trim()}));
+  assert.equal(colors.star,await page.evaluate(()=>getComputedStyle(document.documentElement).getPropertyValue('--star').trim()));
   await expect(frame.locator('#musical-camera')).toBeEnabled();
   await frame.locator('#musical-camera').click();
   await expect(frame.locator('#musical-app')).toHaveAttribute('data-world-tracking', 'normal');
+  const view=await frame.locator('#musical-view').boundingBox(),consoleBox=await frame.locator('.musical-console').boundingBox();
+  assert.ok(view.y+view.height<=consoleBox.y+1,'The control panel must not cover the camera or its floor target');
+  assert.ok(view.height>(await page.locator('iframe').boundingBox()).height*.65,'Camera keeps most of the mobile screen');
   await frame.locator('#musical-place-here').click();
   await expect(frame.locator('#musical-app')).toHaveAttribute('data-playback', 'playing');
   await expect.poll(async () => Number(await frame.locator('#musical-app').getAttribute('data-time')), { timeout: 15000 }).toBeGreaterThan(5);

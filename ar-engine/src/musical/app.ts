@@ -52,6 +52,8 @@ export async function mountMusical(): Promise<void> {
   document.body.classList.add("musical-body");
   document.title = quartet?"검정 교복 · 4인 3D AR 뮤지컬":"목재 무대 · 실사 AR 뮤지컬 MVP";
   const root = document.createElement("main"); root.id = "musical-app";
+  let consoleObserver:ResizeObserver|undefined;
+  if(quartet){root.dataset.audience='true';root.dataset.embedded=String(tourHost);root.dataset.options='closed';root.dataset.developer=String(new URLSearchParams(location.search).has('debug'));}
   root.innerHTML = `
     <div id="musical-view"></div>
     <header class="musical-header"><div><span class="musical-kicker">LIVE STAGE · MVP</span><h1>목재 무대, 30초의 공연</h1></div><button id="musical-exit" aria-label="기존 AR 화면으로 돌아가기">종료 ↗</button></header>
@@ -110,6 +112,16 @@ export async function mountMusical(): Promise<void> {
   root.querySelector("h1")!.textContent=quartet?"검정 교복, 네 배우의 10초": "목재 무대, 30초의 공연";
   const switchShow=document.createElement("a");switchShow.href=quartet?"?musical=1":"?musical=1&show=quartet";switchShow.textContent=quartet?"기존 30초 공연":"검정 교복 4인 3D 공연";root.querySelector(".musical-settings")!.prepend(switchShow);
   const $ = <T extends HTMLElement>(id: string) => root.querySelector<T>(`#musical-${id}`)!;
+  if(quartet){
+    consoleObserver=new ResizeObserver(()=>root.style.setProperty('--audience-console-height',Math.ceil(root.querySelector<HTMLElement>('.musical-console')!.getBoundingClientRect().height)+'px'));
+    consoleObserver.observe(root.querySelector('.musical-console')!);
+    root.querySelector('.musical-kicker')!.textContent='별 헤는 밤';
+    const options=document.createElement('button');options.id='musical-options';options.textContent='무대 조절';options.setAttribute('aria-expanded','false');
+    options.onclick=()=>{const open=root.dataset.options!=='open';root.dataset.options=open?'open':'closed';options.setAttribute('aria-expanded',String(open));options.textContent=open?'조절 닫기':'무대 조절';};
+    const scale=document.createElement('label');scale.className='musical-audience-scale';scale.innerHTML='무대 크기 <output id="musical-scale-value">100%</output><input id="musical-stage-size" aria-label="무대 크기" type="range" min="50" max="150" step="5" value="100" disabled><span>바닥 위치는 유지하고 크기만 조절해요.</span>';
+    $('pause').parentElement!.appendChild(options);$('status').parentElement!.appendChild(scale);
+    $<HTMLInputElement>('stage-size').oninput=()=>{placement.setUniformScale(Number($<HTMLInputElement>('stage-size').value)/100);$('scale-value').textContent=$<HTMLInputElement>('stage-size').value+'%';};
+  }
   if (new URLSearchParams(location.search).get("tracking") === "image") $<HTMLSelectElement>("backend").value = "image";
   $("target-preview").appendChild(panel);
   $("target-guide").querySelector("img")!.src = panel.toDataURL();
@@ -151,6 +163,7 @@ export async function mountMusical(): Promise<void> {
     root.dataset.backend = $<HTMLSelectElement>("backend").value;
     $("target-guide").hidden = !active || preview || root.dataset.mode !== "image" || !!host?.tracked;
     const ready = !!host?.tracked && confirmed;
+    if(quartet)$<HTMLInputElement>('stage-size').disabled=!ready;
     $<HTMLButtonElement>("camera").disabled = active || compiling || ($<HTMLSelectElement>("backend").value === "image" && !target) || ($<HTMLSelectElement>("backend").value === "world" && !worldReady);
     if (root.dataset.mode === "world" && active && !host?.tracked && $("error").hidden) status(root.dataset.placementHint || (root.dataset.worldTracking === "normal" ? "공간 추적 준비 완료 · 무대가 설 바닥을 탭하세요." : "바닥을 천천히 비춰 공간을 파악합니다. 사진 표적은 필요 없습니다."));
     $<HTMLButtonElement>("confirm").disabled = !host?.tracked || confirmed;
@@ -377,13 +390,13 @@ export async function mountMusical(): Promise<void> {
   $("load").addEventListener("click", () => { try { const data = JSON.parse(localStorage.getItem(key()) ?? "null"); if (!data || !validCalibration(data.stage) || !Array.isArray(data.actors) || data.actors.length !== actors.length || !data.actors.every(validCalibration)) throw new Error("이 표적의 유효한 저장값이 없습니다."); placement.applyCalibration(data.stage); actors.forEach((a, i) => apply(a.group, data.actors[i])); showTransform(); status("로컬 정합값 적용 완료 · 실물과 일치하는지 확인하세요."); } catch (e) { fail(errorText(e)); } });
   $("reset").addEventListener("click", () => { placement.reset(); placement.placeAt(new THREE.Matrix4().elements, true); actors.forEach(a => a.applyTransform()); showTransform(); });
   $("report").addEventListener("click", () => download(new Blob([JSON.stringify({ show: show.id, userAgent: navigator.userAgent, secure: isSecureContext, mode: root.dataset.mode, target: targetHash, targetWidthMeters: show.building.target.widthMeters, provisionalDimensions: true, poseTrackedNow: !preview && (host?.tracked ?? false), performerVideoSlotsLoaded: actors.filter(a => a.loaded).length, mediaSources: actorSources, duration: director.time, playback: director.state, testMode: director.testMode, fps, decoderFailures, deviceARVerified: false, trueVolumetricHumanFootageVerified: false, performers: spatialSnapshot(stage.root, actors, host?.camera), note: "진단 수치는 기기 검증 합격을 자동 선언하지 않습니다. 실제 움직임·정합·고정·동기를 수동 확인하세요." }, null, 2)], { type: "application/json" }), "musical-diagnostics.json"));
-  function cleanup(): void { if (disposed) return; disposed = true; epoch++; director.dispose(); host?.dispose(); actors.forEach(a => { a.dispose(); a.group.removeFromParent(); }); stage.dispose(); }
-  $("exit").addEventListener("click", () => { cleanup(); if (quartet && closeTourHost('black-uniform')) return; const url = new URL(location.href); url.searchParams.delete("musical"); location.assign(url.href); });
+  function cleanup(): void { if (disposed) return; disposed = true; epoch++; consoleObserver?.disconnect();director.dispose(); host?.dispose(); actors.forEach(a => { a.dispose(); a.group.removeFromParent(); }); stage.dispose(); }
+  $("exit").addEventListener("click", () => { cleanup(); if (quartet && closeTourHost('black-uniform')) return; if(quartet&&location.pathname.startsWith('/ar/')){location.assign(new URL('../',location.href).href);return;}const url = new URL(location.href); url.searchParams.delete("musical"); location.assign(url.href); });
   document.addEventListener("visibilitychange", () => { if (document.hidden) { director.pause(); updateButtons(); } });
   window.addEventListener("pagehide", cleanup, { once: true });
   if (quartet && tourHost) {
     root.querySelector('.musical-kicker')!.textContent = '별 헤는 밤';
-    for (const id of ['musical-developer', 'musical-setup', 'musical-fps']) {
+    for (const id of ['musical-fps']) {
       const element = document.getElementById(id);
       if (element) element.hidden = true;
     }
@@ -399,7 +412,7 @@ export async function mountMusical(): Promise<void> {
     if(!quartet)$("samples").click();
   }
   if(quartet){
-    const reposition=document.createElement("button");reposition.id="musical-reposition";reposition.textContent="바닥 다시 선택";reposition.onclick=()=>{if(!host?.reposition||preview)return;director.pause();confirmed=false;host.reposition();status("공연을 멈췄습니다. 건물 앞 바닥 기준점을 다시 탭하세요.");updateButtons();};$("photo").parentElement!.append(reposition);
+    const reposition=document.createElement("button");reposition.id="musical-reposition";reposition.textContent="바닥 다시 선택";reposition.onclick=()=>{if(!host?.reposition||preview)return;director.pause();confirmed=false;placement.setUniformScale(1);$<HTMLInputElement>('stage-size').value='100';$('scale-value').textContent='100%';host.reposition();status("공연을 멈췄습니다. 건물 앞 바닥 기준점을 다시 탭하세요.");updateButtons();};$("photo").parentElement!.append(reposition);
     $("samples").textContent="교복 3D 배우 4명 다시 불러오기";
     if($("samples").nextElementSibling instanceof HTMLElement)($("samples").nextElementSibling as HTMLElement).hidden=true;
     actors.forEach((_,i)=>{for(const id of [`video-${i}`,`video-mode-${i}`])$(id).closest("label")!.hidden=true;});
