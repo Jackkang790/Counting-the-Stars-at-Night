@@ -9,3 +9,5 @@
 일반 카메라 영상만 있거나 공간 추적이 불안정한 상태에서는 직접 배치도 활성화하지 않는다. 공간 추적 상실 시 공연은 숨김/일시정지되며 사용자가 재개한다. 이 최소 조건까지 없애면 실제 공간에 고정되는 AR로 표시할 수 없기 때문이다.
 
 검사: `node tests/stage-fit.mjs`, `node ar-engine/tests/quartet-unit.mjs`, `node tests/floor-placement-browser.mjs http://localhost:8193`, `node tests/integration-browser.mjs http://localhost:8193`. 눈높이 지점 허용, hit 없는 직접 배치, 추적이 없을 때 배치 차단, 카메라 이동/새 hit 이후 앵커 유지, 높이 조절을 확인한다. 자동 AR 입력은 모의 추적이며 실제 iPhone/Android 현장 검증과 구분한다.
+
+코드 `8adff59`를 `unified-8adff59-d882d0082e1d`로 배포했다. [공개 앱](https://ar.lobodoc.com/?v=8adff59#roleplay/h1)에서 카메라를 켠 후 **여기에 직접 놓기**를 선택한다. 공개 서버에서 같은 모의 추적 검사와 빌드 해시·UI·REST/제작 API 상태 검사가 통과했다. 결과는 `docs/ar-ui/easy-placement-public.json`과 `easy-placement-deployment.json`에 기록한다. 기존 배우 에셋·원래 AR 엔진 보호 대상 38개·DB·제작 서비스는 보존했다.
